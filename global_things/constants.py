@@ -1,6 +1,3 @@
-import requests
-import json
-
 ATTRACTIVENESS_SCORE_CRITERIA = {
   0: {
     "sex": "man",
