@@ -1,25 +1,25 @@
 import requests
+import json
 
-def slack_error_notification(user_ip: None, user_id: None, nickname: None, api: str, error_log: str):
-  if user_ip == None: user_ip = "Internal Error"
+def slack_error_notification(user_ip: str='', user_id: str='', nickname: str='', api: str='', error_log: str='Cannot find error.'):
   send_notification_request = requests.post(
     "https://hooks.slack.com/services/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?",
-    params = {
+    json.dumps({
       "channel": "#circlin-members-log",
       "username": "써클인 멤버스 - python",
       "text": f"써클인 멤버스(python)에서 오류가 발생했습니다. \n \
-              * 사용자 IP *: `{user_ip}` \n \
-              * 닉네임 (ID): `{nickname}({user_id})`\n \
-              * API URL: `{api}` \n \
-              ```{error_log}```",
+*사용자 IP*: `{user_ip}` \n \
+*닉네임 (ID)*: `{nickname}({user_id})`\n \
+*API URL*: `{api}` \n \
+```{error_log}```",
       "icon_url": "https://www.circlin.co.kr/new/assets/favicon/apple-icon-180x180.png"
     }
-  )
+  ))
 
-  return send_notification_request.json()
+  return send_notification_request
 
 
-def standard_healthiness_score(type: str, age: int, sex: str, weight: float, height: None) -> float:
+def standard_healthiness_score(type: str, age: int, sex: str, weight: float, height=0) -> float:
   if type == None or age == None or sex == None or weight == None:
     return 'Some parameter has None value.'
 
@@ -61,7 +61,7 @@ def standard_healthiness_score(type: str, age: int, sex: str, weight: float, hei
     return ideal_muscle_mass #float
 
   elif type == 'bmi_index':
-    if height != None and type(height) == float:
+    if height != 0 and type(height) == float:
       height_float = round(height / 100, 3) #Scale of height in BMI index is 'meter'.
       my_bmi = weight / (height_float ** 2)
     else:

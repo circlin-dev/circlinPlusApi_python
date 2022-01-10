@@ -7,13 +7,13 @@ from global_things.functions import slack_error_notification
 
 app = Flask(__name__)
 CORS(app)
-app.config.from_pyfile('.config/database.py')
+app.config.from_pyfile('./config/database.py')
 app.register_blueprint(api, url_prefix="/api")
 try:
     db = create_engine(app.config['DB_URL'], encoding="utf-8", max_overflow=0)
     app.database = db
 except Exception as e:
-    slack_error_notification(error_log=e)
+    # slack_error_notification(error_log=e)
     print(e)
 
 
@@ -23,4 +23,5 @@ def hello_world():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    #app.run(host='0.0.0.0', debug=True)
+    app.run(debug=True)
