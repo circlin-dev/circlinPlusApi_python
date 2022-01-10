@@ -10,3 +10,4 @@ pyvenv.cfg
 __pycache__
 
 ./config
+nohup.out
