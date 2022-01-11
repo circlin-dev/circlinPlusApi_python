@@ -66,7 +66,7 @@ def add_weekly_data():
     image_analysis_result = json.loads(image_analysis_result)
     status_code = image_analysis_result['status_code']
     if status_code == 200:
-      analyze_result = json.loads(image_analysis_result['response'])
+      analyze_result = image_analysis_result['response']
       query = f'''
         INSERT INTO bodylab_image
                 (bodylab_id, 
@@ -83,16 +83,16 @@ def add_weekly_data():
                 upperbody_lowerbody)
         VALUES ({latest_bodylab_id},
                 {body_image},
-                {analyze_result.output_url},
-                {analyze_result.shoulder_ratio},
-                {analyze_result.hip_ratio},
-                {analyze_result.shoulder_width},
-                {analyze_result.hip_width},
-                {analyze_result.nose_to_shoulder_center},
-                {analyze_result.shoulder_center_to_hip_center},
-                {analyze_result.hip_center_to_ankle_center},
-                {analyze_result.whole_body_length},
-                {analyze_result.upper_body_lower_body})
+                {analyze_result['output_url']},
+                {analyze_result['shoulder_ratio']},
+                {analyze_result['hip_ratio']},
+                {analyze_result['shoulder_width']},
+                {analyze_result['hip_width']},
+                {analyze_result['nose_to_shoulder_center']},
+                {analyze_result['shoulder_center_to_hip_center']},
+                {analyze_result['hip_center_to_ankle_center']},
+                {analyze_result['whole_body_length']},
+                {analyze_result['upper_body_lower_body']})
       '''
       cursor.execute(query)
       connection.commit()
