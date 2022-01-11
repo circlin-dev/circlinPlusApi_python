@@ -108,10 +108,10 @@ def analyze_image(user_id: int, url: str):
   if response.status_code == 200:
     return jsonify({'response':response.json(), 'status_code':200})
   elif response.status_code == 400:
-    slack_error_notification(api='/api/bodylab/add', error_log=response['message'])
-    return jsonify({'error': response['message'], 'status_code': 400})
+    slack_error_notification(api='/api/bodylab/add', error_log=response.json()['message'])
+    return jsonify({'error': response.json()['message'], 'status_code': 400})
   elif response.status_code == 500:
-    slack_error_notification(api='/api/bodylab/add', error_log=response['message'])
-    return jsonify({'error': response['message'], 'status_code': 400})
+    slack_error_notification(api='/api/bodylab/add', error_log=response.json()['message'])
+    return jsonify({'error': response.json()['message'], 'status_code': 400})
 
 
