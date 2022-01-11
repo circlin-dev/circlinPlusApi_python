@@ -59,7 +59,7 @@ def add_weekly_data():
         ORDER BY id DESC
             LIMIT 1'''
     cursor.execute(query)
-    latest_bodylab_id = cursor.fetchall()[0]
+    latest_bodylab_id = cursor.fetchall()[0][0]
 
     #Analyze user's image.
     image_analysis_result = analyze_image(user_id, body_image)
