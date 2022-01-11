@@ -1,4 +1,4 @@
-from global_things.constants import slack_error_notification, IMAGE_ANALYSYS_SERVER
+from global_things.constants import IMAGE_ANALYSYS_SERVER, SLACK_NOTIFICATION_WEBHOOK
 from config.database import DB_CONFIG
 
 from flask import jsonify
@@ -25,7 +25,7 @@ def slack_error_notification(user_ip: str='', user_id: str='', nickname: str='',
     user_id = "Server error"
 
   send_notification_request = requests.post(
-    "https://hooks.slack.com/services/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?",
+    SLACK_NOTIFICATION_WEBHOOK,
     json.dumps({
       "channel": "#circlin-members-log",
       "username": "써클인 멤버스 - python",

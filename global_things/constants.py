@@ -2,6 +2,9 @@ APP_ROOT = "/home/ubuntu/circlinMembersApi_python/circlinMembersApi_flask"
 
 IMAGE_ANALYSYS_SERVER = "3.35.12.179"
 
+#Slack error notification
+SLACK_NOTIFICATION_WEBHOOK = "https://hooks.slack.com/services/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?"
+
 # region Bodylab criteria data
 ATTRACTIVENESS_SCORE_CRITERIA = {
   0: {
