@@ -22,7 +22,7 @@
           <form method="POST" enctype="multipart/form-data" action="/api/bodylab/add">
             <div class='form-group'>
               <label for='userid(숫자값)'>고객 아이디 번호</label>
-              <input type='text' class='form-control' id='userid' placeholder='사용자 아이디' name='userid'/>
+              <input type='text' class='form-control' id='user_id' placeholder='사용자 아이디' name='userid'/>
             </div>
             <div class='form-group'>
               <label for='username'>고객 키(cm)</label>
@@ -46,7 +46,7 @@
             </div>
             <div class='form-group'>
               <label for='re-password'>눈바디 이미지</label>
-              <input type="file" class='form-control' id="bodyimage" name="bodyimage" accept="image/*" />
+              <input type="text" class='form-control' id="body_image" name="body_image"/>
             </div>
             <button type="submit" class='btn btn-primary'>등록</button>
           </form>

@@ -1,3 +1,8 @@
+APP_ROOT = "/home/ubuntu/circlinMembersApi_python/circlinMembersApi_flask"
+
+IMAGE_ANALYSYS_SERVER = "3.35.12.179"
+
+# region Bodylab criteria data
 ATTRACTIVENESS_SCORE_CRITERIA = {
   0: {
     "sex": "man",
@@ -49,3 +54,4 @@ BODY_IMAGE_ANALYSIS_CRITERIA = {
     "lowerbody_height": 555.2415771484375
   }
 }
+# endregion

@@ -1,7 +1,12 @@
+from global_things.constants import IMAGE_ANALYSYS_SERVER
+from flask import jsonify
 import requests
 import json
 
-def slack_error_notification(user_ip: str='', user_id: str='', nickname: str='', api: str='', error_log: str='Cannot find error.'):
+def slack_error_notification(user_ip: str='', user_id: str='', nickname: str='', api: str='', error_log: str=''):
+  if user_ip == '' or user_id == '':
+    user_ip = "Server error"
+    user_id = "Server error"
   send_notification_request = requests.post(
     "https://hooks.slack.com/services/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?",
     json.dumps({
@@ -18,7 +23,7 @@ API URL: `{api}` \n \
 
   return send_notification_request
 
-
+# region Bodylab functions
 def standard_healthiness_score(type: str, age: int, sex: str, weight: float, height=0) -> float:
   if type == None or age == None or sex == None or weight == None:
     return 'Some parameter has None value.'
@@ -70,3 +75,22 @@ def standard_healthiness_score(type: str, age: int, sex: str, weight: float, hei
 
   else:
     return 'Out of category: score type'
+# endregion
+
+def analyze_image(user_id: int, url: str):
+  response = requests.post(
+    IMAGE_ANALYSYS_SERVER,
+    json.dumps({
+      "id": user_id,
+      "url": url
+    })
+  )
+
+  if response.status_code == 200:
+    return jsonify({'response':response.json(), 'status_code':200})
+  elif response.status_code == 400:
+    return jsonify({'error': response['message'], 'status_code': 400})
+  elif response.status_code == 500:
+    return jsonify({'error': response['message'], 'status_code': 400})
+
+
