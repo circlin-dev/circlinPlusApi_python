@@ -98,7 +98,7 @@ def standard_healthiness_score(type: str, age: int, sex: str, weight: float, hei
 
 def analyze_image(user_id: int, url: str):
   response = requests.post(
-    IMAGE_ANALYSYS_SERVER,
+    f"http://{IMAGE_ANALYSYS_SERVER}/",
     json.dumps({
       "id": user_id,
       "url": url
