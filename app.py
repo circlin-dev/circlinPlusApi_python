@@ -36,6 +36,6 @@ def bodylab_form():
 
 if __name__ == '__main__':
     try:
-        app.run(host='127.0.0.1', debug=True) #0.0.0.0 for production or 127.0.0.1 for local development
+        app.run(host='0.0.0.0', debug=True) #0.0.0.0 for production or 127.0.0.1 for local development
     except Exception as e:
         slack_error_notification(error_log=e)
