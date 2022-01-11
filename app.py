@@ -4,7 +4,6 @@ from global_things.constants import APP_ROOT
 from global_things.functions import slack_error_notification
 from flask import Flask, render_template
 from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
 import logging
 
 app = Flask(__name__)
@@ -23,8 +22,6 @@ app.register_blueprint(api, url_prefix="/api")
 app.config["SQLALCHEMY_DATABASE_URI"] = DB_URL
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True #Automatic commit for database.
-
-db = SQLAlchemy()
 
 @app.route('/testing')
 def hello_world():

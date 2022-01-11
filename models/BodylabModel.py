@@ -1,4 +1,4 @@
-from app import db
+from config.database import db
 
 class BodylabModel(db.Model):
   __tablename__ = "bodylab"

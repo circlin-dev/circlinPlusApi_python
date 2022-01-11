@@ -1,7 +1,5 @@
-from flask_sqlalchemy import SQLAlchemy
+from config.database import db
 from sqlalchemy import Column, String, BIGINT, FLOAT, text, ForeignKey, TIMESTAMP, VARCHAR
-
-db = SQLAlchemy()
 
 class BodylabImageModel(db.Model):
   __tablename__ = "bodylab_image"

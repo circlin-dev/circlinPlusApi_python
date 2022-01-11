@@ -1,4 +1,4 @@
-from app import db
+from config.database import db
 from global_things.functions import slack_error_notification, analyze_image
 from models import BodylabModel, BodylabImageModel
 from . import api
