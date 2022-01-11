@@ -64,7 +64,9 @@ def add_weekly_data():
     #Analyze user's image.
     image_analysis_result = analyze_image(user_id, body_image)
     image_analysis_result = json.loads(image_analysis_result)
-    if image_analysis_result['status_code'] == 200:
+    status_code = image_analysis_result['status_code']
+    if status_code == 200:
+      analyze_result = image_analysis_result['response']
       query = f'''
         INSERT INTO bodylab_image
                 (bodylab_id, 
@@ -81,25 +83,25 @@ def add_weekly_data():
                 upperbody_lowerbody)
         VALUES ({latest_bodylab_id},
                 {body_image},
-                {image_analysis_result.output_url},
-                {image_analysis_result.shoulder_ratio},
-                {image_analysis_result.hip_ratio},
-                {image_analysis_result.shoulder_width},
-                {image_analysis_result.hip_width},
-                {image_analysis_result.nose_to_shoulder_center},
-                {image_analysis_result.shoulder_center_to_hip_center},
-                {image_analysis_result.hip_center_to_ankle_center},
-                {image_analysis_result.whole_body_length},
-                {image_analysis_result.upperbody_lowerbody})
+                {analyze_result.output_url},
+                {analyze_result.shoulder_ratio},
+                {analyze_result.hip_ratio},
+                {analyze_result.shoulder_width},
+                {analyze_result.hip_width},
+                {analyze_result.nose_to_shoulder_center},
+                {analyze_result.shoulder_center_to_hip_center},
+                {analyze_result.hip_center_to_ankle_center},
+                {analyze_result.whole_body_length},
+                {analyze_result.upper_body_lower_body})
       '''
       cursor.execute(query)
       connection.commit()
       connection.close()
       return json.dumps({'success': 'Successfully processed request.'}, ensure_ascii=False), 201
-    elif image_analysis_result['status_code'] == 400:
+    elif status_code == 400:
       connection.close()
       return json.dumps({'error': image_analysis_result['error']}, ensure_ascii=False), 400
-    elif image_analysis_result['status_code'] == 500:
+    elif status_code == 500:
       connection.close()
       return json.dumps({'error': image_analysis_result['error']}, ensure_ascii=False), 500
 
