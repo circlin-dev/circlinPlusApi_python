@@ -94,14 +94,13 @@ def standard_healthiness_score(type: str, age: int, sex: str, weight: float, hei
     return 'Out of category: score type'
 # endregion
 
-def analyze_image(user_id: int, url: str):
+def analyze_image(user_id, url):
   response = requests.post(
     f"http://{IMAGE_ANALYSYS_SERVER}/",
-    json.dumps({
+    json = {
       "user_id": user_id,
       "url": url
-    }, ensure_ascii=False)
-  )
+    })
 
   if response.status_code == 200:
     return json.dumps({'response': json.loads(response), 'status_code':200}, ensure_ascii=False)
