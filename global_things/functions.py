@@ -100,7 +100,7 @@ def analyze_image(user_id: int, url: str):
   response = requests.post(
     f"http://{IMAGE_ANALYSYS_SERVER}/",
     json.dumps({
-      "id": user_id,
+      "user_id": user_id,
       "url": url
     })
   )
@@ -112,6 +112,6 @@ def analyze_image(user_id: int, url: str):
     return jsonify({'error': response.json()['message'], 'status_code': 400})
   elif response.status_code == 500:
     slack_error_notification(api='/api/bodylab/add', error_log=response.json()['message'])
-    return jsonify({'error': response.json()['message'], 'status_code': 400})
+    return jsonify({'error': response.json()['message'], 'status_code': 500})
 
 
