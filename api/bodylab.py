@@ -17,7 +17,7 @@ def add_weekly_data():
       body_image = request.form.get('body_image')
 
       if not(user_id and height and weight and bmi and muscle_mass and fat_mass and body_image):
-        return jsonify({'error': f'Missing data in request.'}), 400
+        return jsonify({'error': f'Missing data in request.', 'values': [user_id, height, weight, bmi, muscle_mass, fat_mass, body_image]}), 400
 
       bodylab_data = BodylabModel()
       bodylab_data.user_id = user_id
