@@ -81,12 +81,12 @@ def add_weekly_data():
                 %f, %f, \
                 %f, %f, \
                 %f, %f)"
-      values = (latest_bodylab_id, body_image, \
-                analyze_result['output_url'], analyze_result['shoulder_ratio'], \
-                analyze_result['hip_ratio'], analyze_result['shoulder_width'], \
-                analyze_result['hip_width'], analyze_result['nose_to_shoulder_center'], \
-                analyze_result['shoulder_center_to_hip_center'], analyze_result['hip_center_to_ankle_center'], \
-                analyze_result['whole_body_length'], analyze_result['upper_body_lower_body'])
+      values = (int(latest_bodylab_id), str(body_image), \
+                str(analyze_result['output_url']), float(analyze_result['shoulder_ratio']), \
+                float(analyze_result['hip_ratio']), float(analyze_result['shoulder_width']), \
+                float(analyze_result['hip_width']), float(analyze_result['nose_to_shoulder_center']), \
+                float(analyze_result['shoulder_center_to_hip_center']), float(analyze_result['hip_center_to_ankle_center']), \
+                float(analyze_result['whole_body_length']), float(analyze_result['upper_body_lower_body']))
       cursor.execute(query, values)
       connection.commit()
       connection.close()
