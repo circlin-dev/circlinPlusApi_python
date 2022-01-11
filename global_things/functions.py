@@ -1,7 +1,5 @@
 from global_things.constants import IMAGE_ANALYSYS_SERVER, SLACK_NOTIFICATION_WEBHOOK
 from config.database import DB_CONFIG
-
-from flask import jsonify
 import json
 import requests
 import pymysql
@@ -37,7 +35,7 @@ API URL: `{api}` \n \
 {query}```",
       "icon_url": "https://www.circlin.co.kr/new/assets/favicon/apple-icon-180x180.png"
     }
-  ))
+  ), ensure_ascii=False)
 
   return send_notification_request
 # endregion
@@ -102,16 +100,16 @@ def analyze_image(user_id: int, url: str):
     json.dumps({
       "user_id": user_id,
       "url": url
-    })
+    }, ensure_ascii=False)
   )
 
   if response.status_code == 200:
-    return jsonify({'response':response.json(), 'status_code':200})
+    return json.dumps({'response':response.json(), 'status_code':200}, ensure_ascii=False)
   elif response.status_code == 400:
     slack_error_notification(api='/api/bodylab/add', error_log=response.json()['message'])
-    return jsonify({'error': response.json()['message'], 'status_code': 400})
+    return json.dumps({'error': response.json()['message'], 'status_code': 400}, ensure_ascii=False)
   elif response.status_code == 500:
     slack_error_notification(api='/api/bodylab/add', error_log=response.json()['message'])
-    return jsonify({'error': response.json()['message'], 'status_code': 500})
+    return json.dumps({'error': response.json()['message'], 'status_code': 500}, ensure_ascii=False)
 
 

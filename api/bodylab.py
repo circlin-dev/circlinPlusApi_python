@@ -1,6 +1,7 @@
 from global_things.functions import slack_error_notification, analyze_image, login_to_db
 from . import api
-from flask import request, jsonify
+from flask import request
+import json
 
 @api.route('/bodylab/add', methods=['POST'])
 def add_weekly_data():
@@ -16,13 +17,13 @@ def add_weekly_data():
     body_image = request.form.get('body_image')
 
     if not(user_id and height and weight and bmi and muscle_mass and fat_mass and body_image):
-      return jsonify({'error': f'Missing data in request.', 'values': [user_id, height, weight, bmi, muscle_mass, fat_mass, body_image]}), 400
+      return json.dumps({'error': f'Missing data in request.', 'values': [user_id, height, weight, bmi, muscle_mass, fat_mass, body_image]}, ensure_ascii=False), 400
 
     try:
       connection = login_to_db()
     except Exception as e:
       slack_error_notification(user_ip=ip, user_id=user_id, api='/api/bodylab/add', error_log=e)
-      return jsonify({'error': f'Server Error while connecting to DB: {e}'}), 500
+      return json.dumps({'error': f'Server Error while connecting to DB: {e}'}, ensure_ascii=False), 500
 
     cursor = connection.cursor()
     query = f'''
@@ -45,7 +46,7 @@ def add_weekly_data():
     except Exception as e:
       connection.close()
       slack_error_notification(user_ip=ip, user_id=user_id, api='/api/bodylab/add', error_log=e, query=query)
-      return jsonify({'error': f'Server Error while executing INSERT query: {e}'}), 500
+      return json.dumps({'error': f'Server Error while executing INSERT query: {e}'}, ensure_ascii=False), 500
 
     #Get users's latest bodylab data = User's data inserted just before.
     query = f'''
@@ -93,16 +94,16 @@ def add_weekly_data():
       cursor.execute(query)
       connection.commit()
       connection.close()
-      return jsonify({'success': 'Successfully processed request.'}), 201
+      return json.dumps({'success': 'Successfully processed request.'}, ensure_ascii=False), 201
     elif image_analysis_result['status_code'] == 400:
       connection.close()
-      return jsonify({'error': image_analysis_result['error']}), 400
+      return json.dumps({'error': image_analysis_result['error']}, ensure_ascii=False), 400
     elif image_analysis_result['status_code'] == 500:
       connection.close()
-      return jsonify({'error': image_analysis_result['error']}), 500
+      return json.dumps({'error': image_analysis_result['error']}, ensure_ascii=False), 500
 
   else:
-    return jsonify({'error': 'Method Not Allowed.'}), 403
+    return json.dumps({'error': 'Method Not Allowed.'}, ensure_ascii=False), 403
 
 
 @api.route('/bodylab/weekly/<user_id>', methods=['GET'])
