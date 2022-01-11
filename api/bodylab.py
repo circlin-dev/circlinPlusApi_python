@@ -67,33 +67,27 @@ def add_weekly_data():
     status_code = image_analysis_result['status_code']
     if status_code == 200:
       analyze_result = image_analysis_result['result']
-      query = f"""
-        INSERT INTO bodylab_image
-                (bodylab_id, 
-                original_url, 
-                analyzed_url, 
-                shoulder_ratio, 
-                hip_ratio, 
-                shoulder_width,
-                hip_width,
-                nose_to_shoulder_center,
-                shoulder_center_to_hip_center,
-                hip_center_to_ankle_center,
-                whole_body_length,
-                upperbody_lowerbody)
-        VALUES ({latest_bodylab_id},
-                {body_image},
-                {analyze_result['output_url']},
-                {analyze_result['shoulder_ratio']},
-                {analyze_result['hip_ratio']},
-                {analyze_result['shoulder_width']},
-                {analyze_result['hip_width']},
-                {analyze_result['nose_to_shoulder_center']},
-                {analyze_result['shoulder_center_to_hip_center']},
-                {analyze_result['hip_center_to_ankle_center']},
-                {analyze_result['whole_body_length']},
-                {analyze_result['upper_body_lower_body']})"""
-      cursor.execute(query)
+      query = f" \
+        INSERT INTO bodylab_image \
+                (bodylab_id, original_url, \
+                analyzed_url, shoulder_ratio, \
+                hip_ratio, shoulder_width, \
+                hip_width, nose_to_shoulder_center, \
+                shoulder_center_to_hip_center, hip_center_to_ankle_center, \
+                whole_body_length, upperbody_lowerbody) \
+        VALUES (%d, %s, \
+                %s, %f, \
+                %f, %f, \
+                %f, %f, \
+                %f, %f, \
+                %f, %f)"
+      values = (latest_bodylab_id, body_image, \
+                analyze_result['output_url'], analyze_result['shoulder_ratio'], \
+                analyze_result['hip_ratio'], analyze_result['shoulder_width'], \
+                analyze_result['hip_width'], analyze_result['nose_to_shoulder_center'], \
+                analyze_result['shoulder_center_to_hip_center'], analyze_result['hip_center_to_ankle_center'], \
+                analyze_result['whole_body_length'], analyze_result['upper_body_lower_body'])
+      cursor.execute(query, values)
       connection.commit()
       connection.close()
       return json.dumps({'success': 'Successfully processed request.'}, ensure_ascii=False), 201
