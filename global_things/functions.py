@@ -110,19 +110,3 @@ def analyze_image(user_id, url):
   elif response.status_code == 500:
     slack_error_notification(api='/api/bodylab/add', error_log=response.json()['message'])
     return json.dumps({'error': response.json()['message'], 'status_code': 500}, ensure_ascii=False)
-
-
-query = f'''
-  INSERT INTO bodylab
-          (user_id, 
-          height, 
-          weight, 
-          bmi, 
-          muscle_mass, 
-          fat_mass)
-  VALUES ({user_id},
-          {height},
-          {weight},
-          {bmi},
-          {muscle_mass},
-          {fat_mass})'''
