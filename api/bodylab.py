@@ -66,7 +66,7 @@ def add_weekly_data():
     image_analysis_result = json.loads(image_analysis_result)
     status_code = image_analysis_result['status_code']
     if status_code == 200:
-      analyze_result = image_analysis_result['response']
+      analyze_result = json.loads(image_analysis_result['response'])
       query = f'''
         INSERT INTO bodylab_image
                 (bodylab_id, 
