@@ -1,7 +1,6 @@
-from flask import Flask, request, jsonify, current_app
+from flask import Flask, render_template
 from flask_cors import CORS
 from api import api
-from flask.json import JSONEncoder
 from sqlalchemy import create_engine, text
 from global_things.functions import slack_error_notification
 import logging
@@ -29,6 +28,9 @@ except Exception as e:
 def hello_world():
     return 'Hello World!'
 
+@app.route('/bodylab_form')
+def bodylab_form():
+    return render_template('bodylab_form.html')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='127.0.0.1', debug=True)

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1, shrint-to-fit=no' />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class='container'>
+      <div class='row mt-5'>
+        <h1>바디랩 상담값 입력</h1>
+      </div>
+      <div class='row mt-5'>
+        <div class='col-12'>
+          <form method="POST" enctype="multipart/form-data" action="/api/bodylab/add">
+            <div class='form-group'>
+              <label for='userid(숫자값)'>고객 아이디 번호</label>
+              <input type='text' class='form-control' id='userid' placeholder='사용자 아이디' name='userid'/>
+            </div>
+            <div class='form-group'>
+              <label for='username'>고객 키(cm)</label>
+              <input type='text' class='form-control' id='height' placeholder='키(cm)' name='height'/>
+            </div>
+            <div class='form-group'>
+              <label for='password'>고객 체중(kg)</label>
+              <input type='text' class='form-control' id='weight' placeholder='체중(kg)' name='weight'/>
+            </div>
+            <div class='form-group'>
+              <label for='re-password'>고객 BMI 지수</label>
+              <input type='text' class='form-control' id='bmi' placeholder='BMI' name='bmi'/>
+            </div>
+            <div class='form-group'>
+              <label for='re-password'>고객 근육량</label>
+              <input type='text' class='form-control' id='muscle_mass' placeholder='근육량' name='muscle_mass'/>
+            </div>
+            <div class='form-group'>
+              <label for='re-password'>고객 체지방량</label>
+              <input type='text' class='form-control' id='fat_mass' placeholder='체지방량' name='fat_mass'/>
+            </div>
+            <div class='form-group'>
+              <label for='re-password'>눈바디 이미지</label>
+              <input type="file" class='form-control' id="bodyimage" name="bodyimage" accept="image/*" />
+            </div>
+            <button type="submit" class='btn btn-primary'>등록</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
+</body>
+</html>
