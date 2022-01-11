@@ -103,12 +103,12 @@ def analyze_image(user_id, url):
     })
 
   if response.status_code == 200:
-    return json.dumps({'response': json.loads(response), 'status_code':200}, ensure_ascii=False)
+    return json.dumps({'response': response.json(), 'status_code':200}, ensure_ascii=False)
   elif response.status_code == 400:
-    slack_error_notification(api='/api/bodylab/add', error_log=json.loads(response['message']))
-    return json.dumps({'error': json.loads(response['message']), 'status_code': 400}, ensure_ascii=False)
+    slack_error_notification(api='/api/bodylab/add', error_log=response.json()['message'])
+    return json.dumps({'error': response.json()['message'], 'status_code': 400}, ensure_ascii=False)
   elif response.status_code == 500:
-    slack_error_notification(api='/api/bodylab/add', error_log=json.loads(response['message']))
-    return json.dumps({'error': json.loads(response['message']), 'status_code': 500}, ensure_ascii=False)
+    slack_error_notification(api='/api/bodylab/add', error_log=response.json()['message'])
+    return json.dumps({'error': response.json()['message'], 'status_code': 500}, ensure_ascii=False)
 
 
