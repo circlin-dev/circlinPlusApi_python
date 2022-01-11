@@ -1,12 +1,29 @@
-from global_things.constants import IMAGE_ANALYSYS_SERVER
-from flask import jsonify
-import requests
-import json
+from global_things.constants import slack_error_notification, IMAGE_ANALYSYS_SERVER
+from config.database import DB_CONFIG
 
-def slack_error_notification(user_ip: str='', user_id: str='', nickname: str='', api: str='', error_log: str=''):
+from flask import jsonify
+import json
+import requests
+import pymysql
+
+# region Connection to database.
+def login_to_db():
+  conn = pymysql.connect(
+    user=DB_CONFIG['user'],
+    passwd=DB_CONFIG['password'],
+    host=DB_CONFIG['host'],
+    db=DB_CONFIG['database'],
+    charset=DB_CONFIG['charset'])
+
+  return conn
+# endregion
+
+# region Slack error notification
+def slack_error_notification(user_ip: str='', user_id: str='', nickname: str='', api: str='', error_log: str='', query: str=''):
   if user_ip == '' or user_id == '':
     user_ip = "Server error"
     user_id = "Server error"
+
   send_notification_request = requests.post(
     "https://hooks.slack.com/services/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?",
     json.dumps({
@@ -16,12 +33,14 @@ def slack_error_notification(user_ip: str='', user_id: str='', nickname: str='',
 사용자 IP: `{user_ip}` \n \
 닉네임 (ID): `{nickname}({user_id})`\n \
 API URL: `{api}` \n \
-```{error_log}```",
+```{error_log} \n \
+{query}```",
       "icon_url": "https://www.circlin.co.kr/new/assets/favicon/apple-icon-180x180.png"
     }
   ))
 
   return send_notification_request
+# endregion
 
 # region Bodylab functions
 def standard_healthiness_score(type: str, age: int, sex: str, weight: float, height=0) -> float:
@@ -89,8 +108,10 @@ def analyze_image(user_id: int, url: str):
   if response.status_code == 200:
     return jsonify({'response':response.json(), 'status_code':200})
   elif response.status_code == 400:
+    slack_error_notification(api='/api/bodylab/add', error_log=response['message'])
     return jsonify({'error': response['message'], 'status_code': 400})
   elif response.status_code == 500:
+    slack_error_notification(api='/api/bodylab/add', error_log=response['message'])
     return jsonify({'error': response['message'], 'status_code': 400})
 
 
