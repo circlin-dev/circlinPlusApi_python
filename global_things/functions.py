@@ -199,10 +199,10 @@ def get_date_range_from_week(year: str, week_number: str):
 
     firstdate_of_week = datetime.datetime.strptime(f'{year}-W{int(corrected_week_number)-1}-1', "%Y-W%W-%w").date()
     lastdate_of_week = firstdate_of_week + datetime.timedelta(days=6.9)
-    return int(year), int(corrected_week_number), firstdate_of_week.strftime('%Y-%m-%d'), lastdate_of_week.strftime('%Y-%m-%d')
+    return str(firstdate_of_week), str(lastdate_of_week)
   elif year in ['2025', '2026', '2030', '2031', '2032', '2036']:
     firstdate_of_week = datetime.datetime.strptime(f'{year}-W{int(week_number)-1}-1', "%Y-W%W-%w").date()
     lastdate_of_week = firstdate_of_week + datetime.timedelta(days=6.9)
-    return int(year), int(week_number), firstdate_of_week.strftime('%Y-%m-%d'), lastdate_of_week.strftime('%Y-%m-%d')
+    return str(firstdate_of_week), str(lastdate_of_week)
 
 # endregion

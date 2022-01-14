@@ -35,7 +35,9 @@ def add_weekly_data():
       }
       return json.dumps(result, ensure_ascii=False), 400
 
-    year, week_number_of_year, firstdate_of_week, lastdate_of_week = get_date_range_from_week(period.split('-W')[0], period.split('-W')[1])
+    year = period.split('-W')[0]
+    week_number_of_year = period.split('-W')[1]
+    firstdate_of_week, lastdate_of_week = get_date_range_from_week(year, week_number_of_year)
 
     try:
       connection = login_to_db()
@@ -63,8 +65,8 @@ def add_weekly_data():
                     fat_mass)
                 VALUES (
                     {user_id},
-                    {year},
-                    {week_number_of_year},
+                    {int(year)},
+                    {int(week_number_of_year)},
                     {firstdate_of_week},
                     {lastdate_of_week},         
                     {height},
