@@ -61,7 +61,6 @@ def add_weekly_data():
                         %s, %s, \
                         %s, %s, \
                         %s, %s, \
-                        %s, %s, \
                         %s, %s)"
     values = (user_id, int(year),
               int(week_number_of_year), firstdate_of_week,
