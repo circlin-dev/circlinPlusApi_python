@@ -51,31 +51,25 @@ def add_weekly_data():
       return json.dumps(result, ensure_ascii=False), 500
 
     cursor = connection.cursor()
-    query = f'''
-                INSERT INTO bodylab(
-                    user_id,
-                    year,
-                    week_number_of_year,
-                    firstdate_of_week,
-                    lastdate_of_week,
-                    height,
-                    weight,
-                    bmi,
-                    muscle_mass,
-                    fat_mass)
-                VALUES (
-                    {user_id},
-                    {int(year)},
-                    {int(week_number_of_year)},
-                    {firstdate_of_week},
-                    {lastdate_of_week},         
-                    {height},
-                    {weight},
-                    {bmi},
-                    {muscle_mass},
-                    {fat_mass})'''
+    query = f"INSERT INTO bodylab( \
+                          user_id, year, \
+                          week_number_of_year, firstdate_of_week, \
+                          lastdate_of_week, height,\
+                          weight, bmi, \
+                          muscle_mass, fat_mass) \
+                  VALUES(%s, %s, \
+                        %s, %s, \
+                        %s, %s, \
+                        %s, %s, \
+                        %s, %s, \
+                        %s, %s)"
+    values = (user_id, int(year),
+              int(week_number_of_year), firstdate_of_week,
+              lastdate_of_week, height,
+              weight, bmi,
+              muscle_mass, fat_mass)
     try:
-      cursor.execute(query)
+      cursor.execute(query, values)
       connection.commit()
     except Exception as e:
       connection.close()
