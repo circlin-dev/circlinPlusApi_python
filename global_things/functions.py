@@ -39,7 +39,7 @@ API URL: `{api}` \n \
 ```{error_log} \n \
 {query}```",
       "icon_url": "https://www.circlin.co.kr/new/assets/favicon/apple-icon-180x180.png"
-    }, ensure_ascii=False)
+    }, ensure_ascii=False).encode('utf-8')
   )
 
   return send_notification_request
