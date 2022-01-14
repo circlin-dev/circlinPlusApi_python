@@ -82,20 +82,13 @@ def add_weekly_data():
     except Exception as e:
       connection.close()
       error = str(e)
-      result = {
-        'result': False,
-        'error': f'Server error while searching latest bodylab data from database(bodylab): {error}'
-      }
-      slack_error_notification(user_ip=ip, user_id=user_id, api=api, error_log=result['error'], query=query)
-      return json.dumps(result, ensure_ascii=False), 500
-
-    if len(latest_bodylab_id_tuple) == 0 or latest_bodylab_id == '' or latest_bodylab_id is None:
-      result = {
-        'result': False,
-        'error': f'Cannot find requested bodylab data of user(bodylab): {user_id}'
-      }
-      slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
-      return json.dumps(result, ensure_ascii=False), 400
+      if len(latest_bodylab_id_tuple) == 0 or latest_bodylab_id_tuple == ():
+        result = {
+          'result': False,
+          'error': f'Cannot find requested bodylab data of user(id: {user_id})(bodylab): {error}'
+        }
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+        return json.dumps(result, ensure_ascii=False), 400
 
     # Analyze user's image and store the result.
     image_analysis_result = analyze_image(user_id, body_image)
