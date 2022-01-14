@@ -9,13 +9,15 @@ import logging
 app = Flask(__name__)
 CORS(app)
 
-#For nginx log
-logging.basicConfig(filename=f'{APP_ROOT}/execution_log.log', filemode='a+', format=' [%(filename)s:%(lineno)s:%(funcName)s()]- %(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
+#   For nginx log
+logging.basicConfig(filename=f'{APP_ROOT}/execution_log.log', filemode='a+',
+                    format=' [%(filename)s:%(lineno)s:%(funcName)s()]- %(asctime)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
 gunicorn_logger = logging.getLogger('gunicorn.error')
 app.logger.handlers = gunicorn_logger.handlers
 app.logger.setLevel(gunicorn_logger.level)
 
-#For Blueprint api activation.
+#   For Blueprint api activation.
 app.register_blueprint(api, url_prefix="/api")
 
 
@@ -23,12 +25,15 @@ app.register_blueprint(api, url_prefix="/api")
 def hello_world():
     return 'Hello World!'
 
+
 @app.route('/bodylab_form')
 def bodylab_form():
     return render_template('bodylab_form.html')
 
+
 if __name__ == '__main__':
     try:
-        app.run(host='0.0.0.0', debug=True) #0.0.0.0 for production or 127.0.0.1 for local development
+        app.run(host='0.0.0.0', debug=True)  # 0.0.0.0 for production or 127.0.0.1 for local development
     except Exception as e:
-        slack_error_notification(error_log=e)
+        error = str(e)
+        slack_error_notification(error_log=error)

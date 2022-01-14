@@ -10,6 +10,8 @@ ATTRACTIVENESS_SCORE_CRITERIA = {
   0: {
     "sex": "man",
     "preferred_by": "man",
+    'weight': 0,
+    'height': 0,
     "bmi": 00.00,
     "muscle_mass": 00.00,
     "fat_mass": 00.00,
@@ -17,6 +19,8 @@ ATTRACTIVENESS_SCORE_CRITERIA = {
   1: {
     "sex": "man",
     "preferred_by": "woman",
+    'weight': 0,
+    'height': 0,
     "bmi": 00.00,
     "muscle_mass": 00.00,
     "fat_mass": 00.00,
@@ -24,6 +28,8 @@ ATTRACTIVENESS_SCORE_CRITERIA = {
   2: {
     "sex": "woman",
     "preferred_by": "man",
+    'weight': 0,
+    'height': 0,
     "bmi": 00.00,
     "muscle_mass": 00.00,
     "fat_mass": 00.00,
@@ -31,6 +37,8 @@ ATTRACTIVENESS_SCORE_CRITERIA = {
   3: {
     "sex": "woman",
     "preferred_by": "woman",
+    'weight': 0,
+    'height': 0,
     "bmi": 00.00,
     "muscle_mass": 00.00,
     "fat_mass": 00.00,
