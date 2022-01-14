@@ -144,7 +144,7 @@ def add_weekly_data():
         return json.dumps(result, ensure_ascii=False), 400
 
       connection.close()
-      result = {'result': True}
+      result = {'result': True, 'value': [firstdate_of_week, lastdate_of_week]}
       return json.dumps(result, ensure_ascii=False), 201
     elif status_code == 400:
       connection.close()
