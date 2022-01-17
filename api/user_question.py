@@ -19,26 +19,6 @@ def add_user_question():
   schedule = parameters['schedule']  # array with index(int)
   disease = parameters['disease']  # array with index(int) & short sentence for index 7(string)
   disease_detail = parameters['disease_detail']
-  #disease_detail = None
-
-  # result = {
-  #   'user_id': [user_id, str(type(user_id))],
-  #   'purpose': [purpose, str(type(purpose))],
-  #   'sports': [sports, str(type(sports))],
-  #   'sex': [sex, str(type(sex))],
-  #   'age_group': [age_group, str(type(age_group))],
-  #   'experience_group': [experience_group, str(type(experience_group))],
-  #   'schedule': [schedule, str(type(schedule))],
-  #   'disease': [disease, str(type(disease))],
-  #   'disease_detail': [disease_detail, str(type(disease_detail))],
-  # }
-  # return json.dumps(result, ensure_ascii=False), 200
-
-  # if type(disease[-1]) == str:
-  #   disease_detail = disease[-1]
-  #   del disease[-1]
-  # else:
-  #   pass
 
   # Verify if mandatory information is not null.
   if request.method == 'POST':
@@ -160,7 +140,7 @@ def read_user_question(user_id):
     return json.dumps(result, ensure_ascii=False), 400
   else:
     connection.close()
-    latest_answers['type'] = str(type(latest_answers))
+    #latest_answers['type'] = str(type(latest_answers))
     return json.dumps(latest_answers, ensure_ascii=False), 201
     # result = {
     #   'result': True,
