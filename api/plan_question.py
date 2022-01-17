@@ -83,7 +83,7 @@ def add_plan_question():
     pass
 
   # query = 'INSERT INTO user_plan_questions (user_id, data) VALUES(%s, %s)'
-  query_value = f"'purpose': {purpose}, 'sports': {sports}, 'sex': {sex}, 'age_group': {age_group}, 'experience_group': {experience_group}, 'schedule': {schedule}, 'disease', {disease}, 'disease_detail', {disease_detail}"
+  query_value = f'"purpose": {purpose}, "sports": {sports}, "sex": {sex}, "age_group": {age_group}, "experience_group": {experience_group}, "schedule": {schedule}, "disease", {disease}, "disease_detail", {disease_detail}'
   query_value = "{" + query_value + "}"
   json_data = escape_string(query_value)
   # "purpose", {str(purpose)}
