@@ -34,6 +34,7 @@ def add_plan_question():
 
   if type(disease[-1]) == str:
     disease_detail = disease[-1]
+    del disease[-1]
   else:
     pass
 
@@ -82,20 +83,32 @@ def add_plan_question():
 
   query = f" \
     INSERT INTO user_plan_questions \
-              (user_id, json_object(purpose), \
-              json_object(sports), sex, \
-              age_group, experience_group, \
-              json_object(schedule), json_object(disease), \
+              (user_id, \
+              purpose, \
+              sports, \
+              sex, \
+              age_group, \
+              experience_group, \
+              schedule, \
+              disease, \
               disease_detail) \
-    VALUES(%s, %s, \
-          %s, %s, \
-          %s, %s, \
-          %s, %s, \
+    VALUES(%s, \
+          json_object('value', JSON_ARRAY(%s)), \
+          json_object('value', JSON_ARRAY(%s)), \
+          %s, \
+          %s, \
+          %s, \
+          json_object('value', JSON_ARRAY(%s)), \
+          json_object('value', JSON_ARRAY(%s)), \
           %s)"
-  values = (user_id, purpose,
-            sports, sex,
-            age_group, experience_group,
-            schedule, disease,
+  values = (user_id,
+            tuple(purpose),
+            tuple(sports),
+            sex,
+            age_group,
+            experience_group,
+            tuple(schedule),
+            tuple(disease),
             disease_detail)
 
   try:
