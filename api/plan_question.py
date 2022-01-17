@@ -81,17 +81,17 @@ def add_plan_question():
     pass
 
   query = f" \
-    INSERT INTO user_plan_question  \
-              (user_id, purpose, \
-              sports, sex, \
+    INSERT INTO user_plan_questions \
+              (user_id, json_object(purpose), \
+              json_object(sports), sex, \
               age_group, experience_group, \
-              schedule, disease, \
+              json_object(schedule), json_object(disease), \
               disease_detail) \
-        VALUES(%s, %s, \
-              %s, %s, \
-              %s, %s, \
-              %s, %s, \
-              %s)"
+    VALUES(%s, %s, \
+          %s, %s, \
+          %s, %s, \
+          %s, %s, \
+          %s)"
   values = (user_id, purpose,
             sports, sex,
             age_group, experience_group,
@@ -106,7 +106,7 @@ def add_plan_question():
     error = str(e)
     result = {
       'result': False,
-      'error': f'Server Error while executing INSERT query(user_plan_question): {error}'
+      'error': f'Server Error while executing INSERT query(user_plan_questions): {error}'
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
     return json.dumps(result, ensure_ascii=False), 500
@@ -156,7 +156,7 @@ def read_plan_question(user_id):
            schedule, disease,
            disease_detail
        FROM
-           user_plan_question
+           user_plan_questions
        WHERE
            user_id={user_id}
        ORDER BY id DESC LIMIT 1'''
@@ -167,7 +167,7 @@ def read_plan_question(user_id):
     connection.close()
     result = {
       'result': False,
-      'error': f'Cannot find requested answer data of user(id: {user_id})(user_plan_question)'
+      'error': f'Cannot find requested answer data of user(id: {user_id})(users)'
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
     return json.dumps(result, ensure_ascii=False), 400
