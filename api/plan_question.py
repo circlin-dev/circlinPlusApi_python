@@ -2,6 +2,7 @@ from global_things.functions import slack_error_notification, login_to_db, check
 from . import api
 from flask import request
 import json
+import pymysql
 
 @api.route('/plan-question/add', methods=['POST'])
 def add_plan_question():
@@ -81,9 +82,14 @@ def add_plan_question():
   elif is_valid_user['result'] == True:
     pass
 
-  query = 'INSERT INTO user_plan_questions (user_id, data) VALUES(%s, json_object(%s)'
-  query_value = f'"purpose", {str(purpose)}, "sports", {str(sports)}, "sex", {sex}, "age_group", {age_group}, "experience_group", {experience_group}, "schedule", {str(schedule)}, "disease", {str(disease)}, "disease_detail", {disease_detail}'
-  values = (user_id, query_value)
+  query = 'INSERT INTO user_plan_questions (user_id, data) VALUES(%s, %s)'
+  query_value = f"{'purpose': {purpose}, 'sports': {sports}, 'sex': {sex}, 'age_group': {age_group}, 'experience_group': {experience_group}, 'schedule': {schedule}, 'disease', {disease}, 'disease_detail', {disease_detail}}"
+  json_data = pymysql.escape_string(query_value)
+  #"purpose", {str(purpose)}
+  # "sports", {str(sports)}
+  # "sex", {sex}
+  # "age_group", {age_group}, "experience_group", {experience_group}, "schedule", {str(schedule)}, "disease", {str(disease)}, "disease_detail", {disease_detail}'
+  values = (user_id, json_data)
 
   try:
     cursor.execute(query, values)
