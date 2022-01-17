@@ -18,7 +18,7 @@ def add_plan_question():
   disease = request.form.get('disease')  # array with index(int) & short sentence for index 7(string)
   disease_detail = None
 
-  if type(request.form.get('disease')[-1]) == str:
+  if type(disease[-1]) == str:
     disease_detail = request.form.get('disease')
   else:
     pass
