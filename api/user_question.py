@@ -4,8 +4,8 @@ from flask import request
 import json
 from pymysql.converters import escape_string
 
-@api.route('/plan-question/add', methods=['POST'])
-def add_plan_question():
+@api.route('/user-question/add', methods=['POST'])
+def add_user_question():
   ip = request.remote_addr
   endpoint = '/api/plan-question/add'
   parameters = json.loads(request.get_data(), encoding='utf-8')
@@ -82,21 +82,13 @@ def add_plan_question():
   elif is_valid_user['result'] == True:
     pass
 
-  # query = 'INSERT INTO user_plan_questions (user_id, data) VALUES(%s, %s)'
+  # Formatting json to INSERT into mysql database.
   query_value = f'"purpose": {purpose}, "sports": {sports}, "sex": "{sex}", "age_group": {age_group}, "experience_group": {experience_group}, "schedule": {schedule}, "disease": {disease}, "disease_detail": "{disease_detail}"'
   query_value = "{" + query_value + "}"
   json_data = escape_string(query_value)
-  # "purpose", {str(purpose)}
-  # "sports", {str(sports)}
-  # "sex", {sex}
-  # "age_group", {age_group}, "experience_group", {experience_group}, "schedule", {str(schedule)},
-  # "disease", {str(disease)}, "disease_detail", {disease_detail}'
-  # values = (user_id, json_data)
-
-  query = f"INSERT INTO user_plan_questions (user_id, data) VALUES({user_id}, '" + json_data + "')"
+  query = f"INSERT INTO user_questions (user_id, data) VALUES({user_id}, '" + json_data + "')"
 
   try:
-    # cursor.execute(query, values)
     cursor.execute(query)
     connection.commit()
   except Exception as e:
@@ -104,7 +96,7 @@ def add_plan_question():
     error = str(e)
     result = {
       'result': False,
-      'error': f'Server Error while executing INSERT query(user_plan_questions): {error}'
+      'error': f'Server Error while executing INSERT query(user_questions): {error}'
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
     return json.dumps(result, ensure_ascii=False), 500
@@ -114,8 +106,8 @@ def add_plan_question():
   return json.dumps(result, ensure_ascii=False), 201
 
 
-@api.route('/plan-question/read/<user_id>', methods=['GET'])
-def read_plan_question(user_id):
+@api.route('/user-question/read/<user_id>', methods=['GET'])
+def read_user_question(user_id):
   ip = request.remote_addr
   endpoint = '/plan-question/read/<user_id>'
 
@@ -148,13 +140,9 @@ def read_plan_question(user_id):
   # Get users latest bodylab data = User's data inserted just before.
   query = f'''
      SELECT 
-           purpose, sports,
-           sex, age_group,
-           experience_group,
-           schedule, disease,
-           disease_detail
+           data
        FROM
-           user_plan_questions
+           user_questions
        WHERE
            user_id={user_id}
        ORDER BY id DESC LIMIT 1'''
@@ -171,15 +159,17 @@ def read_plan_question(user_id):
     return json.dumps(result, ensure_ascii=False), 400
   else:
     connection.close()
-    result = {
-      'result': True,
-      'purpose': latest_answers[0][0],
-      'sports': latest_answers[0][1],
-      'sex': latest_answers[0][2],
-      'age_group': latest_answers[0][3],
-      'experience_group': latest_answers[0][4],
-      'schedule': latest_answers[0][5],
-      'disease': latest_answers[0][6],
-      'disease_detail': latest_answers[0][7],
-    }
-    return json.dumps(result, ensure_ascii=False), 201
+    latest_answers['type'] = str(type(latest_answers))
+    return json.dumps(latest_answers, ensure_ascii=False), 201
+    # result = {
+    #   'result': True,
+    #   'purpose': latest_answers[0][0],
+    #   'sports': latest_answers[0][1],
+    #   'sex': latest_answers[0][2],
+    #   'age_group': latest_answers[0][3],
+    #   'experience_group': latest_answers[0][4],
+    #   'schedule': latest_answers[0][5],
+    #   'disease': latest_answers[0][6],
+    #   'disease_detail': latest_answers[0][7],
+    # }
+    # return json.dumps(result, ensure_ascii=False), 201
