@@ -7,7 +7,7 @@ import json
 def add_plan_question():
   ip = request.remote_addr
   endpoint = '/api/plan-question/add'
-  parameters = json.loads(request.get_data(), encodings='utf-8')
+  parameters = json.loads(request.get_data(), encoding='utf-8')
 
   user_id = parameters['user_id']
   purpose = parameters['purpose']  # array
