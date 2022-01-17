@@ -140,17 +140,6 @@ def read_user_question(user_id):
     return json.dumps(result, ensure_ascii=False), 400
   else:
     connection.close()
-    #latest_answers['type'] = str(type(latest_answers))
+    latest_answers = json.loads(latest_answers[0][0].replace("\\", "\\\\"), strict=False) # To prevent decoding error.
     return json.dumps(latest_answers, ensure_ascii=False), 201
-    # result = {
-    #   'result': True,
-    #   'purpose': latest_answers[0][0],
-    #   'sports': latest_answers[0][1],
-    #   'sex': latest_answers[0][2],
-    #   'age_group': latest_answers[0][3],
-    #   'experience_group': latest_answers[0][4],
-    #   'schedule': latest_answers[0][5],
-    #   'disease': latest_answers[0][6],
-    #   'disease_detail': latest_answers[0][7],
-    # }
-    # return json.dumps(result, ensure_ascii=False), 201
+
