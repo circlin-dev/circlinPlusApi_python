@@ -81,7 +81,7 @@ def add_plan_question():
   elif is_valid_user['result'] == True:
     pass
 
-  query = f'INSERT INTO user_plan_questions (user_id, data) VALUES(%s, json_object("purpose", JSON_ARRAY(%s), "sports", JSON_ARRAY(%s), "sex", %s, "age_group", %s, "experience_group", %s, "schedule", JSON_ARRAY(%s), "disease", JSON_ARRAY(%s), "disease_detail", %s)'
+  query = f'INSERT INTO user_plan_questions (user_id, data) VALUES(%s, json_object("purpose", %s, "sports", %s, "sex", %s, "age_group", %s, "experience_group", %s, "schedule", %s, "disease", %s, "disease_detail", %s)'
   values = (user_id,
             str(purpose),
             str(sports),
