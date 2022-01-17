@@ -7,15 +7,16 @@ import json
 def add_plan_question():
   ip = request.remote_addr
   endpoint = '/api/plan-question/add'
+  parameters = json.loads(request.get_data(), encodings='utf-8')
 
-  user_id = request.form.get('user_id')
-  purpose = request.form.get('purpose')  # array
-  sports = request.form.get('sports')  # array
-  sex = request.form.get('sex')  # string
-  age_group = request.form.get('age_group')  # string
-  experience_group = request.form.get('experience_group')  # string
-  schedule = request.form.get('schedule')  # array with index(int)
-  disease = request.form.get('disease')  # array with index(int) & short sentence for index 7(string)
+  user_id = parameters['user_id']
+  purpose = parameters['purpose']  # array
+  sports = parameters['sports']  # array
+  sex = parameters['sex']  # string
+  age_group = parameters['age_group']  # string
+  experience_group = parameters['experience_group']  # string
+  schedule = parameters['schedule']  # array with index(int)
+  disease = parameters['disease']  # array with index(int) & short sentence for index 7(string)
   disease_detail = None
 
   result = {
