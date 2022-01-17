@@ -83,13 +83,13 @@ def add_plan_question():
 
   query = f'INSERT INTO user_plan_questions (user_id, data) VALUES(%s, json_object("purpose", JSON_ARRAY(%s), "sports", JSON_ARRAY(%s), "sex", %s, "age_group", %s, "experience_group", %s, "schedule", JSON_ARRAY(%s), "disease", JSON_ARRAY(%s), "disease_detail", %s)'
   values = (user_id,
-            tuple(purpose),
-            tuple(sports),
+            str(purpose),
+            str(sports),
             sex,
             age_group,
             experience_group,
-            tuple(schedule),
-            tuple(disease),
+            str(schedule),
+            str(disease),
             disease_detail)
 
   try:
