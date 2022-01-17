@@ -118,3 +118,74 @@ def add_plan_question():
   connection.close()
   result = {'result': True}
   return json.dumps(result, ensure_ascii=False), 201
+
+
+@api.route('/plan-question/read/<user_id>', methods=['GET'])
+def read_plan_question(user_id):
+  ip = request.remote_addr
+  endpoint = '/plan-question/read/<user_id>'
+
+  try:
+    connection = login_to_db()
+  except Exception as e:
+    error = str(e)
+    result = {
+      'result': False,
+      'error': f'Server Error while connecting to DB: {error}'
+    }
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+    return json.dumps(result, ensure_ascii=False), 500
+
+  cursor = connection.cursor()
+
+  # Verify user is valid or not.
+  is_valid_user = check_user(cursor, user_id)
+  if is_valid_user['result'] == False:
+    connection.close()
+    result = {
+      'result': False,
+      'error': f"Cannot find user {user_id}: No such user."
+    }
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+    return json.dumps(result, ensure_ascii=False), 500
+  elif is_valid_user['result'] == True:
+    pass
+
+  # Get users latest bodylab data = User's data inserted just before.
+  query = f'''
+     SELECT 
+           purpose, sports,
+           sex, age_group,
+           experience_group,
+           schedule, disease,
+           disease_detail
+       FROM
+           user_plan_question
+       WHERE
+           user_id={user_id}
+       ORDER BY id DESC LIMIT 1'''
+
+  cursor.execute(query)
+  latest_answers = cursor.fetchall()
+  if len(latest_answers) == 0 or latest_answers == ():
+    connection.close()
+    result = {
+      'result': False,
+      'error': f'Cannot find requested answer data of user(id: {user_id})(user_plan_question)'
+    }
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+    return json.dumps(result, ensure_ascii=False), 400
+  else:
+    connection.close()
+    result = {
+      'result': True,
+      'purpose': latest_answers[0][0],
+      'sports': latest_answers[0][1],
+      'sex': latest_answers[0][2],
+      'age_group': latest_answers[0][3],
+      'experience_group': latest_answers[0][4],
+      'schedule': latest_answers[0][5],
+      'disease': latest_answers[0][6],
+      'disease_detail': latest_answers[0][7],
+    }
+    return json.dumps(result, ensure_ascii=False), 201
