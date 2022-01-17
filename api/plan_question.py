@@ -86,7 +86,7 @@ def add_plan_question():
                 user_plan_question( \
                 user_id, purpose, \
                 sports, sex, \
-                age_group, exprience_group, \
+                age_group, experience_group, \
                 schedule, disease) \
           VALUES(%s, %s, \
                 %s, %s, \
@@ -102,7 +102,7 @@ def add_plan_question():
                 user_plan_question( \
                 user_id, purpose, \
                 sports, sex, \
-                age_group, exprience_group, \
+                age_group, experience_group, \
                 schedule, disease, \
                 disease_detail) \
           VALUES(%s, %s, \
