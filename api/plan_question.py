@@ -19,15 +19,15 @@ def add_plan_question():
   disease_detail = None
 
   result = {
-    'user_id': [user_id, type(user_id)],
-    'purpose': [purpose, type(purpose)],
-    'sports': [sports, type(sports)],
-    'sex': [sex, type(sex)],
-    'age_group': [age_group, type(age_group)],
-    'experience_group': [experience_group, type(experience_group)],
-    'schedule': [schedule, type(schedule)],
-    'disease': [disease, type(disease)],
-    'disease_detail': [disease_detail, type(disease_detail)],
+    'user_id': [user_id, str(type(user_id))],
+    'purpose': [purpose, str(type(purpose))],
+    'sports': [sports, str(type(sports))],
+    'sex': [sex, str(type(sex))],
+    'age_group': [age_group, str(type(age_group))],
+    'experience_group': [experience_group, str(type(experience_group))],
+    'schedule': [schedule, str(type(schedule))],
+    'disease': [disease, str(type(disease))],
+    'disease_detail': [disease_detail, str(type(disease_detail))],
   }
   return json.dumps(result, ensure_ascii=False), 200
 
