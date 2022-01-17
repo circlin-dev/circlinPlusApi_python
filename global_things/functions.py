@@ -6,7 +6,8 @@ import requests
 import pymysql
 
 
-# region Connection to database.
+# region General
+# Connection to database.
 def login_to_db():
   conn = pymysql.connect(
     user=DB_CONFIG['user'],
@@ -17,10 +18,7 @@ def login_to_db():
 
   return conn
 
-# endregion
-
-
-# region user verification by exploring user table.
+# User verification by exploring user table.
 def check_user(cursor, user_id):
   query = f"SELECT * FROM users WHERE id={user_id}"
   cursor.execute(query)
@@ -32,10 +30,7 @@ def check_user(cursor, user_id):
     result = {'result': True}
     return result
 
-# endregion
-
-
-# region Slack error notification
+# Slack error notification
 def slack_error_notification(user_ip: str = '', user_id: str = '', nickname: str = '', api: str = '',
                              error_log: str = '', query: str = ''):
   if user_ip == '' or user_id == '':
@@ -61,7 +56,7 @@ API URL: `{api}` \n \
 # endregion
 
 
-# region Bodylab functions
+# region bodylab.py
 def standard_healthiness_score(score_type: str, age: int, sex: str, weight: float, height=0):
   if score_type is None or age is None or sex is None or weight is None:
     return 'Some parameter has None value.'
@@ -219,5 +214,40 @@ def get_date_range_from_week(year: str, week_number: str):
     firstdate_of_week = datetime.datetime.strptime(f'{year}-W{int(week_number)-1}-1', "%Y-W%W-%w").date()
     lastdate_of_week = firstdate_of_week + datetime.timedelta(days=6.9)
     return str(firstdate_of_week), str(lastdate_of_week)
+# endregion
 
+
+# region user_question.py
+def convert_index_to_sports(index_array: list, list_type: str):
+  if list_type == 'purpose' and len(index_array) > 0:
+    new_list = []
+    for index in index_array:
+      if index == 0: new_list.append("체력강화/건강유지")
+      elif index == 1: new_list.append("다이어트")
+      elif index == 2: new_list.append("바른체형/신체정렬")
+      elif index == 3: new_list.append("근력향상")
+      elif index == 4: new_list.append("산전/산후관리")
+      elif index == 5: new_list.append("중증 통증관리")
+    return new_list
+  elif list_type == 'sports' and len(index_array) > 0:
+    new_list = []
+    for index in index_array:
+      if index == 0: new_list.append("무관")
+      elif index == 1: new_list.append("요가")
+      elif index == 2: new_list.append("필라테스")
+      elif index == 3: new_list.append("웨이트")
+      elif index == 4: new_list.append("유산소")
+      elif index == 5: new_list.append("무산소")
+    return new_list
+  elif list_type == 'disease' and len(index_array) > 0:
+    new_list = []
+    for index in index_array:
+      if index == 0: new_list.append("허리디스크")
+      elif index == 1: new_list.append("목디스크")
+      elif index == 2: new_list.append("고혈압")
+      elif index == 3: new_list.append("저혈압")
+      elif index == 4: new_list.append("천식")
+      elif index == 5: new_list.append("당뇨")
+      elif index == 6: new_list.append("기타(수술이력, 사고이력)")
+    return new_list
 # endregion

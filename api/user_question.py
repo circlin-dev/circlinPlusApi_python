@@ -1,4 +1,4 @@
-from global_things.functions import slack_error_notification, login_to_db, check_user
+from global_things.functions import slack_error_notification, login_to_db, check_user, convert_index_to_sports
 from . import api
 from flask import request
 import json
@@ -140,6 +140,9 @@ def read_user_question(user_id):
     return json.dumps(result, ensure_ascii=False), 400
   else:
     connection.close()
-    latest_answers = json.loads(latest_answers[0][0].replace("\\", "\\\\"), strict=False) # To prevent decoding error.
+    latest_answers = json.loads(latest_answers[0][0].replace("\\", "\\\\"), strict=False)  # To prevent decoding error.
+    latest_answers["sports"] = convert_index_to_sports(latest_answers["sports"], "sports")
+    latest_answers["purpose"] = convert_index_to_sports(latest_answers["purpose"], "purpose")
+    latest_answers["disease"] = convert_index_to_sports(latest_answers["disease"], "disease")
     return json.dumps(latest_answers, ensure_ascii=False), 201
 
