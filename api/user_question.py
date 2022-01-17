@@ -59,7 +59,7 @@ def add_user_question():
       'error': f"Cannot find user {user_id}: No such user."
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-    return json.dumps(result, ensure_ascii=False), 500
+    return json.dumps(result, ensure_ascii=False), 401
   elif is_valid_user['result'] == True:
     pass
 
@@ -114,7 +114,7 @@ def read_user_question(user_id):
       'error': f"Cannot find user {user_id}: No such user."
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-    return json.dumps(result, ensure_ascii=False), 500
+    return json.dumps(result, ensure_ascii=False), 401
   elif is_valid_user['result'] == True:
     pass
 
@@ -137,7 +137,7 @@ def read_user_question(user_id):
       'error': f'Cannot find requested answer data of user(id: {user_id})(users)'
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
-    return json.dumps(result, ensure_ascii=False), 400
+    return json.dumps(result, ensure_ascii=False), 401
   else:
     connection.close()
     latest_answers = json.loads(latest_answers[0][0].replace("\\", "\\\\"), strict=False)  # To prevent decoding error.
@@ -146,5 +146,5 @@ def read_user_question(user_id):
     latest_answers["disease"] = convert_index_to_sports(latest_answers["disease"], "disease")  # list -> list
     latest_answers["age_group"] = convert_index_to_sports([int(x) for x in str(latest_answers["age_group"])], "age_group")  # list -> index
     latest_answers["experience_group"] = convert_index_to_sports([int(x) for x in str(latest_answers["experience_group"])], "experience_group")  # list -> int
-
+    latest_answers['result'] = True
     return json.dumps(latest_answers, ensure_ascii=False), 201
