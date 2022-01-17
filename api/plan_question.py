@@ -19,18 +19,18 @@ def add_plan_question():
   disease = parameters['disease']  # array with index(int) & short sentence for index 7(string)
   disease_detail = None
 
-  result = {
-    'user_id': [user_id, str(type(user_id))],
-    'purpose': [purpose, str(type(purpose))],
-    'sports': [sports, str(type(sports))],
-    'sex': [sex, str(type(sex))],
-    'age_group': [age_group, str(type(age_group))],
-    'experience_group': [experience_group, str(type(experience_group))],
-    'schedule': [schedule, str(type(schedule))],
-    'disease': [disease, str(type(disease))],
-    'disease_detail': [disease_detail, str(type(disease_detail))],
-  }
-  return json.dumps(result, ensure_ascii=False), 200
+  # result = {
+  #   'user_id': [user_id, str(type(user_id))],
+  #   'purpose': [purpose, str(type(purpose))],
+  #   'sports': [sports, str(type(sports))],
+  #   'sex': [sex, str(type(sex))],
+  #   'age_group': [age_group, str(type(age_group))],
+  #   'experience_group': [experience_group, str(type(experience_group))],
+  #   'schedule': [schedule, str(type(schedule))],
+  #   'disease': [disease, str(type(disease))],
+  #   'disease_detail': [disease_detail, str(type(disease_detail))],
+  # }
+  # return json.dumps(result, ensure_ascii=False), 200
 
   if type(disease[-1]) == str:
     disease_detail = request.form.get('disease')
