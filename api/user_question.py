@@ -18,7 +18,8 @@ def add_user_question():
   experience_group = parameters['experience_group']  # string
   schedule = parameters['schedule']  # array with index(int)
   disease = parameters['disease']  # array with index(int) & short sentence for index 7(string)
-  disease_detail = None
+  disease_detail = parameters['disease_detail']
+  #disease_detail = None
 
   # result = {
   #   'user_id': [user_id, str(type(user_id))],
@@ -33,11 +34,11 @@ def add_user_question():
   # }
   # return json.dumps(result, ensure_ascii=False), 200
 
-  if type(disease[-1]) == str:
-    disease_detail = disease[-1]
-    del disease[-1]
-  else:
-    pass
+  # if type(disease[-1]) == str:
+  #   disease_detail = disease[-1]
+  #   del disease[-1]
+  # else:
+  #   pass
 
   # Verify if mandatory information is not null.
   if request.method == 'POST':
