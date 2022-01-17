@@ -1,5 +1,5 @@
-from global_things.functions import slack_error_notification, analyze_image, get_date_range_from_week, login_to_db
-from global_things.constants import ATTRACTIVENESS_SCORE_CRITERIA
+from global_things.functions import slack_error_notification, analyze_image, get_date_range_from_week, \
+                                    login_to_db, check_user
 from . import api
 from flask import request
 import json
@@ -17,6 +17,7 @@ def add_weekly_data():
   fat_mass = request.form.get('fat_mass')
   body_image = request.form.get('body_image')
 
+  # Verify if mandatory information is not null.
   if request.method == 'POST':
     if not(period and user_id and height and weight and bmi and muscle_mass and fat_mass and body_image):
       result = {
@@ -51,6 +52,20 @@ def add_weekly_data():
       return json.dumps(result, ensure_ascii=False), 500
 
     cursor = connection.cursor()
+
+    # Verify user is valid or not.
+    is_valid_user = check_user(cursor, user_id)
+    if is_valid_user['result'] == False:
+      connection.close()
+      result = {
+        'result': False,
+        'error': f"Cannot find user {user_id}: No such user."
+      }
+      slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+      return json.dumps(result, ensure_ascii=False), 500
+    elif is_valid_user['result'] == True:
+      pass
+
     query = f"INSERT INTO bodylab( \
                           user_id, year, \
                           week_number_of_year, firstdate_of_week, \
@@ -143,7 +158,7 @@ def add_weekly_data():
         return json.dumps(result, ensure_ascii=False), 400
 
       connection.close()
-      result = {'result': True, 'value': [firstdate_of_week, lastdate_of_week]}
+      result = {'result': True}
       return json.dumps(result, ensure_ascii=False), 201
     elif status_code == 400:
       connection.close()

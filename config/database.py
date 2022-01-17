@@ -3,6 +3,6 @@ DB_CONFIG = {
   "password": "circlinDev2019!",
   "host": "circlin-test.cse1vltsv4xu.ap-northeast-2.rds.amazonaws.com",
   "port": 3306,
-  "database": "circlin_plus_test",
+  "database": "circlin_members_test",
   "charset": "utf8"
 }
