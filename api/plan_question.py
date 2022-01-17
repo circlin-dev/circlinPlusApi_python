@@ -16,7 +16,7 @@ def add_plan_question():
   experience_group = request.form.get('experience_group')  # string
   schedule = request.form.get('schedule')  # array with index(int)
   disease = request.form.get('disease')  # array with index(int) & short sentence for index 7(string)
-  disease_detail = ''
+  disease_detail = None
 
   if type(request.form.get('disease')[-1]) == str:
     disease_detail = request.form.get('disease')
