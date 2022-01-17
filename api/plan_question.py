@@ -18,6 +18,19 @@ def add_plan_question():
   disease = request.form.get('disease')  # array with index(int) & short sentence for index 7(string)
   disease_detail = None
 
+  result = {
+    'user_id': [user_id, type(user_id)],
+    'purpose': [purpose, type(purpose)],
+    'sports': [sports, type(sports)],
+    'sex': [sex, type(sex)],
+    'age_group': [age_group, type(age_group)],
+    'experience_group': [experience_group, type(experience_group)],
+    'schedule': [schedule, type(schedule)],
+    'disease': [disease, type(disease)],
+    'disease_detail': [disease_detail, type(disease_detail)],
+  }
+  return json.dumps(result, ensure_ascii=False), 200
+
   if type(disease[-1]) == str:
     disease_detail = request.form.get('disease')
   else:
