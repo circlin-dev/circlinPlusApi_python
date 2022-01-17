@@ -82,9 +82,8 @@ def add_plan_question():
 
   if not disease_detail:
     query = f" \
-      INSERT INTO \
-                user_plan_question( \
-                user_id, purpose, \
+      INSERT INTO user_plan_question \
+                (user_id, purpose, \
                 sports, sex, \
                 age_group, experience_group, \
                 schedule, disease) \
@@ -98,9 +97,8 @@ def add_plan_question():
               schedule, disease)
   else:
     query = f" \
-      INSERT INTO \
-                user_plan_question( \
-                user_id, purpose, \
+      INSERT INTO user_plan_question  \
+                (user_id, purpose, \
                 sports, sex, \
                 age_group, experience_group, \
                 schedule, disease, \
