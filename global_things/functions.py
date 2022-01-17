@@ -250,4 +250,27 @@ def convert_index_to_sports(index_array: list, list_type: str):
       elif index == 5: new_list.append("당뇨")
       elif index == 6: new_list.append("기타(수술이력, 사고이력)")
     return new_list
+  elif list_type == 'age_group' and len(index_array) > 0:
+    new_list = []
+    for index in index_array:
+      if index == 0: new_list.append("10대")
+      elif index == 1: new_list.append("20대")
+      elif index == 2: new_list.append("30대")
+      elif index == 3: new_list.append("40대")
+      elif index == 4: new_list.append("50대")
+      elif index == 5: new_list.append("60대")
+      elif index == 6: new_list.append("70대+")
+    return new_list
+  elif list_type == 'experience_group' and len(index_array) > 0:
+    new_list = []
+    for index in index_array:
+      if index == 0: new_list.append("처음")
+      elif index == 1: new_list.append("~1개월 이내")
+      elif index == 2: new_list.append("~3개월 이내")
+      elif index == 3: new_list.append("~6개월 이내")
+      elif index == 4: new_list.append("~1년 이내")
+      elif index == 5: new_list.append("~3년 이내")
+      elif index == 6: new_list.append("~5년 이내")
+      elif index == 7: new_list.append("5년 이상")
+    return new_list
 # endregion

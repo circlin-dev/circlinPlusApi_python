@@ -141,8 +141,10 @@ def read_user_question(user_id):
   else:
     connection.close()
     latest_answers = json.loads(latest_answers[0][0].replace("\\", "\\\\"), strict=False)  # To prevent decoding error.
-    latest_answers["sports"] = convert_index_to_sports(latest_answers["sports"], "sports")
-    latest_answers["purpose"] = convert_index_to_sports(latest_answers["purpose"], "purpose")
-    latest_answers["disease"] = convert_index_to_sports(latest_answers["disease"], "disease")
-    return json.dumps(latest_answers, ensure_ascii=False), 201
+    latest_answers["sports"] = convert_index_to_sports(latest_answers["sports"], "sports")  # list -> list
+    latest_answers["purpose"] = convert_index_to_sports(latest_answers["purpose"], "purpose")  # list -> list
+    latest_answers["disease"] = convert_index_to_sports(latest_answers["disease"], "disease")  # list -> list
+    latest_answers["age_group"] = convert_index_to_sports(list(latest_answers["age_group"]), "age_group")  # list -> index
+    latest_answers["experience_group"] = convert_index_to_sports(list(latest_answers["experience_group"]), "experience_group")  # list -> int
 
+    return json.dumps(latest_answers, ensure_ascii=False), 201
