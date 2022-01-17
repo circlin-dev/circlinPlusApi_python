@@ -33,7 +33,7 @@ def add_plan_question():
   # return json.dumps(result, ensure_ascii=False), 200
 
   if type(disease[-1]) == str:
-    disease_detail = request.form.get('disease')
+    disease_detail = disease[-1]
   else:
     pass
 
@@ -80,39 +80,23 @@ def add_plan_question():
   elif is_valid_user['result'] == True:
     pass
 
-  if not disease_detail:
-    query = f" \
-      INSERT INTO user_plan_question \
-                (user_id, purpose, \
-                sports, sex, \
-                age_group, experience_group, \
-                schedule, disease) \
-          VALUES(%s, %s, \
-                %s, %s, \
-                %s, %s, \
-                %s, %s)"
-    values = (user_id, purpose,
-              sports, sex,
-              age_group, experience_group,
-              schedule, disease)
-  else:
-    query = f" \
-      INSERT INTO user_plan_question  \
-                (user_id, purpose, \
-                sports, sex, \
-                age_group, experience_group, \
-                schedule, disease, \
-                disease_detail) \
-          VALUES(%s, %s, \
-                %s, %s, \
-                %s, %s, \
-                %s, %s, \
-                %s)"
-    values = (user_id, purpose,
-              sports, sex,
-              age_group, experience_group,
-              schedule, disease,
-              disease_detail)
+  query = f" \
+    INSERT INTO user_plan_question  \
+              (user_id, purpose, \
+              sports, sex, \
+              age_group, experience_group, \
+              schedule, disease, \
+              disease_detail) \
+        VALUES(%s, %s, \
+              %s, %s, \
+              %s, %s, \
+              %s, %s, \
+              %s)"
+  values = (user_id, purpose,
+            sports, sex,
+            age_group, experience_group,
+            schedule, disease,
+            disease_detail)
 
   try:
     cursor.execute(query, values)
