@@ -8,6 +8,10 @@ import json
 def add_weekly_data():
   ip = request.remote_addr
   endpoint = '/api/bodylab/add'
+  """
+  요청이 html form으로부터가 아닌, axios나 fetch로 온다면 파라미터를 아래와 같이 다뤄야 할 수도 있다.
+  -> parameters = json.loads(request.get_data(), encoding='utf-8')
+  """
   period = request.form.get('period')  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
   user_id = request.form.get('user_id')
   height = request.form.get('height')

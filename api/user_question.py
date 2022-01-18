@@ -1,5 +1,5 @@
-from global_things.functions import slack_error_notification, login_to_db, check_user, convert_index_to_sports
 from . import api
+from global_things.functions import slack_error_notification, login_to_db, check_user, convert_index_to_sports
 from flask import request
 import json
 from pymysql.converters import escape_string
