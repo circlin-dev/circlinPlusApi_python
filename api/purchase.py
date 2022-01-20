@@ -63,36 +63,18 @@ def add_purchase():
   period = int(parameters['subscription_period'])
 
   # 결제 정보 변수
-  apply_num = payment_info['apply_num']
-  bank_name = payment_info['bank_name']
-  buyer_addr = payment_info['buyer_addr']
-  buyer_email = payment_info['buyer_email']
-  buyer_name = payment_info['buyer_name']
-  buyer_postcode = payment_info['buyer_postcode']
-  buyer_tel = payment_info['buyer_tel']
-  card_name = payment_info['card_name']
-  card_number = payment_info['card_number']
-  card_quota = payment_info['card_quota']
-  currency = payment_info['currency']
-  custom_data = payment_info['custom_data']
+  plan_title = payment_info['name']
+  total_payment = payment_info['amount']
   imp_uid = payment_info['imp_uid']
   merchant_uid = payment_info['merchant_uid']
-  name = payment_info['name'].strip()
-  paid_amount = payment_info['amount']
-  paid_at = payment_info['paid_at']
-  pay_method = payment_info['pay_method']
-  pg_provider = payment_info['pg_provider']
-  pg_tid = payment_info['pg_tid']
-  pg_type = payment_info['pg_type']
-  receipt_url = payment_info['receipt_url']
-  status = payment_info['status']
 
   # 배송 정보 변수
   recipient_name = delivery_info['recipient_name'].strip()  # 결제자 이름
   post_code = delivery_info['post_code'].strip()  # 스타터 키트 배송지 주소(우편번호)
   address = delivery_info['address'].strip()  # 스타터 키트 배송지 주소(주소)
   address_detail = delivery_info['address_detail'].strip()  # 스타터 키트 배송지 주소(상세주소)
-  phone = delivery_info['phone'].strip()  # 결제자 휴대폰 번호
+  recipient_phone = delivery_info['recipient_phone'].strip()  # 결제자 휴대폰 번호
+  # phone = payment_info['buyer_tel'].strip()  # 결제자 휴대폰 번호
   comment = delivery_info['comment'].strip()  # 배송 요청사항
 
   # 기구 정보 변수
@@ -108,14 +90,14 @@ def add_purchase():
   elif period == 12:
     subscription_days = 365
 
-    if not(user_id and period and buyer_tel and imp_uid and merchant_uid):
+    if not(user_id and period and recipient_phone and imp_uid and merchant_uid):
       result = {
         'result': False,
         'error': f'Missing data in request.',
         'values': {
           'period': period,
           'user_id': user_id,
-          'buyer_tel': buyer_tel,
+          'recipient_phone': recipient_phone,
           'imp_uid': imp_uid,
           'merchant_uid': merchant_uid,
         }
@@ -209,45 +191,15 @@ def add_purchase():
   query = f"INSERT INTO purchases( \
                                   user_id, plan_id, \
                                   start_date, expire_date, \
-                                  total_payment, apply_num, \
-                                  bank_name,  buyer_addr, \
-                                  buyer_email, buyer_name, \
-                                  buyer_postcode, buyer_tel, \
-                                  card_name, card_number, \
-                                  card_quota, currency, \
-                                  custom_data, imp_uid, \
-                                  merchant_uid, name, \
-                                  paid_amount, paid_at, \
-                                  pay_method, pg_provider, \
-                                  pg_tid, pg_type, \
-                                  receipt_url, status) \
+                                  total_payment, imp_uid, \
+                                  merchant_uid) \
                           VALUES(%s, (SELECT id FROM subscribe_plans WHERE title=%s), \
                                 (SELECT NOW()), (SELECT NOW() + INTERVAL {subscription_days} DAY), \
                                 %s, %s, \
-                                %s, %s, \
-                                %s, %s, \
-                                %s, %s, \
-                                %s, %s, \
-                                %s, %s, \
-                                %s, %s, \
-                                %s, %s, \
-                                %s, %s, \
-                                %s, %s, \
-                                %s, %s, \
-                                %s, %s)"
-  values = (int(user_id), name,
-            int(paid_amount), apply_num,
-            bank_name, buyer_addr,
-            buyer_email, buyer_name,
-            buyer_postcode, buyer_tel,
-            card_name, card_number,
-            card_quota, currency,
-            custom_data, imp_uid,
-            merchant_uid, name,
-            paid_amount, paid_at,
-            pay_method, pg_provider,
-            pg_tid, pg_type,
-            receipt_url, status)
+                                %s)"
+  values = (int(user_id), plan_title,
+            total_payment, imp_uid,
+            merchant_uid)
   # user_id, payment_info, delivery_info
   try:
     cursor.execute(query, values)
@@ -266,7 +218,7 @@ def add_purchase():
   query = f"""INSERT INTO purchase_delivery(
                                   purchase_id, post_code,
                                   address, address_detail,
-                                  recipient_name, phone,
+                                  recipient_name, recipient_phone,
                                   comment)
                           VALUES(%s, %s,
                                 %s, %s,
@@ -274,7 +226,7 @@ def add_purchase():
                                 %s)"""
   values = (purchase_id, post_code,
             address, address_detail,
-            recipient_name, phone,
+            recipient_name, recipient_phone,
             comment)
   try:
     cursor.execute(query, values)
@@ -328,10 +280,11 @@ def add_purchase():
       slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
       return json.dumps(result, ensure_ascii=False), 500
 
-    query = "INSERT INTO chat_users(created_at, updated_at, chat_room_id, user_id) \
-                  VALUES(%s, %s, %s, %s)"
-    values = [("SELECT NOW()", "SELECT NOW()", chat_room_id, manager_id),
-              ("SELECT NOW()", "SELECT NOW()", chat_room_id, user_id)]
+    query = "INSERT INTO chat_users(created_at, updated_at, \
+                                    chat_room_id, user_id) \
+                    VALUES((SELECT NOW()), (SELECT NOW()), \
+                            %s, %s)"
+    values = [(chat_room_id, manager_id), (chat_room_id, user_id)]
     try:
       cursor.execute(query, values)
       connection.commit()
