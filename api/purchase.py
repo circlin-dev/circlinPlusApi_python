@@ -73,7 +73,7 @@ def add_purchase():
   currency = payment_info['currency']
   custom_data = payment_info['custom_data']
   imp_uid = payment_info['imp_uid']
-  merchant_uid = payment_info['merchant_id']
+  merchant_uid = payment_info['merchant_uid']
   name = payment_info['name']
   paid_amount = payment_info['paid_amount']
   paid_at = payment_info['paid_at']
