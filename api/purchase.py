@@ -280,11 +280,11 @@ def add_purchase():
       slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
       return json.dumps(result, ensure_ascii=False), 500
 
-    query = "INSERT INTO chat_users(created_at, updated_at, chat_room_id, user_id) \
-                    VALUES(NOW(), NOW(), %s, %s)"
-    values = [(chat_room_id, manager_id), (chat_room_id, user_id)]
+    query = f"INSERT INTO chat_users(created_at, updated_at, chat_room_id, user_id) \
+                    VALUES(NOW(), NOW(), {chat_room_id}, {manager_id}), \
+                          (NOW(), NOW(), {chat_room_id}, {user_id})"
     try:
-      cursor.execute(query, values)
+      cursor.execute(query)
       connection.commit()
     except Exception as e:
       connection.rollback()
