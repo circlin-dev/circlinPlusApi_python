@@ -329,9 +329,8 @@ def add_purchase():
       return json.dumps(result, ensure_ascii=False), 500
 
     try:
-      query = """INSERT INTO 
-                            chat_users(created_at, updated_at, chat_room_id, user_id) 
-                    VALUES((SELECT NOW()), (SELECT NOW()), %s, %s)"""
+      query = """INSERT INTO chat_users(created_at, updated_at, chat_room_id, user_id) 
+                      VALUES((SELECT NOW()), (SELECT NOW()), %s, %s)"""
       values = ((chat_room_id, manager_id), (chat_room_id, user_id))
       cursor.execute(query, values)
       connection.commit()
