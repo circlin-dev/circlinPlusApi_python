@@ -39,7 +39,7 @@ def read_purchase_record(user_id):
       'num_purchase_record': 0
     }
     return json.dumps(result, ensure_ascii=False), 201
-  #elif len(purchase_record) > 0 and purchase_record[0][1] != 'success':
+  # elif len(purchase_record) > 0 and purchase_record[0][1] != 'success':
   else:
     result = {
       'result': True,
@@ -104,9 +104,9 @@ def add_purchase():
   elif period == 12: subscription_days == 365
 
 
-  # 1. 결제 정보 조회(import)
+# 1. 결제 정보 조회(import)
   get_token = json.loads(get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET))
-  if get_token['result'] == False:
+  if get_token['result'] is False:
     result = {'result': False,
               'error': f'Failed to get import access token at server(message: {get_token["message"]})'}
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=get_token['message'])
@@ -142,13 +142,9 @@ def add_purchase():
 
   cursor = connection.cursor()
 
-  query = f"""SELECT
-                  sales_price 
-              FROM 
-                  subscribe_plans 
-            WHERE 
-                  title={user_subscribed_plan}"""
-  cursor.execute(query)
+  query = "SELECT sales_price FROM subscribe_plans WHERE title=%s"
+  values = (user_subscribed_plan)
+  cursor.execute(query, values)
   sales_price = int(cursor.fetchall()[0][0])
 
   if 1004 != user_paid_amount:  # 1004 -> sales_price
@@ -164,7 +160,7 @@ def add_purchase():
 
   # 3. 유저 정보 확인
   is_valid_user = check_user(cursor, user_id)
-  if is_valid_user['result'] == False:
+  if is_valid_user['result'] is False:
     connection.close()
     result = {
       'result': False,
@@ -172,7 +168,7 @@ def add_purchase():
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
     return json.dumps(result, ensure_ascii=False), 401
-  elif is_valid_user['result'] == True:
+  elif is_valid_user['result'] is True:
     pass
 
   # 4. 결제 정보(-> purchases), 배송 정보(purchase_delivery) 저장
@@ -291,19 +287,19 @@ def add_purchase():
                 chat_rooms(created_at, updated_at)
         VALUES ((SELECT NOW()), (SELECT NOW())
     """
-  try:
-    cursor.execute(query)
-    chat_room_id = cursor.lastrowid
-    connection.commit()
-  except Exception as e:
-    connection.close()
-    error = str(e)
-    result = {
-      'result': False,
-      'error': f'Server Error while executing INSERT query(chat_rooms): {error}'
-    }
-    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
-    return json.dumps(result, ensure_ascii=False), 500
+    try:
+      cursor.execute(query)
+      chat_room_id = cursor.lastrowid
+      connection.commit()
+    except Exception as e:
+      connection.close()
+      error = str(e)
+      result = {
+        'result': False,
+        'error': f'Server Error while executing INSERT query(chat_rooms): {error}'
+      }
+      slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+      return json.dumps(result, ensure_ascii=False), 500
   else:
     chat_room_id = existing_chat_room[0][0]
 
