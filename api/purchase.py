@@ -278,7 +278,6 @@ def add_purchase():
             comment)
   try:
     cursor.execute(query, values)
-    connection.commit()
   except Exception as e:
     connection.rollback()
     connection.close()
@@ -317,8 +316,7 @@ def add_purchase():
     query = f"""
       INSERT INTO 
                 chat_rooms(created_at, updated_at)
-        VALUES ((SELECT NOW()), (SELECT NOW()))
-    """
+          VALUES((SELECT NOW()), (SELECT NOW()))"""
     try:
       cursor.execute(query)
       chat_room_id = cursor.lastrowid
@@ -326,9 +324,7 @@ def add_purchase():
       query = f"""
         INSERT INTO 
                   chat_users(chat_room_id, user_id)
-            VALUES(%s, %s)
-      
-      """
+            VALUES(%s, %s)"""
       values = ((chat_room_id, manager_id), (chat_room_id, user_id))
       cursor.execute(query, values)
       connection.commit()
