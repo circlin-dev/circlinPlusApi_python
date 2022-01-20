@@ -108,6 +108,20 @@ def add_purchase():
   elif period == 12:
     subscription_days = 365
 
+    if not(user_id and period and buyer_tel and imp_uid and merchant_uid):
+      result = {
+        'result': False,
+        'error': f'Missing data in request.',
+        'values': {
+          'period': period,
+          'user_id': user_id,
+          'buyer_tel': buyer_tel,
+          'imp_uid': imp_uid,
+          'merchant_uid': merchant_uid,
+        }
+      }
+      return json.dumps(result, ensure_ascii=False), 400
+
 # 1. 결제 정보 조회(import)
   get_token = json.loads(get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET))
   if get_token['result'] is False:
@@ -207,8 +221,8 @@ def add_purchase():
                                   pay_method, pg_provider, \
                                   pg_tid, pt_type, \
                                   receipt_url, status) \
-                          VALUES(%s, (SELECT id FROM subscribe_plan WHERE title={name}), \
-                                (SELECT NOW()), (SELECT NOW() + INTERVAL {subscription_days} DAY), \
+                          SELECT(%s, SELECT id FROM subscribe_plan WHERE title=%s, \
+                                NOW(), NOW() + INTERVAL {subscription_days} DAY, \
                                 %s, %s, \
                                 %s, %s, \
                                 %s, %s, \
@@ -221,7 +235,7 @@ def add_purchase():
                                 %s, %s, \
                                 %s, %s, \
                                 %s, %s)"
-  values = (int(user_id),
+  values = (int(user_id), name,
             int(paid_amount), apply_num,
             bank_name, buyer_addr,
             buyer_email, buyer_name,
