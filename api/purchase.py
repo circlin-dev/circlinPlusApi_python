@@ -1,14 +1,13 @@
-from global_things.functions import slack_error_notification, login_to_db
-from global_things.constants import ATTRACTIVENESS_SCORE_CRITERIA
+from global_things.functions import slack_error_notification, login_to_db, check_user, get_import_access_token
+from global_things.constants import ATTRACTIVENESS_SCORE_CRITERIA, IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET
 from . import api
 from flask import request
 import json
 
-@api.route('/purchase/record', methods=['POST'])
-def read_purchase_record():
+@api.route('/purchase/read/<user_id>', methods=['POST'])
+def read_purchase_record(user_id):
   ip = request.remote_addr
-  endpoint = '/api/purchase/record'
-  user_id = request.form.get('user_id')
+  endpoint = '/api/purchase/read/{user_id}'
 
   try:
     connection = login_to_db()
@@ -48,68 +47,271 @@ def read_purchase_record():
 
 
 
-# @api.route('/purchase/add', methods=['POST'])
-# def add_purchase():
-#   ip = request.remote_addr
-#   endpoint = '/api/purchase/add'
-#
-#   period = request.form.get('period')  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
-#   user_id = request.form.get('user_id')
-#   subscribe_period = request.form.get('subscribe_period') # int  # for plan_id 'purchases'
-#   rent_equipment = request.form.get('rent_equipment') # boolean  # for plan_id at table 'purchases'
-#
-#   try:
-#     connection = login_to_db()
-#   except Exception as e:
-#     error = str(e)
-#     result = {
-#       'result': False,
-#       'error': f'Server Error while connecting to DB: {error}'
-#     }
-#     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-#     return json.dumps(result, ensure_ascii=False), 500
-#
-#   cursor = connection.cursor()
-#
-#   if subscribe_period == 1:
-#     if rent_equipment is True: plan_id = 0
-#       # start_date
-#       # expire_date
-#       # discount_id
-#
-#   # 결제 정보
-#   apply_num = request.form.get('apply_num')
-#   bank_name = request.form.get('bank_name')
-#   buyer_addr = request.form.get('buyer_addr')
-#   buyer_email = request.form.get('buyer_email')
-#   buyer_name = request.form.get('buyer_name')
-#   buyer_postcode = request.form.get('buyer_postcode')
-#   buyer_tel = request.form.get('buyer_tel')
-#   card_name = request.form.get('card_name')
-#   card_number = request.form.get('card_number')
-#   card_quota = request.form.get('card_quota')
-#   currency = request.form.get('currency')
-#   custom_data = request.form.get('custom_data')
-#   imp_uid = request.form.get('imp_uid')
-#   merchant_id = request.form.get('merchant_id')
-#   name = request.form.get('name')
-#   paid_amount = request.form.get('paid_amount')
-#   paid_at = request.form.get('paid_at')
-#   pay_method = request.form.get('pay_method')
-#   pg_provider = request.form.get('pg_provider')
-#   pg_tid = request.form.get('pg_tid')
-#   pg_type = request.form.get('pg_tid')
-#   receipt_url = request.form.get('receipt_url')
-#   status = request.form.get('status')
-#   success = request.form.get('success')
-#
-#   # 배송정보
-#   recipient_name = request.form.get('recipient_name')  # 결제자 이름
-#   post_code  = request.form.get('post_code') # 스타터키트 배송지 주소(우편번호)
-#   address = request.form.get('address') # 스타터키트 배송지 주소(주소)
-#   aaddress_detail = request.form.get('aaddress_detail') # 스타터키트 배송지 주소(상세주소)
-#   phone = request.form.get('phone') # 결제자 휴대폰 번호
-#
-#
-#   if request.method == 'POST':
-#     if not(user_id, )
+@api.route('/purchase/add', methods=['POST'])
+def add_purchase():
+  ip = request.remote_addr
+  endpoint = '/api/purchase/add'
+  parameters = json.loads(request.get_data(), encoding='utf-8')
+
+  user_id = parameters('user_id')
+  payment_info = parameters('payment_info')  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
+  delivery_info = parameters('delivery_info')  # int  # for plan_id 'purchases'
+  # equipment_info = parameters('equipment_info')  # boolean  # for plan_id at table 'purchases'
+  period = parameters('subscription_period')
+
+  # 결제 정보 변수
+  apply_num = payment_info('apply_num')
+  bank_name = payment_info('bank_name')
+  buyer_addr = payment_info('buyer_addr')
+  buyer_email = payment_info('buyer_email')
+  buyer_name = payment_info('buyer_name')
+  buyer_postcode = payment_info('buyer_postcode')
+  buyer_tel = payment_info('buyer_tel')
+  card_name = payment_info('card_name')
+  card_number = payment_info('card_number')
+  card_quota = payment_info('card_quota')
+  currency = payment_info('currency')
+  custom_data = payment_info('custom_data')
+  imp_uid = payment_info('imp_uid')
+  merchant_uid = payment_info('merchant_id')
+  name = payment_info('name')
+  paid_amount = payment_info('paid_amount')
+  paid_at = payment_info('paid_at')
+  pay_method = payment_info('pay_method')
+  pg_provider = payment_info('pg_provider')
+  pg_tid = payment_info('pg_tid')
+  pg_type = payment_info('pg_tid')
+  receipt_url = payment_info('receipt_url')
+  status = payment_info('status')
+  success = payment_info('success')
+
+  # 배송 정보 변수
+  recipient_name = delivery_info('recipient_name')  # 결제자 이름
+  post_code = delivery_info('post_code')  # 스타터 키트 배송지 주소(우편번호)
+  address = delivery_info('address')  # 스타터 키트 배송지 주소(주소)
+  address_detail = delivery_info('address_detail')  # 스타터 키트 배송지 주소(상세주소)
+  phone = delivery_info('phone')  # 결제자 휴대폰 번호
+  comment = delivery_info('comment')  # 배송 요청사항
+
+  # 기구 정보 변수
+
+  # 구독 기간 정보 변수
+  subscription_days = 0
+  if period == 1: subscription_days == 30
+  elif period == 3: subscription_days == 90
+  elif period == 6: subscription_days == 180
+  elif period == 12: subscription_days == 365
+
+
+  # 1. 결제 정보 조회(import)
+  get_token = get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET)
+  if get_token['result'] == False:
+    result = {'result': False,
+              'error': f'Failed to get import access token at server(message: {get_token["message"]})'}
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=get_token['message'])
+    return json.dumps(result, ensure_ascii=False), 500
+  else:
+    access_token = get_token['access_token']
+
+  payment_validation_import = request.get(
+    f"https://api.iamport.kr/payments/{payment_info['imp_uid']}",
+    headers={"Authorization": access_token}
+  ).json()
+  user_paid_amount = int(payment_validation_import['response']['amount'])
+  user_subscribed_plan = payment_validation_import['response']['name']
+
+  # 2. 결제 정보 검증(DB ~ import 결제액)
+  """
+  보완사항
+  (1) 결제 검증 수단: payment_info의 name값으로만 비교 중.
+  =>  기구 렌탈 여부, 할인권 적용, 구독 기간 등의 정보 고려하여 올바르게 계산하도록 보완해야 함!
+  (2) 결제 검증 수단: sales_price와 user_paid_amount의 비교는 테스트 결제액인 1004원으로 비교중.
+  => 결제 가격 체계를 보완하여 1004원을 실제 판매가인 sales_price로 변경해야 함!
+  """
+  try:
+    connection = login_to_db()
+  except Exception as e:
+    error = str(e)
+    result = {
+      'result': False,
+      'error': f'Server Error while connecting to DB: {error}'
+    }
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+    return json.dumps(result, ensure_ascii=False), 500
+
+  cursor = connection.cursor()
+
+  query = f"""SELECT
+                  sales_price 
+              FROM 
+                  subscribe_plans 
+            WHERE 
+                  title={user_subscribed_plan}"""
+  cursor.execute(query)
+  sales_price = int(cursor.fetchall()[0][0])
+
+  if 1004 != user_paid_amount:  # 1004 -> sales_price
+    connection.close()
+    result = {
+      'result': False,
+      'error': f': Error while validating payment information: For plan "{user_subscribed_plan}", actual sales price is "{sales_price}", but user paid "{user_paid_amount}".'
+    }
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+    return json.dumps(result, ensure_ascii=False), 403
+  else:
+    pass
+
+  # 3. 유저 정보 확인
+  is_valid_user = check_user(cursor, user_id)
+  if is_valid_user['result'] == False:
+    connection.close()
+    result = {
+      'result': False,
+      'error': f"Cannot find user {user_id}: No such user."
+    }
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+    return json.dumps(result, ensure_ascii=False), 401
+  elif is_valid_user['result'] == True:
+    pass
+
+  # 4. 결제 정보(-> purchases), 배송 정보(purchase_delivery) 저장
+  """
+  기구 신청을 했을 경우, 기구 신청 내역을 저장하는 쿼리를 만들어야 함!
+  """
+  query = f"INSERT INTO purchases( \
+                                  user_id, plan_id, \
+                                  start_date, expire_date, \
+                                  total_payment, apply_num, \
+                                  bank_name,  buyer_addr, \
+                                  buyer_email, buyer_name, \
+                                  buyer_postcode, buyer_tel, \
+                                  card_name, card_number, \
+                                  card_quota, currency, \
+                                  custom_data, imp_uid, \
+                                  merchant_uid, name, \
+                                  paid_amount, paid_at, \
+                                  pay_method, pg_provider, \
+                                  pg_tid, pt_type, \
+                                  receipt_url, status, \
+                                  success) \
+                          VALUES(%s, (SELECT id FROM subscribe_plan WHERE title={name}), \
+                                (SELECT NOW()), (SELECT NOW() + INTERVAL {subscription_days} DAY), \
+                                %s, %s, \
+                                %s, %s, \
+                                %s, %s, \
+                                %s, %s, \
+                                %s, %s, \
+                                %s, %s, \
+                                %s, %s, \
+                                %s, %s, \
+                                %s, %s, \
+                                %s, %s, \
+                                %s, %s, \
+                                %s, %s, \
+                                %s)"
+  values = (user_id,
+            paid_amount, apply_num,
+            bank_name, buyer_addr,
+            buyer_email, buyer_name,
+            buyer_postcode, buyer_tel,
+            card_name, card_number,
+            card_quota, currency,
+            custom_data, imp_uid,
+            merchant_uid, name,
+            paid_amount, paid_at,
+            pay_method, pg_provider,
+            pg_tid, pg_type,
+            receipt_url, status,
+            success)
+  # user_id, payment_info, delivery_info
+  try:
+    cursor.execute(query, values)
+    purchase_id = cursor.lastrowid
+    connection.commit()
+  except Exception as e:
+    connection.close()
+    error = str(e)
+    result = {
+      'result': False,
+      'error': f'Server error while executing INSERT query(purchases): {error}'
+    }
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+    return json.dumps(result, ensure_ascii=False), 400
+
+  query = f"""INSERT INTO purchases_delivery(
+                                  purchase_id, post_code,
+                                  address, address_detail,
+                                  recipient_name, phone,
+                                  comment)
+                          VALUES(%s, %s,
+                                %s, %s,
+                                %s, %s,
+                                %s)"""
+  values = (purchase_id, post_code,
+            address, address_detail,
+            recipient_name, phone,
+            comment)
+  try:
+    cursor.execute(query, values)
+    connection.commit()
+  except Exception as e:
+    connection.close()
+    error = str(e)
+    result = {
+      'result': False,
+      'error': f'Server error while executing INSERT query(purchases_delivery): {error}'
+    }
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+    return json.dumps(result, ensure_ascii=False), 400
+
+  # 5. 채팅방 생성 or 조회하여 채팅방 id 리턴
+  """
+  1. 매니저 할당(매니저 선정 로직 필요)
+  2. chat_users에서 user와 manager의 chat_room_id의 교집합(= 이미 만들어진 채팅방)이 있는지 확인한다.
+  3. 없으면 새 채팅룸을 생성하고, 있으면 기존 채팅룸 id를 조회한다.
+  4. 채팅룸 id를 리턴한다.
+  """
+
+  manager_id = 2 #1 = 대표님, 2 = 희정님
+
+  query = f"""
+    SELECT 
+        manager.chat_room_id
+    FROM
+        chat_users customer, chat_users manager
+    WHERE
+        customer.chat_room_id = manager.chat_room_id 
+        AND customer.user_id = {user_id} 
+        AND manager.user_id = {manager_id}"""
+
+  cursor.execute(query)
+  existing_chat_room = cursor.fetchall()
+
+  if len(existing_chat_room) == 0 or existing_chat_room == ():
+    query = f"""
+      INSERT INTO 
+                chat_rooms(created_at, updated_at)
+        VALUES ((SELECT NOW()), (SELECT NOW())
+    """
+  try:
+    cursor.execute(query)
+    chat_room_id = cursor.lastrowid
+    connection.commit()
+  except Exception as e:
+    connection.close()
+    error = str(e)
+    result = {
+      'result': False,
+      'error': f'Server Error while executing INSERT query(chat_rooms): {error}'
+    }
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+    return json.dumps(result, ensure_ascii=False), 500
+  else:
+    chat_room_id = existing_chat_room[0][0]
+
+  result = {
+    'result': True,
+    'chat_room_id': chat_room_id
+  }
+
+  return json.dumps(result, ensure_ascii=False), 201

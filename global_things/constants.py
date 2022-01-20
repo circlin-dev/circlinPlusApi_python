@@ -1,11 +1,16 @@
 APP_ROOT = "/home/ubuntu/circlinMembersApi_python/circlinMembersApi_flask"
-
 IMAGE_ANALYSYS_SERVER = "3.35.12.179"
 
-#Slack error notification
+# region Slack error notification
 SLACK_NOTIFICATION_WEBHOOK = "https://hooks.slack.com/services/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?"
+# endregion
 
-# region Bodylab criteria data
+# region Import payment API Keys
+IMPORT_REST_API_KEY = "8960715711085849"
+IMPORT_REST_API_SECRET = "aa8f4f6206e82213fc1665f0cd6f8967a59def6fd2be1321a34a48af8c87b39bd39850c45b54824b"
+# endregion
+
+# region bodylab criteria data
 ATTRACTIVENESS_SCORE_CRITERIA = {
   0: {
     "sex": "man",
