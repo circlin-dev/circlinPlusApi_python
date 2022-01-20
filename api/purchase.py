@@ -1,5 +1,5 @@
-from global_things.functions import slack_error_notification, login_to_db, check_user, get_import_access_token, \
-                                    query_result_is_none
+from global_things.functions import slack_error_notification, slack_purchase_notification, login_to_db, check_user, \
+                                    get_import_access_token, query_result_is_none
 from global_things.constants import ATTRACTIVENESS_SCORE_CRITERIA, IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET
 from . import api
 from flask import request
@@ -332,6 +332,7 @@ def add_purchase():
     chat_room_id = existing_chat_room[0][0]
 
   connection.commit()
+  slack_purchase_notification(cursor, user_id, manager_id, purchase_id)
   connection.close()
   result = {
     'result': True,
