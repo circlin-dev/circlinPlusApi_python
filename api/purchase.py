@@ -222,7 +222,7 @@ def add_purchase():
                                   pg_tid, pg_type, \
                                   receipt_url, status) \
                           VALUES(%s, (SELECT id FROM subscribe_plans WHERE title=%s), \
-                                (SELECT NOW()), (SELECT NOW() + INTERVAL {subscription_days} DAY), \
+                                %s, %s, \
                                 %s, %s, \
                                 %s, %s, \
                                 %s, %s, \
@@ -236,6 +236,7 @@ def add_purchase():
                                 %s, %s, \
                                 %s, %s)"
   values = (int(user_id), name,
+            "CURRENT_TIMESTAMP", f"CURRENT_TIMESTAMP + INTERVAL {subscription_days} DAY",
             int(paid_amount), apply_num,
             bank_name, buyer_addr,
             buyer_email, buyer_name,
