@@ -89,9 +89,9 @@ def slack_purchase_notification(cursor, user_id: int = 0, manager_id: int = 0, p
   send_notification_request = requests.post(
     SLACK_NOTIFICATION_WEBHOOK,
     json.dumps({
-      "channel": "#circlin-members-log",
+      "channel": "#circlin-plus-order-log",
       "username": f"결제 완료 알림: {nickname}({user_id})",
-      "text": f"{nickname} 고객님께서 [{plan_title}] 플랜을 결제하셨습니다! \n \
+      "text": f":dollar::dollar:{nickname} 고객님께서 *{plan_title}* 플랜을 결제하셨습니다!:dollar::dollar: \n\n \
 결제 id: `{purchase_id}` \n \
 시작일: `{start_date.strftime('%Y-%m-%d %H:%M:%S')}` \n \
 만료일: `{expire_date.strftime('%Y-%m-%d %H:%M:%S')}`\n \
