@@ -57,10 +57,10 @@ def add_purchase():
   parameters = json.loads(request.get_data(), encoding='utf-8')
 
   user_id = parameters['user_id']
+  period = int(parameters['subscription_period'])
   payment_info = parameters['payment_info']  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
   delivery_info = parameters['delivery_info']  # int  # for plan_id 'purchases'
   # equipment_info = parameters('equipment_info')  # boolean  # for plan_id at table 'purchases'
-  period = int(parameters['subscription_period'])
 
   # 결제 정보 변수
   plan_title = payment_info['name']
@@ -213,7 +213,7 @@ def add_purchase():
       'error': f'Server error while executing INSERT query(purchases): {error}'
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
-    return json.dumps(result, ensure_ascii=False), 400
+    return json.dumps(result, ensure_ascii=False), 500
 
   query = f"""INSERT INTO purchase_delivery(
                                   purchase_id, post_code,
@@ -239,7 +239,7 @@ def add_purchase():
       'error': f'Server error while executing INSERT query(purchase_delivery): {error}'
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
-    return json.dumps(result, ensure_ascii=False), 400
+    return json.dumps(result, ensure_ascii=False), 500
 
   # 5. 채팅방 생성 or 조회하여 채팅방 id 리턴
   """
