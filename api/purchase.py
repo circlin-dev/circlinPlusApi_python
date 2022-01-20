@@ -69,12 +69,13 @@ def read_purchase_record(user_id):
     return json.dumps(result, ensure_ascii=False), 202
   # elif len(purchase_record) > 0 and purchase_record[0][1] != 'success':
   else:
+    plan_title, start_date, expire_date = purchase_record[0]
     result = {
       'result': True,
       'plan_in_progress': {
-        'plan_title': purchase_record[0][0],
-        'start_date': purchase_record[0][1],
-        'expire_date': purchase_record[0][2]
+        'plan_title': plan_title,
+        'start_date': str(start_date),
+        'expire_date': str(expire_date)
       }
     }
     return json.dumps(result, ensure_ascii=False), 201
