@@ -313,10 +313,7 @@ def add_purchase():
   existing_chat_room = cursor.fetchall()
 
   if len(existing_chat_room) == 0 or existing_chat_room == ():
-    query = f"""
-      INSERT INTO 
-                chat_rooms(created_at, updated_at)
-          VALUES((SELECT NOW()), (SELECT NOW()))"""
+    query = "INSERT INTO chat_rooms(created_at, updated_at) VALUES((SELECT NOW()), (SELECT NOW()))"
     try:
       cursor.execute(query)
       chat_room_id = cursor.lastrowid
@@ -332,10 +329,9 @@ def add_purchase():
       return json.dumps(result, ensure_ascii=False), 500
 
     try:
-      query = f"""
-        INSERT INTO 
-                  chat_users(chat_room_id, user_id)
-            VALUES(%s, %s)"""
+      query = """INSERT INTO 
+                            chat_users(created_at, updated_at, chat_room_id, user_id) 
+                    VALUES((SELECT NOW()), (SELECT NOW()), %s, %s)"""
       values = ((chat_room_id, manager_id), (chat_room_id, user_id))
       cursor.execute(query, values)
       connection.commit()
