@@ -234,7 +234,6 @@ def add_purchase():
                                 %s, %s, \
                                 %s, %s, \
                                 %s, %s, \
-                                %s, %s, \
                                 %s, %s)"
   values = (int(user_id), name,
             int(paid_amount), apply_num,
