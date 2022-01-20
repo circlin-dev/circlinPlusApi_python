@@ -77,7 +77,7 @@ def slack_purchase_notification(cursor, user_id: int = 0, manager_id: int = 0, p
     FROM
         purchases p,
         subscribe_plans sp,
-        users u,        
+        users u   
   WHERE
         p.id = {purchase_id} 
     AND sp.id = p.plan_id 
