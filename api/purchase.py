@@ -56,11 +56,11 @@ def add_purchase():
   endpoint = '/api/purchase/add'
   parameters = json.loads(request.get_data(), encoding='utf-8')
 
-  user_id = int(parameters['user_id'])
+  user_id = parameters['user_id']
   payment_info = parameters['payment_info']  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
   delivery_info = parameters['delivery_info']  # int  # for plan_id 'purchases'
   # equipment_info = parameters('equipment_info')  # boolean  # for plan_id at table 'purchases'
-  period = int(parameters['subscription_period'].strip())
+  period = int(parameters['subscription_period'])
 
   # 결제 정보 변수
   apply_num = payment_info['apply_num']
@@ -222,8 +222,8 @@ def add_purchase():
                                 %s, %s, \
                                 %s, %s, \
                                 %s, %s)"
-  values = (user_id,
-            paid_amount, apply_num,
+  values = (int(user_id),
+            int(paid_amount), apply_num,
             bank_name, buyer_addr,
             buyer_email, buyer_name,
             buyer_postcode, buyer_tel,
@@ -232,8 +232,7 @@ def add_purchase():
             custom_data, imp_uid,
             merchant_uid, name,
             paid_amount, paid_at,
-            pay_method, pg_provider,
-            pg_tid, pg_type,
+            pay_method, pg_provid
             receipt_url, status)
   # user_id, payment_info, delivery_info
   try:
