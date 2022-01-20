@@ -285,7 +285,6 @@ def add_purchase():
                           (NOW(), NOW(), {chat_room_id}, {user_id})"
     try:
       cursor.execute(query)
-      connection.commit()
     except Exception as e:
       connection.rollback()
       connection.close()
@@ -299,6 +298,8 @@ def add_purchase():
   else:
     chat_room_id = existing_chat_room[0][0]
 
+  connection.commit()
+  connection.close()
   result = {
     'result': True,
     'chat_room_id': chat_room_id

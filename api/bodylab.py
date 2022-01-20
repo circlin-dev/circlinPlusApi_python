@@ -88,8 +88,8 @@ def add_weekly_data():
               muscle_mass, fat_mass)
     try:
       cursor.execute(query, values)
-      connection.commit()
     except Exception as e:
+      connection.rollback()
       connection.close()
       error = str(e)
       result = {
@@ -113,6 +113,8 @@ def add_weekly_data():
     cursor.execute(query)
     latest_bodylab_id_tuple = cursor.fetchall()
     if query_result_is_none(latest_bodylab_id_tuple) is True:
+      connection.rollback()
+      connection.close()
       result = {
         'result': False,
         'error': f'Cannot find requested bodylab data of user(id: {user_id})(bodylab)'
@@ -150,8 +152,8 @@ def add_weekly_data():
                 analyze_result['whole_body_length'], analyze_result['upper_body_lower_body'])
       try:
         cursor.execute(query, values)
-        connection.commit()
       except Exception as e:
+        connection.rollback()
         connection.close()
         error = str(e)
         result = {
@@ -161,10 +163,12 @@ def add_weekly_data():
         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
         return json.dumps(result, ensure_ascii=False), 400
 
+      connection.commit()
       connection.close()
       result = {'result': True}
       return json.dumps(result, ensure_ascii=False), 201
     elif status_code == 400:
+      connection.rollback()
       connection.close()
       result = {
         'result': False,
@@ -173,6 +177,7 @@ def add_weekly_data():
       slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
       return json.dumps(result, ensure_ascii=False), 400
     elif status_code == 500:
+      connection.rollback()
       connection.close()
       result = {
         'result': False,
