@@ -23,12 +23,12 @@ def read_purchase_record(user_id):
   cursor = connection.cursor()
   query = f"\
     SELECT \
-          id, success \
+          id, status \
       from \
           purchases \
       WHERE \
           user_id={user_id} \
-      ORDER BY id"
+      ORDER BY id DESC LIMIT 1"
 
   cursor.execute(query)
   purchase_record = cursor.fetchall()
@@ -38,10 +38,11 @@ def read_purchase_record(user_id):
       'num_purchase_record': 0
     }
     return json.dumps(result, ensure_ascii=False), 201
-  elif len(purchase_record) > 0 and purchase_record[0][1] != 'success':
+  #elif len(purchase_record) > 0 and purchase_record[0][1] != 'success':
+  else:
     result = {
       'result': True,
-      'num_purchase_record': 0
+      'status': purchase_record[0][1]
     }
     return json.dumps(result, ensure_ascii=False), 201
 
@@ -83,7 +84,6 @@ def add_purchase():
   pg_type = payment_info['pg_tid']
   receipt_url = payment_info['receipt_url']
   status = payment_info['status']
-  success = payment_info['success']
 
   # 배송 정보 변수
   recipient_name = delivery_info['recipient_name']  # 결제자 이름
@@ -192,8 +192,7 @@ def add_purchase():
                                   paid_amount, paid_at, \
                                   pay_method, pg_provider, \
                                   pg_tid, pt_type, \
-                                  receipt_url, status, \
-                                  success) \
+                                  receipt_url, status) \
                           VALUES(%s, (SELECT id FROM subscribe_plan WHERE title={name}), \
                                 (SELECT NOW()), (SELECT NOW() + INTERVAL {subscription_days} DAY), \
                                 %s, %s, \
@@ -207,8 +206,7 @@ def add_purchase():
                                 %s, %s, \
                                 %s, %s, \
                                 %s, %s, \
-                                %s, %s, \
-                                %s)"
+                                %s, %s)"
   values = (user_id,
             paid_amount, apply_num,
             bank_name, buyer_addr,
@@ -221,8 +219,7 @@ def add_purchase():
             paid_amount, paid_at,
             pay_method, pg_provider,
             pg_tid, pg_type,
-            receipt_url, status,
-            success)
+            receipt_url, status)
   # user_id, payment_info, delivery_info
   try:
     cursor.execute(query, values)
