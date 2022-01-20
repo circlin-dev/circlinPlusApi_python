@@ -323,8 +323,18 @@ def add_purchase():
     try:
       cursor.execute(query)
       chat_room_id = cursor.lastrowid
+
+      query = f"""
+        INSERT INTO 
+                  chat_users(chat_room_id, user_id)
+            VALUES(%s, %s)
+      
+      """
+      values = ((chat_room_id, manager_id), (chat_room_id, user_id))
+      cursor.execute(query, values)
       connection.commit()
     except Exception as e:
+      connection.rollback()
       connection.close()
       error = str(e)
       result = {
