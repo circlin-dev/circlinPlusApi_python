@@ -53,11 +53,11 @@ def add_purchase():
   endpoint = '/api/purchase/add'
   parameters = json.loads(request.get_data(), encoding='utf-8')
 
-  user_id = parameters('user_id')
-  payment_info = parameters('payment_info')  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
-  delivery_info = parameters('delivery_info')  # int  # for plan_id 'purchases'
+  user_id = parameters['user_id']
+  payment_info = parameters['payment_info']  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
+  delivery_info = parameters['delivery_info']  # int  # for plan_id 'purchases'
   # equipment_info = parameters('equipment_info')  # boolean  # for plan_id at table 'purchases'
-  period = parameters('subscription_period')
+  period = parameters['subscription_period']
 
   # 결제 정보 변수
   apply_num = payment_info['apply_num']
