@@ -232,7 +232,7 @@ def add_purchase():
             custom_data, imp_uid,
             merchant_uid, name,
             paid_amount, paid_at,
-            pay_method, pg_provid
+            pay_method, pg_provider,
             receipt_url, status)
   # user_id, payment_info, delivery_info
   try:
