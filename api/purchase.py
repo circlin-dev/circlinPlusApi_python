@@ -83,7 +83,7 @@ def add_purchase():
   pay_method = payment_info['pay_method']
   pg_provider = payment_info['pg_provider']
   pg_tid = payment_info['pg_tid']
-  pg_type = payment_info['pg_tid']
+  pg_type = payment_info['pg_type']
   receipt_url = payment_info['receipt_url']
   status = payment_info['status']
 
@@ -219,7 +219,7 @@ def add_purchase():
                                   merchant_uid, name, \
                                   paid_amount, paid_at, \
                                   pay_method, pg_provider, \
-                                  pg_tid, pt_type, \
+                                  pg_tid, pg_type, \
                                   receipt_url, status) \
                           SELECT(%s, SELECT id FROM subscribe_plan WHERE title=%s, \
                                 NOW(), NOW() + INTERVAL {subscription_days} DAY, \
@@ -246,6 +246,7 @@ def add_purchase():
             merchant_uid, name,
             paid_amount, paid_at,
             pay_method, pg_provider,
+            pg_tid, pg_type,
             receipt_url, status)
   # user_id, payment_info, delivery_info
   try:

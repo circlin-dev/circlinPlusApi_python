@@ -418,3 +418,19 @@ def add_weekly_data():
 #   # (2) 신체 점수: 총점, (전체 동성 유저 중)순위
 #   return ''
 # endregion
+
+
+user_id, plan_id, \
+start_date, expire_date, \
+total_payment, apply_num, \
+bank_name, buyer_addr, \
+buyer_email, buyer_name, \
+buyer_postcode, buyer_tel, \
+card_name, card_number, \
+card_quota, currency, \
+custom_data, imp_uid, \
+merchant_uid, name, \
+paid_amount, paid_at, \
+pay_method, pg_provider, \
+pg_tid, pt_type, \
+receipt_url, status) \
