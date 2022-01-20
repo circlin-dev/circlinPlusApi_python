@@ -251,7 +251,6 @@ def add_purchase():
             receipt_url, status)
   # user_id, payment_info, delivery_info
   try:
-    cursor.execute("BEGIN TRANSACTION")  # Transaction: purchase ~ purchase_delivery
     cursor.execute(query, values)
     purchase_id = cursor.lastrowid
   except Exception as e:
