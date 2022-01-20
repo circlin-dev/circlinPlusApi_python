@@ -320,7 +320,18 @@ def add_purchase():
     try:
       cursor.execute(query)
       chat_room_id = cursor.lastrowid
+    except Exception as e:
+      connection.rollback()
+      connection.close()
+      error = str(e)
+      result = {
+        'result': False,
+        'error': f'Server Error while executing INSERT query(chat_rooms): {error}'
+      }
+      slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+      return json.dumps(result, ensure_ascii=False), 500
 
+    try:
       query = f"""
         INSERT INTO 
                   chat_users(chat_room_id, user_id)
@@ -334,7 +345,7 @@ def add_purchase():
       error = str(e)
       result = {
         'result': False,
-        'error': f'Server Error while executing INSERT query(chat_rooms): {error}'
+        'error': f'Server Error while executing INSERT query(chat_users): {error}'
       }
       slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
       return json.dumps(result, ensure_ascii=False), 500
