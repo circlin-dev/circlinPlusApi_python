@@ -9,6 +9,12 @@ import requests
 
 @api.route('/purchase/read/<user_id>', methods=['GET'])
 def read_purchase_record(user_id):
+  """
+  검증 조건 1: 존재하는 유저인지 확인
+  검증 조건 2: 현재 구독기간이 끝나지 않은 플랜이 있는지 확인
+
+  return: 현재 구독중인 플랜의 제목, 시작일, 마지막일
+  """
   ip = request.remote_addr
   endpoint = '/api/purchase/read/{user_id}'
 
@@ -24,13 +30,32 @@ def read_purchase_record(user_id):
     return json.dumps(result, ensure_ascii=False), 500
 
   cursor = connection.cursor()
+  # 1. 유저 정보 확인
+  is_valid_user = check_user(cursor, user_id)
+  if is_valid_user['result'] is False:
+    connection.close()
+    result = {
+      'result': False,
+      'error': f"Cannot find user {user_id}: No such user."
+    }
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+    return json.dumps(result, ensure_ascii=False), 401
+  elif is_valid_user['result'] is True:
+    pass
+
+# 2. 해당 유저에게 구독중인(기간이 만료되지 않은) 플랜이 있는지 확인
   query = f"\
     SELECT \
-          id, status \
+          sp.title, \
+          p.start_date, \
+          p.expire_date \
       from \
-          purchases \
-      WHERE \
-          user_id={user_id} \
+          purchases p, \
+          subscribe_plans sp \
+    WHERE \
+          sp.id = p.user_id \
+      AND p.user_id = {user_id} \
+      AND p.expire_date > NOW() \
       ORDER BY id DESC LIMIT 1"
 
   cursor.execute(query)
@@ -38,14 +63,18 @@ def read_purchase_record(user_id):
   if query_result_is_none(purchase_record) is True:
     result = {
       'result': True,
-      'num_purchase_record': 0
+      'plan_in_progress': None
     }
-    return json.dumps(result, ensure_ascii=False), 201
+    return json.dumps(result, ensure_ascii=False), 202
   # elif len(purchase_record) > 0 and purchase_record[0][1] != 'success':
   else:
     result = {
       'result': True,
-      'status': purchase_record[0][1]
+      'plan_in_progress': {
+        'plan_title': purchase_record[0][0],
+        'start_date': purchase_record[0][1],
+        'expire_date': purchase_record[0][2]
+      }
     }
     return json.dumps(result, ensure_ascii=False), 201
 
