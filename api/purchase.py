@@ -100,14 +100,13 @@ def add_purchase():
   # 구독 기간 정보 변수
   subscription_days = 0
   if period == 1:
-    subscription_days == 30
+    subscription_days = 30
   elif period == 3:
-    subscription_days == 90
+    subscription_days = 90
   elif period == 6:
-    subscription_days == 180
+    subscription_days = 180
   elif period == 12:
-    subscription_days == 365
-
+    subscription_days = 365
 
 # 1. 결제 정보 조회(import)
   get_token = json.loads(get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET))
