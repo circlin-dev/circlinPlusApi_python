@@ -60,38 +60,38 @@ def add_purchase():
   period = parameters('subscription_period')
 
   # 결제 정보 변수
-  apply_num = payment_info('apply_num')
-  bank_name = payment_info('bank_name')
-  buyer_addr = payment_info('buyer_addr')
-  buyer_email = payment_info('buyer_email')
-  buyer_name = payment_info('buyer_name')
-  buyer_postcode = payment_info('buyer_postcode')
-  buyer_tel = payment_info('buyer_tel')
-  card_name = payment_info('card_name')
-  card_number = payment_info('card_number')
-  card_quota = payment_info('card_quota')
-  currency = payment_info('currency')
-  custom_data = payment_info('custom_data')
-  imp_uid = payment_info('imp_uid')
-  merchant_uid = payment_info('merchant_id')
-  name = payment_info('name')
-  paid_amount = payment_info('paid_amount')
-  paid_at = payment_info('paid_at')
-  pay_method = payment_info('pay_method')
-  pg_provider = payment_info('pg_provider')
-  pg_tid = payment_info('pg_tid')
-  pg_type = payment_info('pg_tid')
-  receipt_url = payment_info('receipt_url')
-  status = payment_info('status')
-  success = payment_info('success')
+  apply_num = payment_info['apply_num']
+  bank_name = payment_info['bank_name']
+  buyer_addr = payment_info['buyer_addr']
+  buyer_email = payment_info['buyer_email']
+  buyer_name = payment_info['buyer_name']
+  buyer_postcode = payment_info['buyer_postcode']
+  buyer_tel = payment_info['buyer_tel']
+  card_name = payment_info['card_name']
+  card_number = payment_info['card_number']
+  card_quota = payment_info['card_quota']
+  currency = payment_info['currency']
+  custom_data = payment_info['custom_data']
+  imp_uid = payment_info['imp_uid']
+  merchant_uid = payment_info['merchant_id']
+  name = payment_info['name']
+  paid_amount = payment_info['paid_amount']
+  paid_at = payment_info['paid_at']
+  pay_method = payment_info['pay_method']
+  pg_provider = payment_info['pg_provider']
+  pg_tid = payment_info['pg_tid']
+  pg_type = payment_info['pg_tid']
+  receipt_url = payment_info['receipt_url']
+  status = payment_info['status']
+  success = payment_info['success']
 
   # 배송 정보 변수
-  recipient_name = delivery_info('recipient_name')  # 결제자 이름
-  post_code = delivery_info('post_code')  # 스타터 키트 배송지 주소(우편번호)
-  address = delivery_info('address')  # 스타터 키트 배송지 주소(주소)
-  address_detail = delivery_info('address_detail')  # 스타터 키트 배송지 주소(상세주소)
-  phone = delivery_info('phone')  # 결제자 휴대폰 번호
-  comment = delivery_info('comment')  # 배송 요청사항
+  recipient_name = delivery_info['recipient_name']  # 결제자 이름
+  post_code = delivery_info['post_code']  # 스타터 키트 배송지 주소(우편번호)
+  address = delivery_info['address']  # 스타터 키트 배송지 주소(주소)
+  address_detail = delivery_info['address_detail']  # 스타터 키트 배송지 주소(상세주소)
+  phone = delivery_info['phone']  # 결제자 휴대폰 번호
+  comment = delivery_info['comment']  # 배송 요청사항
 
   # 기구 정보 변수
 
