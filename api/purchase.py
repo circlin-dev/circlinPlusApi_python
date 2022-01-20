@@ -104,7 +104,7 @@ def add_purchase():
 
 
   # 1. 결제 정보 조회(import)
-  get_token = get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET)
+  get_token = json.loads(get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET))
   if get_token['result'] == False:
     result = {'result': False,
               'error': f'Failed to get import access token at server(message: {get_token["message"]})'}
