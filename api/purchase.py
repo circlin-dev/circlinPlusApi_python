@@ -1,9 +1,11 @@
-from global_things.functions import slack_error_notification, login_to_db, check_user, get_import_access_token
+from global_things.functions import slack_error_notification, login_to_db, check_user, get_import_access_token, \
+                                    query_result_is_none
 from global_things.constants import ATTRACTIVENESS_SCORE_CRITERIA, IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET
 from . import api
 from flask import request
 import json
 import requests
+
 
 @api.route('/purchase/read/<user_id>', methods=['GET'])
 def read_purchase_record(user_id):
@@ -33,7 +35,7 @@ def read_purchase_record(user_id):
 
   cursor.execute(query)
   purchase_record = cursor.fetchall()
-  if len(purchase_record) == 0 or purchase_record == ():
+  if query_result_is_none(purchase_record) is True:
     result = {
       'result': True,
       'num_purchase_record': 0
@@ -46,7 +48,6 @@ def read_purchase_record(user_id):
       'status': purchase_record[0][1]
     }
     return json.dumps(result, ensure_ascii=False), 201
-
 
 
 @api.route('/purchase/add', methods=['POST'])
@@ -98,10 +99,14 @@ def add_purchase():
 
   # 구독 기간 정보 변수
   subscription_days = 0
-  if period == 1: subscription_days == 30
-  elif period == 3: subscription_days == 90
-  elif period == 6: subscription_days == 180
-  elif period == 12: subscription_days == 365
+  if period == 1:
+    subscription_days == 30
+  elif period == 3:
+    subscription_days == 90
+  elif period == 6:
+    subscription_days == 180
+  elif period == 12:
+    subscription_days == 365
 
 
 # 1. 결제 정보 조회(import)
@@ -145,7 +150,18 @@ def add_purchase():
   query = "SELECT sales_price FROM subscribe_plans WHERE title=%s"
   values = (user_subscribed_plan)
   cursor.execute(query, values)
-  sales_price = int(cursor.fetchall()[0][0])
+  sales_price = cursor.fetchall()
+
+  if query_result_is_none(sales_price) is True:
+    connection.close()
+    result = {
+      'result': False,
+      'error': f': Error while validating payment information: plan "{user_subscribed_plan}" does not exist, but user purchase it. Check product list at IMPORT.'
+    }
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+    return json.dumps(result, ensure_ascii=False), 403
+  else:
+    pass
 
   if 1004 != user_paid_amount:  # 1004 -> sales_price
     connection.close()
@@ -266,7 +282,7 @@ def add_purchase():
   4. 채팅룸 id를 리턴한다.
   """
 
-  manager_id = 2 #1 = 대표님, 2 = 희정님
+  manager_id = 2  # 1 = 대표님, 2 = 희정님
 
   query = f"""
     SELECT 

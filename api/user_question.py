@@ -1,5 +1,5 @@
 from . import api
-from global_things.functions import slack_error_notification, login_to_db, check_user, convert_index_to_sports
+from global_things.functions import slack_error_notification, login_to_db, check_user, convert_index_to_sports, query_result_is_none
 from flask import request
 import json
 from pymysql.converters import escape_string
@@ -52,7 +52,7 @@ def add_user_question():
 
   # Verify user is valid or not.
   is_valid_user = check_user(cursor, user_id)
-  if is_valid_user['result'] == False:
+  if is_valid_user['result'] is False:
     connection.close()
     result = {
       'result': False,
@@ -60,7 +60,7 @@ def add_user_question():
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
     return json.dumps(result, ensure_ascii=False), 401
-  elif is_valid_user['result'] == True:
+  elif is_valid_user['result'] is True:
     pass
 
   # Formatting json to INSERT into mysql database.
@@ -107,7 +107,7 @@ def read_user_question(user_id):
 
   # Verify user is valid or not.
   is_valid_user = check_user(cursor, user_id)
-  if is_valid_user['result'] == False:
+  if is_valid_user['result'] is False:
     connection.close()
     result = {
       'result': False,
@@ -115,7 +115,7 @@ def read_user_question(user_id):
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
     return json.dumps(result, ensure_ascii=False), 401
-  elif is_valid_user['result'] == True:
+  elif is_valid_user['result'] is True:
     pass
 
   # Get users latest bodylab data = User's data inserted just before.
@@ -130,7 +130,7 @@ def read_user_question(user_id):
 
   cursor.execute(query)
   latest_answers = cursor.fetchall()
-  if len(latest_answers) == 0 or latest_answers == ():
+  if query_result_is_none(latest_answers) is True:
     connection.close()
     result = {
       'result': False,

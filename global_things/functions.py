@@ -18,6 +18,7 @@ def login_to_db():
 
   return conn
 
+
 # User verification by exploring user table.
 def check_user(cursor, user_id):
   query = f"SELECT * FROM users WHERE id={user_id}"
@@ -29,6 +30,15 @@ def check_user(cursor, user_id):
   else:
     result = {'result': True}
     return result
+
+
+# Check how many rows are in the result of query execution
+def query_result_is_none(execution: tuple):
+  if len(execution) == 0 or execution == ():
+    return True
+  else:
+    return False
+
 
 # Slack error notification
 def slack_error_notification(user_ip: str = '', user_id: str = '', nickname: str = '', api: str = '',

@@ -1,5 +1,5 @@
 from global_things.functions import slack_error_notification, analyze_image, get_date_range_from_week, \
-                                    login_to_db, check_user
+                                    login_to_db, check_user, query_result_is_none
 from . import api
 from flask import request
 import json
@@ -59,7 +59,7 @@ def add_weekly_data():
 
     # Verify user is valid or not.
     is_valid_user = check_user(cursor, user_id)
-    if is_valid_user['result'] == False:
+    if is_valid_user['result'] is False:
       connection.close()
       result = {
         'result': False,
@@ -67,7 +67,7 @@ def add_weekly_data():
       }
       slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
       return json.dumps(result, ensure_ascii=False), 500
-    elif is_valid_user['result'] == True:
+    elif is_valid_user['result'] is True:
       pass
 
     query = f"INSERT INTO bodylab( \
@@ -112,7 +112,7 @@ def add_weekly_data():
 
     cursor.execute(query)
     latest_bodylab_id_tuple = cursor.fetchall()
-    if len(latest_bodylab_id_tuple) == 0 or latest_bodylab_id_tuple == ():
+    if query_result_is_none(latest_bodylab_id_tuple) is True:
       result = {
         'result': False,
         'error': f'Cannot find requested bodylab data of user(id: {user_id})(bodylab)'
