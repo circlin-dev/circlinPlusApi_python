@@ -66,7 +66,7 @@ def read_purchase_record(user_id):
       'result': True,
       'plan_in_progress': None
     }
-    return json.dumps(result, ensure_ascii=False), 202
+    return json.dumps(result, ensure_ascii=False), 204
   # elif len(purchase_record) > 0 and purchase_record[0][1] != 'success':
   else:
     plan_title = purchase_record[0][1]
@@ -80,7 +80,7 @@ def read_purchase_record(user_id):
         'expire_date': expire_date
       }
     }
-    return json.dumps(result, ensure_ascii=False), 201
+    return json.dumps(result, ensure_ascii=False), 200
 
 
 @api.route('/purchase/add', methods=['POST'])
