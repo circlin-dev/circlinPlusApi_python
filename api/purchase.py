@@ -4,7 +4,7 @@ from . import api
 from flask import request
 import json
 
-@api.route('/purchase/read/<user_id>', methods=['POST'])
+@api.route('/purchase/read/<user_id>', methods=['GET'])
 def read_purchase_record(user_id):
   ip = request.remote_addr
   endpoint = '/api/purchase/read/{user_id}'
