@@ -250,10 +250,11 @@ def add_purchase():
             receipt_url, status)
   # user_id, payment_info, delivery_info
   try:
+    cursor.execute("BEGIN TRANSACTION")  # Transaction: purchase ~ purchase_delivery
     cursor.execute(query, values)
     purchase_id = cursor.lastrowid
-    connection.commit()
   except Exception as e:
+    connection.rollback()
     connection.close()
     error = str(e)
     result = {
@@ -263,7 +264,7 @@ def add_purchase():
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
     return json.dumps(result, ensure_ascii=False), 400
 
-  query = f"""INSERT INTO purchases_delivery(
+  query = f"""INSERT INTO purchase_delivery(
                                   purchase_id, post_code,
                                   address, address_detail,
                                   recipient_name, phone,
@@ -280,11 +281,12 @@ def add_purchase():
     cursor.execute(query, values)
     connection.commit()
   except Exception as e:
+    connection.rollback()
     connection.close()
     error = str(e)
     result = {
       'result': False,
-      'error': f'Server error while executing INSERT query(purchases_delivery): {error}'
+      'error': f'Server error while executing INSERT query(purchase_delivery): {error}'
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
     return json.dumps(result, ensure_ascii=False), 400
