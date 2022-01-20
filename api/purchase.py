@@ -46,6 +46,7 @@ def read_purchase_record(user_id):
 # 2. 해당 유저에게 구독중인(기간이 만료되지 않은) 플랜이 있는지 확인
   query = f"\
     SELECT \
+          p.id, \
           sp.title, \
           p.start_date, \
           p.expire_date \
@@ -56,7 +57,7 @@ def read_purchase_record(user_id):
           sp.id = p.user_id \
       AND p.user_id = {user_id} \
       AND p.expire_date > NOW() \
-      ORDER BY id DESC LIMIT 1"
+      ORDER BY p.id DESC LIMIT 1"
 
   cursor.execute(query)
   purchase_record = cursor.fetchall()
