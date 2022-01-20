@@ -3,6 +3,7 @@ from global_things.constants import ATTRACTIVENESS_SCORE_CRITERIA, IMPORT_REST_A
 from . import api
 from flask import request
 import json
+import requests
 
 @api.route('/purchase/read/<user_id>', methods=['GET'])
 def read_purchase_record(user_id):
@@ -113,7 +114,7 @@ def add_purchase():
   else:
     access_token = get_token['access_token']
 
-  payment_validation_import = request.get(
+  payment_validation_import = requests.get(
     f"https://api.iamport.kr/payments/{payment_info['imp_uid']}",
     headers={"Authorization": access_token}
   ).json()
