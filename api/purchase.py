@@ -222,7 +222,7 @@ def add_purchase():
                                   pg_tid, pg_type, \
                                   receipt_url, status) \
                           SELECT %s, id FROM subscribe_plan WHERE title=%s, \
-                                NOW(), NOW() + INTERVAL {subscription_days} DAY, \
+                                SELECT NOW(), SELECT NOW() + INTERVAL {subscription_days} DAY, \
                                 %s, %s, \
                                 %s, %s, \
                                 %s, %s, \
