@@ -328,8 +328,10 @@ def add_purchase():
       slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
       return json.dumps(result, ensure_ascii=False), 500
 
-    query = "INSERT INTO chat_users(created_at, updated_at, chat_room_id, user_id) \
-                  VALUES((SELECT NOW()), (SELECT NOW()), %s, %s)"
+    query = "INSERT INTO chat_users(created_at, updated_at, \
+                                    chat_room_id, user_id) \
+                    VALUES((SELECT NOW()), (SELECT NOW()), \
+                            %s, %s)"
     values = [(chat_room_id, manager_id), (chat_room_id, user_id)]
     try:
       cursor.execute(query, values)
