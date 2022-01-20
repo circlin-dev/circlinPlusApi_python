@@ -56,11 +56,11 @@ def add_purchase():
   endpoint = '/api/purchase/add'
   parameters = json.loads(request.get_data(), encoding='utf-8')
 
-  user_id = parameters['user_id']
+  user_id = int(parameters['user_id'])
   payment_info = parameters['payment_info']  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
   delivery_info = parameters['delivery_info']  # int  # for plan_id 'purchases'
   # equipment_info = parameters('equipment_info')  # boolean  # for plan_id at table 'purchases'
-  period = parameters['subscription_period']
+  period = int(parameters['subscription_period'].strip())
 
   # 결제 정보 변수
   apply_num = payment_info['apply_num']
@@ -77,7 +77,7 @@ def add_purchase():
   custom_data = payment_info['custom_data']
   imp_uid = payment_info['imp_uid']
   merchant_uid = payment_info['merchant_uid']
-  name = payment_info['name']
+  name = payment_info['name'].strip()
   paid_amount = payment_info['amount']
   paid_at = payment_info['paid_at']
   pay_method = payment_info['pay_method']
@@ -88,12 +88,12 @@ def add_purchase():
   status = payment_info['status']
 
   # 배송 정보 변수
-  recipient_name = delivery_info['recipient_name']  # 결제자 이름
-  post_code = delivery_info['post_code']  # 스타터 키트 배송지 주소(우편번호)
-  address = delivery_info['address']  # 스타터 키트 배송지 주소(주소)
-  address_detail = delivery_info['address_detail']  # 스타터 키트 배송지 주소(상세주소)
-  phone = delivery_info['phone']  # 결제자 휴대폰 번호
-  comment = delivery_info['comment']  # 배송 요청사항
+  recipient_name = delivery_info['recipient_name'].strip()  # 결제자 이름
+  post_code = delivery_info['post_code'].strip()  # 스타터 키트 배송지 주소(우편번호)
+  address = delivery_info['address'].strip()  # 스타터 키트 배송지 주소(주소)
+  address_detail = delivery_info['address_detail'].strip()  # 스타터 키트 배송지 주소(상세주소)
+  phone = delivery_info['phone'].strip()  # 결제자 휴대폰 번호
+  comment = delivery_info['comment'].strip()  # 배송 요청사항
 
   # 기구 정보 변수
 
@@ -156,7 +156,7 @@ def add_purchase():
     connection.close()
     result = {
       'result': False,
-      'error': f': Error while validating payment information: plan "{user_subscribed_plan}" does not exist, but user purchase it. Check product list at IMPORT.'
+      'error': f': Error while validating payment information: Subscription plan "{user_subscribed_plan}" does not exist, but user purchased it. Check product list at IMPORT.'
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
     return json.dumps(result, ensure_ascii=False), 403
