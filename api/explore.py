@@ -45,11 +45,12 @@ def explore(search_filter, word):
 
   result_list = []
   for each_id in program_ids:
+    each_id = int(each_id)
     df_by_id = programs_df[programs_df['program_id'] == each_id]
-    title = df_by_id['title'].unique()[0]
-    thumbnail = df_by_id['thumbnail'].unique()[0]
+    title = int(df_by_id['title'].unique()[0])  # For error 'TypeError: Object of type int64 is not JSON serializable'
+    thumbnail = int(df_by_id['thumbnail'].unique()[0])
     thumbnails = df_by_id['thumbnails'].sort_values(ascending=True)  # Thumbnail needs be sorted from big size to small size(1080 -> ... 150).
-    num_lectures = df_by_id['num_lectures'].unique()[0]
+    num_lectures = int(df_by_id['num_lectures'].unique()[0])
     thumbnails_list = []
     for image in thumbnails:
       each_dict = json.dumps({"pathname": image}, ensure_ascii=False)
@@ -68,4 +69,4 @@ def explore(search_filter, word):
     "result": True,
     "search_results": result_list
   }
-  return result_dict, 200
+  return json.dumps(result_dict, ensure_ascii=False), 200
