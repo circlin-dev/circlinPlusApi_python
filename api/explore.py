@@ -55,13 +55,13 @@ def explore(filter, word):
       each_dict = {"pathname": image}
       thumbnails_list.append(each_dict)
 
-    result = {
+    result = json.dumps({
       "id": each_id,
       "title": title,
       "thumbnail": thumbnail,
       "thumbnails": thumbnails_list,
       "num_lectures": num_lectures
-    }
+    }, ensure_ascii=False)
     result_list.append(result)
 
   result_dict = {
