@@ -20,6 +20,8 @@ def add_user_question():
   schedule = parameters['schedule']  # array with index(int)
   disease = parameters['disease']  # array with index(int) & short sentence for index 7(string)
   disease_detail = parameters['disease_detail']
+  intensity = parameters['intensity']
+  trial_days = parameters['trial_days']
 
   # Verify if mandatory information is not null.
   if request.method == 'POST':
@@ -71,9 +73,11 @@ def add_user_question():
     "sex": sex,
     "age_group": age_group,
     "experience_group": experience_group,
-    "schedule": schedule,
     "disease": disease,
-    "disease_detail": disease_detail
+    "disease_detail": disease_detail,
+    "schedule": schedule,
+    "intensity": intensity,
+    "trial_days": trial_days
   }, ensure_ascii=False)
   query = f"INSERT INTO user_questions (user_id, data) VALUES({user_id}, '{json_data}')"
 
