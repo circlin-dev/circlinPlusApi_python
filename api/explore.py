@@ -68,4 +68,4 @@ def explore(search_filter, word):
     "result": True,
     "search_results": result_list
   }
-  return json.dumps(result_dict, ensure_ascii=False), 200
+  return result_dict, 200
