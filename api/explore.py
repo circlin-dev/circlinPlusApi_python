@@ -10,10 +10,10 @@ import pymysql
 import requests
 
 
-@api.route('/explore/<filter>/<word>', methods=['GET'])
+@api.route('/explore/<search_filter>/<word>', methods=['GET'])
 def explore(search_filter, word):
   """
-  :param filter: 필터명(잠정: program, exercise, coach, equipment, purpose)
+  :param search_filter: 필터명(잠정: program, exercise, coach, equipment, purpose)
   :param word: 검색어
   :return: {"id": 0,
             "title": "",
@@ -22,7 +22,7 @@ def explore(search_filter, word):
             "num_lectures": 0}
   """
   ip = request.remote_addr
-  endpoint = '/explore/<filter>/<word>'
+  endpoint = '/explore/<search_filter>/<word>'
 
   try:
     connection = login_to_db()
