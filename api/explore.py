@@ -53,13 +53,13 @@ def explore(filter, word):
     thumbnails_list = []
     for image in thumbnails:
       each_dict = {"pathname": image}
-      thumbnails.append(each_dict)
+      thumbnails_list.append(each_dict)
 
     result = {
       "id": each_id,
       "title": title,
       "thumbnail": thumbnail,
-      "thumbnails": thumbnails,
+      "thumbnails": thumbnails_list,
       "num_lectures": num_lectures
     }
     result_list.append(result)
