@@ -4,8 +4,8 @@ def explore_query(search_filter, word):
       SELECT
             p.id AS program_id,
             p.title,
-            f.pathname AS thumbnails,
             (SELECT pathname FROM files WHERE id = p.thumbnail_id) AS thumbnail,
+            f.pathname AS thumbnails,            
             (SELECT COUNT(*) FROM program_lectures WHERE program_id = program_id) AS num_lectures
         FROM
             programs p,

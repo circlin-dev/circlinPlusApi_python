@@ -53,16 +53,16 @@ def explore(search_filter, word):
     num_lectures = int(df_by_id['num_lectures'].unique()[0])
     thumbnails_list = []
     for image in thumbnails:
-      each_dict = json.dumps({"pathname": image}, ensure_ascii=False)
+      each_dict = {"pathname": image}
       thumbnails_list.append(each_dict)
 
-    result = json.dumps({
+    result = {
       "id": each_id,
       "title": title,
       "thumbnail": thumbnail,
       "thumbnails": thumbnails_list,
       "num_lectures": num_lectures
-    }, ensure_ascii=False)
+    }
     result_list.append(result)
 
   result_dict = {
