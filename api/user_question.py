@@ -73,14 +73,14 @@ def add_user_question():
   # query = f"INSERT INTO user_questions (user_id, data) VALUES({user_id}, '" + json_data + "')"
 
   json_data = json.dumps({
-    "purpose": {purpose},
-    "sports": {sports},
-    "sex": {sex},
-    "age_group": {age_group},
-    "experience_group": {experience_group},
-    "schedule": {schedule},
-    "disease": {disease},
-    "disease_detail": {disease_detail}
+    "purpose": purpose,
+    "sports": sports,
+    "sex": sex,
+    "age_group": age_group,
+    "experience_group": experience_group,
+    "schedule": schedule,
+    "disease": disease,
+    "disease_detail": disease_detail
   })
   query = f"INSERT INTO user_questions (user_id, data) VALUES({user_id}, {json_data})"
 
