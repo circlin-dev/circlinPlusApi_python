@@ -13,9 +13,9 @@ def slack_error_notification(user_ip: str = '', user_id: str = '', nickname: str
   send_notification_request = requests.post(
     SLACK_NOTIFICATION_WEBHOOK,
     json.dumps({
-      "channel": "#circlin-members-log",
-      "username": "써클인 멤버스 - python",
-      "text": f"*써클인 멤버스(python)에서 오류가 발생했습니다.* \n \
+      "channel": "#circlin-plus-log",
+      "username": "써클인 플러스 - python",
+      "text": f"*써클인 플러스(python)에서 오류가 발생했습니다.* \n \
 사용자 IP: `{user_ip}` \n \
 닉네임 (ID): `{nickname}({user_id})`\n \
 API URL: `{api}` \n \
