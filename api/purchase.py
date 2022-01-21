@@ -1,5 +1,6 @@
-from global_things.functions import slack_error_notification, slack_purchase_notification, login_to_db, check_user, \
-                                    get_import_access_token, query_result_is_none
+from global_things.functions.slack import slack_error_notification, slack_purchase_notification
+from global_things.functions.general import login_to_db, check_user, query_result_is_none
+from global_things.functions.purchase import get_import_access_token
 from global_things.constants import ATTRACTIVENESS_SCORE_CRITERIA, IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET
 from . import api
 from flask import request

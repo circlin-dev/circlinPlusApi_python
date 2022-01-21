@@ -1,8 +1,11 @@
 from . import api
-from global_things.functions import slack_error_notification, login_to_db, check_user, convert_index_to_sports, query_result_is_none
+from global_things.functions.slack import slack_error_notification
+from global_things.functions.general import login_to_db, check_user, query_result_is_none
+from global_things.functions.user_question import convert_index_to_sports
 from flask import request
 import json
 from pymysql.converters import escape_string
+
 
 @api.route('/user-question/add', methods=['POST'])
 def add_user_question():

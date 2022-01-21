@@ -1,8 +1,10 @@
-from global_things.functions import slack_error_notification, analyze_image, get_date_range_from_week, \
-                                    login_to_db, check_user, query_result_is_none
+from global_things.functions.slack import slack_error_notification
+from global_things.functions.general import login_to_db, check_user, query_result_is_none
+from global_things.functions.bodylab import analyze_image, get_date_range_from_week
 from . import api
 from flask import request
 import json
+
 
 @api.route('/bodylab/add', methods=['POST'])
 def add_weekly_data():

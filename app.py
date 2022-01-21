@@ -1,6 +1,6 @@
 from api import api
 from global_things.constants import APP_ROOT
-from global_things.functions import slack_error_notification
+from global_things.functions.slack import slack_error_notification
 
 from flask import Flask, render_template
 from flask_cors import CORS
@@ -23,17 +23,17 @@ app.register_blueprint(api, url_prefix="/api")
 
 @app.route('/testing')
 def hello_world():
-    return 'Hello World!'
+  return 'Hello World!'
 
 
 @app.route('/bodylab_form')
 def bodylab_form():
-    return render_template('bodylab_form.html')
+  return render_template('bodylab_form.html')
 
 
 if __name__ == '__main__':
-    try:
-        app.run(host='0.0.0.0', debug=True)  # 0.0.0.0 for production or 127.0.0.1 for local development
-    except Exception as e:
-        error = str(e)
-        slack_error_notification(error_log=error)
+  try:
+    app.run(host='0.0.0.0', debug=True)  # 0.0.0.0 for production or 127.0.0.1 for local development
+  except Exception as e:
+    error = str(e)
+    slack_error_notification(error_log=error)

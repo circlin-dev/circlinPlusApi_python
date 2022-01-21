@@ -9,8 +9,6 @@ from pymysql.converters import escape_string
 import requests
 
 
-
-
 @api.route('/explore/<filter>/<word>', methods=['GET'])
 def explore(filter, word):
   '''
