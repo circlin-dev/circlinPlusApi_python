@@ -82,7 +82,7 @@ def add_user_question():
     "disease": disease,
     "disease_detail": disease_detail
   }, ensure_ascii=False)
-  query = f'INSERT INTO user_questions (user_id, data) VALUES({user_id}, "{json_data}")'
+  query = f"INSERT INTO user_questions (user_id, data) VALUES({user_id}, '{json_data}')"
 
   try:
     cursor.execute(query)
