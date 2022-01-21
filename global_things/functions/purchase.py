@@ -21,3 +21,18 @@ def get_import_access_token(api_key: str, api_secret: str):
               'message': response['message'],
               'status_code': 400}
     return json.dumps(result, ensure_ascii=False)
+
+
+def data_to_assign_manager(connection, user_id:int):
+  cursor = connection.cursor()
+  query = f"""SELECT
+                    data
+                FROM
+                    user_questions
+              WHERE
+                    user_id={user_id}
+              ORDER BY id DESC LIMIT 1"""
+  cursor.execute(query)
+  latest_answers = json.loads(cursor.fetchall()[0][0].replace("\\", "\\\\"), strict=False)
+  user_sex = latest_answers['sex']
+  return user_sex

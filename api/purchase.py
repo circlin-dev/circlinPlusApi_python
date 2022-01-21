@@ -1,6 +1,6 @@
 from global_things.functions.slack import slack_error_notification, slack_purchase_notification
 from global_things.functions.general import login_to_db, check_user, query_result_is_none
-from global_things.functions.purchase import get_import_access_token
+from global_things.functions.purchase import get_import_access_token, data_to_assign_manager
 from global_things.constants import ATTRACTIVENESS_SCORE_CRITERIA, IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET
 from . import api
 from flask import request
@@ -215,8 +215,8 @@ def add_purchase():
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
     return json.dumps(result, ensure_ascii=False), 401
-  elif is_valid_user['result'] is True:
-    pass
+  else:
+    user_sex = data_to_assign_manager(connection, user_id)
 
   # 4. 결제 정보(-> purchases), 배송 정보(purchase_delivery) 저장
   """
@@ -277,13 +277,16 @@ def add_purchase():
 
   # 5. 채팅방 생성 or 조회하여 채팅방 id 리턴
   """
-  1. 매니저 할당(매니저 선정 로직 필요)
+  1. 매니저 할당(매니저 선정 로직: 초기에는 '성별'만 고려)
   2. chat_users에서 user와 manager의 chat_room_id의 교집합(= 이미 만들어진 채팅방)이 있는지 확인한다.
   3. 없으면 새 채팅룸을 생성하고, 있으면 기존 채팅룸 id를 조회한다.
   4. 채팅룸 id를 리턴한다.
   """
 
-  manager_id = 2  # 1 = 대표님, 2 = 희정님
+  if user_sex == 'M':
+    manager_id = 1  # 1 = 대표님, 2 = 희정님
+  else:
+    manager_id = 2
 
   query = f"""
     SELECT 
@@ -292,7 +295,7 @@ def add_purchase():
         chat_users customer, chat_users manager
     WHERE
         customer.chat_room_id = manager.chat_room_id 
-        AND customer.user_id = {user_id} 
+        AND customer.user_id = {user_id}
         AND manager.user_id = {manager_id}"""
 
   cursor.execute(query)
