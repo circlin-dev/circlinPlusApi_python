@@ -81,8 +81,8 @@ def add_user_question():
     "schedule": schedule,
     "disease": disease,
     "disease_detail": disease_detail
-  })
-  query = f"INSERT INTO user_questions (user_id, data) VALUES({user_id}, {json_data})"
+  }, ensure_ascii=False)
+  query = f'INSERT INTO user_questions (user_id, data) VALUES({user_id}, "{json_data}")'
 
   try:
     cursor.execute(query)
