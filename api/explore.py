@@ -1,4 +1,5 @@
 from global_things.functions.slack import slack_error_notification
+from global_things.functions.explore import explore_query
 from global_things.functions.general import login_to_db, check_user, query_result_is_none
 from . import api
 import datetime
@@ -36,24 +37,7 @@ def explore(filter, word):
 
   cursor = connection.cursor()
 
-  if filter == 'program':
-    query = f"""
-      SELECT
-            p.id AS program_id,
-            p.title,
-            (SELECT pathname FROM files WHERE id = p.thumbnail_id) AS thumbnail            
-            f.pathname AS thumbnails,
-            (SELECT COUNT(*) FROM program_lectures WHERE program_id = 1) AS num_lectures,
-    
-        FROM
-            programs p,
-            files f
-        WHERE 
-            p.title LIKE "%{word}%"
-        AND
-            f.original_file_id = p.thumbnail_id"""
-  else:
-    pass
+  query = explore_query(filter, word)
 
   cursor.execute(query)
   programs_df = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'title', 'thumbnail', 'thumbnails', 'num_lectures'])
