@@ -52,7 +52,7 @@ def explore(filter, word):
     num_lectures = df_by_id['num_lectures'].unique()[0]
     thumbnails_list = []
     for image in thumbnails:
-      each_dict = {"pathname": image}
+      each_dict = json.dumps({"pathname": image}, ensure_ascii=False)
       thumbnails_list.append(each_dict)
 
     result = json.dumps({
