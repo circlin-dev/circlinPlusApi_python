@@ -108,7 +108,7 @@ def add_purchase():
   address = delivery_info['address'].strip()  # 스타터 키트 배송지 주소(주소)
   address_detail = delivery_info['address_detail'].strip()  # 스타터 키트 배송지 주소(상세주소)
   recipient_phone = delivery_info['recipient_phone'].strip()  # 결제자 휴대폰 번호
-  # phone = payment_info['buyer_tel'].strip()  # 결제자 휴대폰 번호
+  # recipient_phone = payment_info['buyer_tel'].strip()  # 결제자 휴대폰 번호
   comment = delivery_info['comment'].strip()  # 배송 요청사항
 
   # 기구 정보 변수

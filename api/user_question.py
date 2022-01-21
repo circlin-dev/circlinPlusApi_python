@@ -1,10 +1,8 @@
 from . import api
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_user, query_result_is_none
-from global_things.functions.user_question import convert_index_to_sports
 from flask import request
 import json
-from pymysql.converters import escape_string
 
 
 @api.route('/user-question/add', methods=['POST'])
@@ -67,11 +65,6 @@ def add_user_question():
     pass
 
   # Formatting json to INSERT into mysql database.
-  # query_value = f'"purpose": {purpose}, "sports": {sports}, "sex": "{sex}", "age_group": {age_group}, "experience_group": {experience_group}, "schedule": {schedule}, "disease": {disease}, "disease_detail": "{disease_detail}"'
-  # query_value = "{" + query_value + "}"
-  # json_data = escape_string(query_value)
-  # query = f"INSERT INTO user_questions (user_id, data) VALUES({user_id}, '" + json_data + "')"
-
   json_data = json.dumps({
     "purpose": purpose,
     "sports": sports,
@@ -156,12 +149,5 @@ def read_user_question(user_id):
   else:
     connection.close()
     latest_answers = json.loads(latest_answers[0][0].replace("\\", "\\\\"), strict=False)  # To prevent decoding error.
-    # latest_answers["sports"] = convert_index_to_sports(latest_answers["sports"], "sports")  # list -> list
-    # latest_answers["purpose"] = convert_index_to_sports(latest_answers["purpose"], "purpose")  # list -> list
-    # latest_answers["disease"] = convert_index_to_sports(latest_answers["disease"], "disease")  # list -> list
-    # latest_answers["age_group"] = convert_index_to_sports([int(x) for x in str(latest_answers["age_group"])],
-    #                                                       "age_group")[0]  # list -> index
-    # latest_answers["experience_group"] = convert_index_to_sports([int(x) for x in str(latest_answers["experience_group"])],
-    #                                                              "experience_group")[0]  # list -> index
     latest_answers['result'] = True
-    return json.dumps(latest_answers, ensure_ascii=False), 201
+    return json.dumps(latest_answers, ensure_ascii=False), 200
