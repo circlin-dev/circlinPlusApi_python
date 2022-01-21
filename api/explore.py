@@ -11,7 +11,7 @@ import requests
 
 
 @api.route('/explore/<filter>/<word>', methods=['GET'])
-def explore(filter, word):
+def explore(search_filter, word):
   """
   :param filter: 필터명(잠정: program, exercise, coach, equipment, purpose)
   :param word: 검색어
@@ -37,7 +37,7 @@ def explore(filter, word):
 
   cursor = connection.cursor()
 
-  query = explore_query(filter, word)
+  query = explore_query(search_filter, word)
 
   cursor.execute(query)
   programs_df = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'title', 'thumbnail', 'thumbnails', 'num_lectures'])
