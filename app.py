@@ -2,7 +2,7 @@ from api import api
 from global_things.constants import APP_ROOT
 from global_things.functions.slack import slack_error_notification
 
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask_cors import CORS
 import logging
 
@@ -23,7 +23,8 @@ app.register_blueprint(api, url_prefix="/api")
 
 @app.route('/testing')
 def hello_world():
-  return 'Hello World!'
+  ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+  return f'Hello World! {ip}'
 
 
 @app.route('/bodylab_form')
