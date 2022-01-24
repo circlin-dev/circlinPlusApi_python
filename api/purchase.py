@@ -255,7 +255,7 @@ def add_purchase():
                                 %s, %s, \
                                 %s)"
   values = (int(user_id), plan_title,
-            total_payment, imp_uid,
+            user_paid_amount, imp_uid,
             merchant_uid)
   # user_id, payment_info, delivery_info
   try:
