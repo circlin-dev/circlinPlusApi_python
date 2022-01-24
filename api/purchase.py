@@ -434,8 +434,8 @@ def update_payment_status_by_webhook():
         WHERE 
               imp_uid=%s 
           AND merchant_uid=%s"""
-      valuse = (updated_status, imp_uid, merchant_uid)
-      cursor.execute(query)
+      values = (updated_status, imp_uid, merchant_uid)
+      cursor.execute(query, values)
     else:
       pass
     cursor.commit()
