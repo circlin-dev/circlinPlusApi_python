@@ -23,7 +23,7 @@ def explore(search_filter, word):
             "num_lectures": 0}
   """
   ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
-  endpoint = API_ROOT + url_for('explore', search_filter=search_filter, word=word)
+  endpoint = API_ROOT + url_for('api.explore', search_filter=search_filter, word=word)
 
   try:
     connection = login_to_db()

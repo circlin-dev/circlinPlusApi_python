@@ -9,7 +9,7 @@ import json
 @api.route('/user-question/add', methods=['POST'])
 def add_user_question():
   ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
-  endpoint = API_ROOT + url_for('add_user_question')
+  endpoint = API_ROOT + url_for('api.add_user_question')
   parameters = json.loads(request.get_data(), encoding='utf-8')
 
   user_id = parameters['user_id']
@@ -103,7 +103,7 @@ def add_user_question():
 @api.route('/user-question/read/<user_id>', methods=['GET'])
 def read_user_question(user_id):
   ip = request.remote_addr
-  endpoint = API_ROOT + url_for('read_user_question', user_id=user_id)
+  endpoint = API_ROOT + url_for('api.read_user_question', user_id=user_id)
 
   try:
     connection = login_to_db()

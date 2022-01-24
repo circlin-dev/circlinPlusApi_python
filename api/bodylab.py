@@ -10,7 +10,7 @@ import json
 @api.route('/bodylab/add', methods=['POST'])
 def add_weekly_data():
   ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
-  endpoint = API_ROOT + url_for('add_weekly_data')
+  endpoint = API_ROOT + url_for('api.add_weekly_data')
   """
   요청이 html form으로부터가 아닌, axios나 fetch로 온다면 파라미터를 아래와 같이 다뤄야 할 수도 있다.
   -> parameters = json.loads(request.get_data(), encoding='utf-8')
@@ -265,7 +265,7 @@ def add_weekly_data():
 
 # @api.route('/bodylab/weekly/<user_id>/<period>', methods=['GET'])
 # def read_weekly_score(user_id, period):
-#   endpoint = API_ROOT + url_for('read_weekly_score', user_id=user_id, period=period)
+#   endpoint = API_ROOT + url_for('api.read_weekly_score', user_id=user_id, period=period)
 #   ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
 #   user_id = request.args.get(user_id)
 #   period = request.args.get(period)
