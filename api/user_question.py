@@ -49,6 +49,12 @@ def add_user_question():
         'disease_detail': disease_detail
       }
       return json.dumps(result, ensure_ascii=False), 400
+    if intensity not in ["고", "중", "저"]:
+      result = {
+        'result': False,
+        'error': f'Invalid value: Variable intensity should be "고", "중", "저".',
+      }
+      return json.dumps(result, ensure_ascii=False), 400
 
   try:
     connection = login_to_db()
