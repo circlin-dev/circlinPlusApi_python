@@ -438,7 +438,7 @@ def update_payment_status_by_webhook():
       cursor.execute(query, values)
     else:
       pass
-    cursor.commit()
+    connection.commit()
     connection.close()
 
     result = {'result': True}
