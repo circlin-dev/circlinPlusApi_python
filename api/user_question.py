@@ -1,14 +1,14 @@
 from . import api
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_user, query_result_is_none
-from flask import request
+from flask import request, url_for
 import json
 
 
 @api.route('/user-question/add', methods=['POST'])
 def add_user_question():
-  ip = request.remote_addr
-  endpoint = '/api/plan-question/add'
+  ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+  endpoint = url_for('add_user_question')
   parameters = json.loads(request.get_data(), encoding='utf-8')
 
   user_id = parameters['user_id']
@@ -103,6 +103,7 @@ def add_user_question():
 def read_user_question(user_id):
   ip = request.remote_addr
   endpoint = '/plan-question/read/<user_id>'
+  endpoint = url_for('read_user_question', user_id=user_id)
 
   try:
     connection = login_to_db()

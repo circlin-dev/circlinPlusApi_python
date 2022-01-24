@@ -3,7 +3,7 @@ from global_things.functions.explore import explore_query
 from global_things.functions.general import login_to_db, check_user, query_result_is_none
 from . import api
 import datetime
-from flask import request
+from flask import url_for, request
 import json
 import pandas as pd
 import pymysql
@@ -21,8 +21,8 @@ def explore(search_filter, word):
             "thumbnails": [{pathname: "320w.png"}, {pathname: "240w.png",}],
             "num_lectures": 0}
   """
-  ip = request.remote_addr
-  endpoint = '/explore/<search_filter>/<word>'
+  ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+  endpoint = url_for('explore', search_filter=search_filter, word=word)  # '/explore/<search_filter>/<word>'
 
   try:
     connection = login_to_db()
