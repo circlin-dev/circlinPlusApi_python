@@ -40,6 +40,15 @@ def add_user_question():
         }
       }
       return json.dumps(result, ensure_ascii=False), 400
+    # Check if disease_detail is None, or disease_detail is empty string("" or " " or "  " ...).
+    if len(disease) == 0 and (disease_detail is None or (type(disease_detail) == str and len(disease_detail.strip()) == 0)):
+      result = {
+        'result': False,
+        'error': f'User answered that he/she has no disease, but disease_detail has value.',
+        'disease': disease,
+        'disease_detail': disease_detail
+      }
+      return json.dumps(result, ensure_ascii=False), 400
 
   try:
     connection = login_to_db()

@@ -59,7 +59,8 @@ def read_purchase_record(user_id):
           subscribe_plans sp \
     WHERE \
           sp.id = p.user_id \
-      AND p.user_id = {user_id}"
+      AND p.user_id = {user_id} \
+    ORDER BY start_    "
 
   cursor.execute(query)
   purchase_records = cursor.fetchall()
