@@ -62,16 +62,18 @@ def read_purchase_record(user_id):
   cursor.execute(query)
   purchase_records = cursor.fetchall()
   if query_result_is_none(purchase_records) is True:
+    connection.close()
     result = {
       'result': True,
-      'plan_in_progress': None
+      'purchase_data': None
     }
     return json.dumps(result, ensure_ascii=False), 200
   # elif len(purchase_record) > 0 and purchase_record[0][1] != 'success':
   else:
     result_list = []
     for data in purchase_records:
-      each_dict = {"plan_title": data[1],
+      each_dict = {"index": data[0],
+                   "plan_title": data[1],
                    "start_date": data[2].strftime("%Y-%m-%d %H:%M:%S"),
                    "expire_date": data[3].strftime("%Y-%m-%d %H:%M:%S")}
       result_list.append(each_dict)
