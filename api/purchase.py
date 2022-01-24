@@ -74,7 +74,7 @@ def read_purchase_record(user_id):
   else:
     result_list = []
     for data in purchase_records:
-      if type(data[4]) is not None:
+      if data[4] is not None:
         deleted_at = data[4].strftime("%Y-%m-%d %H:%M:%S")
       else:
         deleted_at = data[4]
