@@ -248,14 +248,14 @@ def add_purchase():
                                   user_id, plan_id, \
                                   start_date, expire_date, \
                                   total_payment, imp_uid, \
-                                  merchant_uid) \
+                                  merchant_uid, status) \
                           VALUES(%s, (SELECT id FROM subscribe_plans WHERE title=%s), \
                                 (SELECT NOW()), (SELECT NOW() + INTERVAL {subscription_days} DAY), \
                                 %s, %s, \
-                                %s)"
+                                %s, %s)"
   values = (int(user_id), plan_title,
             user_paid_amount, imp_uid,
-            merchant_uid)
+            merchant_uid, payment_status)
   # user_id, payment_info, delivery_info
   try:
     cursor.execute(query, values)
@@ -418,8 +418,9 @@ def update_payment_status_by_webhook():
   import_paid_amount = int(payment_validation_import['response']['amount'])
 
   # 3. DB에서 결제 내역 조회
-  query = f"SELECT total_payment FROM purchases WHERE imp_uid={imp_uid} AND merchant_uid={merchant_uid}"
-  cursor.execute(query)
+  query = "SELECT total_payment FROM purchases WHERE imp_uid=%s AND merchant_uid=%s"
+  values = (imp_uid, merchant_uid)
+  cursor.execute(query, values)
   db_paid_amount = cursor.fetchall()[0][0]
 
   if int(db_paid_amount) == int(import_paid_amount):
