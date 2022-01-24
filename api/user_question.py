@@ -102,7 +102,6 @@ def add_user_question():
 @api.route('/user-question/read/<user_id>', methods=['GET'])
 def read_user_question(user_id):
   ip = request.remote_addr
-  endpoint = '/plan-question/read/<user_id>'
   endpoint = url_for('read_user_question', user_id=user_id)
 
   try:

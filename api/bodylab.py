@@ -264,7 +264,7 @@ def add_weekly_data():
 
 # @api.route('/bodylab/weekly/<user_id>/<period>', methods=['GET'])
 # def read_weekly_score(user_id, period):
-#   endpoint = url_for('read_weekly_score', user_id=user_id)  # '/api/bodylab/weekly/<user_id>'
+#   endpoint = url_for('read_weekly_score', user_id=user_id, period=period)  # '/api/bodylab/weekly/<user_id>'
 #   ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
 #   user_id = request.args.get(user_id)
 #   period = request.args.get(period)

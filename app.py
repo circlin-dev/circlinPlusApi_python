@@ -1,5 +1,5 @@
 from api import api
-from global_things.constants import APP_ROOT
+from global_things.constants import APP_ROOT, API_URL
 from global_things.functions.slack import slack_error_notification
 
 from flask import Flask, render_template, request, url_for
@@ -21,11 +21,11 @@ app.logger.setLevel(gunicorn_logger.level)
 app.register_blueprint(api, url_prefix="/api")
 
 
-@app.route('/testing/<user_id>')
-def hello_world(user_id):
+@app.route('/testing')
+def hello_world():
   ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
-  url = url_for(hello_world, user_id=user_id)
-  return f'Hello World! {ip}'
+  url = API_URL + url_for('hello_world')
+  return f'Hello World! {ip}, {url}'
 
 
 @app.route('/bodylab_form')
