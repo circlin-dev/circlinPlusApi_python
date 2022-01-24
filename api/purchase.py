@@ -60,8 +60,8 @@ def read_purchase_record(user_id):
       AND p.user_id = {user_id}"
 
   cursor.execute(query)
-  purchase_record = cursor.fetchall()
-  if query_result_is_none(purchase_record) is True:
+  purchase_records = cursor.fetchall()
+  if query_result_is_none(purchase_records) is True:
     result = {
       'result': True,
       'plan_in_progress': None
@@ -69,18 +69,17 @@ def read_purchase_record(user_id):
     return json.dumps(result, ensure_ascii=False), 200
   # elif len(purchase_record) > 0 and purchase_record[0][1] != 'success':
   else:
-    plan_title = purchase_record[0][1]
-    start_date = purchase_record[0][2].strftime("%Y-%m-%d %H:%M:%S")
-    expire_date = purchase_record[0][3].strftime("%Y-%m-%d %H:%M:%S")
-    result = {
-      'result': True,
-      'plan_in_progress': {
-        'plan_title': plan_title,
-        'start_date': start_date,
-        'expire_date': expire_date
-      }
+    result_list = []
+    for data in purchase_records:
+      each_dict = {"plan_title": data[1],
+                   "start_date": data[2].strftime("%Y-%m-%d %H:%M:%S"),
+                   "expire_date": data[3].strftime("%Y-%m-%d %H:%M:%S")}
+      result_list.append(each_dict)
+    result_dict = {
+      "result": True,
+      "purchase_data": result_list
     }
-    return json.dumps(result, ensure_ascii=False), 200
+    return json.dumps(result_dict, ensure_ascii=False), 200
 
 
 @api.route('/purchase/add', methods=['POST'])
