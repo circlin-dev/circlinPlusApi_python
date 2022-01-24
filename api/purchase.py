@@ -429,11 +429,12 @@ def update_payment_status_by_webhook():
         UPDATE 
               purchases
           SET 
-              status={updated_status}, 
+              status=%s, 
               deleted_at=(SELECT NOW())
         WHERE 
-              imp_uid={imp_uid} 
-          AND merchant_uid={merchant_uid}"""
+              imp_uid=%s 
+          AND merchant_uid=%s"""
+      valuse = (updated_status, imp_uid, merchant_uid)
       cursor.execute(query)
     else:
       pass
