@@ -23,6 +23,14 @@ def get_import_access_token(api_key: str, api_secret: str):
     return json.dumps(result, ensure_ascii=False)
 
 
+def amount_to_be_paid():
+  """
+  Must add purchase options as parameter!
+  :return: Total amount to be paid(int).
+  """
+  return 1004  # Calculate sales price by purchase options.
+
+
 def data_to_assign_manager(connection, user_id:int):
   cursor = connection.cursor()
   query = f"""SELECT

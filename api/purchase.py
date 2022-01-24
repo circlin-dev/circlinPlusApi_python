@@ -1,7 +1,7 @@
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification, slack_purchase_notification
 from global_things.functions.general import login_to_db, check_user, query_result_is_none
-from global_things.functions.purchase import get_import_access_token, data_to_assign_manager
+from global_things.functions.purchase import amount_to_be_paid, get_import_access_token, data_to_assign_manager
 from global_things.constants import IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET
 from . import api
 from flask import url_for, request
@@ -18,7 +18,7 @@ def read_purchase_record(user_id):
   return: 현재 구독중인 플랜의 제목, 시작일, 마지막일
   """
   ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
-  endpoint = API_ROOT + url_for('api.read_purchase_record', user_id=user_id)  # '/api/purchase/read/{user_id}'
+  endpoint = API_ROOT + url_for('api.read_purchase_record', user_id=user_id)
 
   try:
     connection = login_to_db()
@@ -138,33 +138,7 @@ def add_purchase():
       }
       return json.dumps(result, ensure_ascii=False), 400
 
-# 1. 결제 정보 조회(import)
-  get_token = json.loads(get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET))
-  if get_token['result'] is False:
-    result = {'result': False,
-              'error': f'Failed to get import access token at server(message: {get_token["message"]})'}
-    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=get_token['message'])
-    return json.dumps(result, ensure_ascii=False), 500
-  else:
-    access_token = get_token['access_token']
-
-  payment_validation_import = requests.get(
-    f"https://api.iamport.kr/payments/{payment_info['imp_uid']}",
-    headers={"Authorization": access_token}
-  ).json()
-  user_paid_amount = int(payment_validation_import['response']['amount'])
-  user_subscribed_plan = payment_validation_import['response']['name']
-
-  # 2. 결제 정보 검증(DB ~ import 결제액)
-  """
-  보완사항
-  (1) 결제 검증 수단: payment_info의 name값으로만 비교 중.
-    ==> 기구 렌탈 여부, 할인권 적용, 구독 기간 등의 정보 고려하여 올바르게 계산하도록 보완해야 함!
-  (2) 결제 검증 수단: sales_price와 user_paid_amount의 비교는 테스트 결제액인 1004원으로 비교중.
-    ==> 결제 가격 체계를 보완하여 1004원을 실제 판매가인 sales_price로 변경해야 함!
-  (3) 기존 결제한 플랜의 기간이 만료되지 않은 상태에서의 결제 막기 
-    ==> IMPORT 모듈을 이용하는 현재 구조상 클라이언트에서 처리해야 할듯
-  """
+  # 1. 유저 정보 확인
   try:
     connection = login_to_db()
   except Exception as e:
@@ -178,8 +152,49 @@ def add_purchase():
 
   cursor = connection.cursor()
 
+  is_valid_user = check_user(cursor, user_id)
+  if is_valid_user['result'] is False:
+    connection.close()
+    result = {
+      'result': False,
+      'error': f"Cannot find user {user_id}: No such user."
+    }
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+    return json.dumps(result, ensure_ascii=False), 401
+  else:
+    user_sex = data_to_assign_manager(connection, user_id)
+
+  # 2. 결제 정보 조회(import)
+  get_token = json.loads(get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET))
+  if get_token['result'] is False:
+    result = {'result': False,
+              'error': f'Failed to get import access token at server(message: {get_token["message"]})'}
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=get_token['message'])
+    return json.dumps(result, ensure_ascii=False), 500
+  else:
+    access_token = get_token['access_token']
+
+  payment_validation_import = requests.get(
+    f"https://api.iamport.kr/payments/{payment_info['imp_uid']}",
+    headers={"Authorization": access_token}
+  ).json()
+  payment_status = payment_validation_import['response']['status']
+  user_paid_amount = int(payment_validation_import['response']['amount'])
+  user_subscribed_plan = payment_validation_import['response']['name']
+
+  # 3. 결제 정보 검증(DB ~ import 결제액)
+  """
+  보완사항
+  (1) 결제 검증 수단: payment_info의 name값으로만 비교 중.
+    ==> 기구 렌탈 여부, 할인권 적용, 구독 기간 등의 정보 고려하여 올바르게 계산하도록 보완해야 함!
+  (2) 결제 검증 수단: sales_price와 user_paid_amount의 비교는 테스트 결제액인 1004원으로 비교중.
+    ==> 결제 가격 체계를 보완하여 1004원을 실제 판매가인 sales_price로 변경해야 함!
+  (3) 기존 결제한 플랜의 기간이 만료되지 않은 상태에서의 결제 막기 
+    ==> IMPORT 모듈을 이용하는 현재 구조상 클라이언트에서 처리해야 할듯
+  """
+
   query = "SELECT sales_price FROM subscribe_plans WHERE title=%s"
-  values = (user_subscribed_plan)
+  values = tuple(user_subscribed_plan)
   cursor.execute(query, values)
   sales_price = cursor.fetchall()
 
@@ -194,29 +209,26 @@ def add_purchase():
   else:
     pass
 
-  if 1004 != user_paid_amount:  # 1004 -> sales_price
+  total_amount = amount_to_be_paid()
+  if total_amount != user_paid_amount:  # Test value: 1004
     connection.close()
     result = {
       'result': False,
-      'error': f': Error while validating payment information: For plan "{user_subscribed_plan}", actual sales price is "{sales_price}", but user paid "{user_paid_amount}".'
+      'error': f': Error while validating payment information: For plan "{user_subscribed_plan}", actual sales price is "{total_amount}", but user paid "{user_paid_amount}".'
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
     return json.dumps(result, ensure_ascii=False), 403
   else:
-    pass
-
-  # 3. 유저 정보 확인
-  is_valid_user = check_user(cursor, user_id)
-  if is_valid_user['result'] is False:
-    connection.close()
-    result = {
-      'result': False,
-      'error': f"Cannot find user {user_id}: No such user."
-    }
-    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-    return json.dumps(result, ensure_ascii=False), 401
-  else:
-    user_sex = data_to_assign_manager(connection, user_id)
+    if payment_status == 'paid' or payment_status == 'failed':
+      pass
+    else:
+      connection.close()
+      result = {
+        'result': False,
+        'error': f': Error while validating payment information: Payment status is "{payment_status}". Payment process will continue only when the status value is "paid".'
+      }
+      slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+      return json.dumps(result, ensure_ascii=False), 403
 
   # 4. 결제 정보(-> purchases), 배송 정보(purchase_delivery) 저장
   """
@@ -344,3 +356,90 @@ def add_purchase():
   }
 
   return json.dumps(result, ensure_ascii=False), 201
+
+
+@api.route('/purchase/update_notification', methods=['POST'])
+def update_payment_status_by_webhook():
+  """
+  POST parameter
+  * imp_uid
+  * merchant_uid
+  * status:
+    - 결제가 승인되었을 때(모든 결제 수단): paid
+    - 가상계좌가 발급되었을 때: ready
+    - 가상계좌에 결제 금액이 입금되었을 때: paid
+    - 예약결제가 시도되었을 때: paid / failed
+    - 관리자 콘솔에서 환불되었을 때: cancelled
+  :return:
+  """
+  ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+  endpoint = API_ROOT + url_for('api.update_payment_status_by_webhook')
+
+  try:
+    connection = login_to_db()
+  except Exception as e:
+    error = str(e)
+    result = {
+      'result': False,
+      'error': f'Server Error while connecting to DB: {error}'
+    }
+    slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'])
+    return json.dumps(result, ensure_ascii=False), 500
+  cursor = connection.cursor()
+
+  parameters = json.loads(request.get_data(), encoding='utf-8')
+
+  imp_uid = parameters['imp_uid']
+  merchant_uid = parameters['merchant_uid']
+  updated_status = parameters['status']
+
+  # 2. import에서 결제 정보 조회
+  get_token = json.loads(get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET))
+  if get_token['result'] is False:
+    result = {'result': False,
+              'error': f'Failed to get import access token at server(message: {get_token["message"]})'}
+    slack_error_notification(user_ip=ip, api=endpoint, error_log=get_token['message'])
+    return json.dumps(result, ensure_ascii=False), 500
+  else:
+    access_token = get_token['access_token']
+
+  payment_validation_import = requests.get(
+    f"https://api.iamport.kr/payments/{imp_uid}",
+    headers={"Authorization": access_token}
+  ).json()
+  payment_status = payment_validation_import['response']['status']
+  import_paid_amount = int(payment_validation_import['response']['amount'])
+
+  # 3. DB에서 결제 내역 조회
+  query = f"SELECT total_payment FROM purchases WHERE imp_uid={imp_uid} AND merchant_uid={merchant_uid}"
+  cursor.execute(query)
+  db_paid_amount = cursor.fetchall()[0][0]
+
+  if int(db_paid_amount) == int(import_paid_amount):
+    if updated_status == 'cancelled':
+      query = f"""
+        UPDATE 
+              purchases
+          SET 
+              status={updated_status}, 
+              deleted_at=(SELECT NOW())
+        WHERE 
+              imp_uid={imp_uid} 
+          AND merchant_uid={merchant_uid}"""
+      cursor.execute(query)
+    else:
+      pass
+    cursor.commit()
+    connection.close()
+
+    result = {'result': True}
+    return json.dumps(result, ensure_ascii=False), 201
+  else:
+    connection.close()
+    result = {
+      'result': False,
+      'error': f': Error while validating payment information: Paid amount that was sent from import is {import_paid_amount} WON(imp_uid: {imp_uid}), but purchase record from DB says {db_paid_amount} WON.'
+    }
+    slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'])
+    return json.dumps(result, ensure_ascii=False), 403
+
