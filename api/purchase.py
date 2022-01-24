@@ -115,7 +115,6 @@ def add_purchase():
   recipient_name = delivery_info['recipient_name'].strip()  # 결제자 이름
   post_code = delivery_info['post_code'].strip()  # 스타터 키트 배송지 주소(우편번호)
   address = delivery_info['address'].strip()  # 스타터 키트 배송지 주소(주소)
-  address_detail = delivery_info['address_detail'].strip()  # 스타터 키트 배송지 주소(상세주소)
   recipient_phone = delivery_info['recipient_phone'].strip()  # 결제자 휴대폰 번호
   # recipient_phone = payment_info['buyer_tel'].strip()  # 결제자 휴대폰 번호
   comment = delivery_info['comment'].strip()  # 배송 요청사항
@@ -221,9 +220,12 @@ def add_purchase():
   total_amount = amount_to_be_paid()
   if total_amount != user_paid_amount:  # Test value: 1004
     connection.close()
+
+    # Failed validation: Request import to cancel the payment.
+
     result = {
       'result': False,
-      'error': f': Error while validating payment information: For plan "{user_subscribed_plan}", actual sales price is "{total_amount}", but user paid "{user_paid_amount}".'
+      'error': f': Error while validating payment information: For plan "{user_subscribed_plan}", actual sales price is "{total_amount}", but user paid "{user_paid_amount}". Automatically cancel this payment(imp_uid: {imp_uid}, merchant_uid: {merchant_uid}).'
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
     return json.dumps(result, ensure_ascii=False), 403
@@ -272,17 +274,14 @@ def add_purchase():
 
   query = f"""INSERT INTO purchase_delivery(
                                   purchase_id, post_code,
-                                  address, address_detail,
-                                  recipient_name, recipient_phone,
-                                  comment)
+                                  address, recipient_name, 
+                                  recipient_phone, comment)
                           VALUES(%s, %s,
                                 %s, %s,
-                                %s, %s,
-                                %s)"""
+                                %s, %s)"""
   values = (purchase_id, post_code,
-            address, address_detail,
-            recipient_name, recipient_phone,
-            comment)
+            address, recipient_name,
+            recipient_phone, comment)
   try:
     cursor.execute(query, values)
   except Exception as e:
