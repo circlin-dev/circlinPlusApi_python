@@ -1,5 +1,5 @@
 APP_ROOT = "/home/ubuntu/circlinMembersApi_python/circlinMembersApi_flask"
-API_URL = "https://web-api-python.circlin.co.kr"
+API_ROOT = "web-api-python.circlin.co.kr"
 IMAGE_ANALYSYS_SERVER = "3.35.12.179"
 
 # region Slack error notification

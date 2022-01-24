@@ -1,3 +1,4 @@
+from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.explore import explore_query
 from global_things.functions.general import login_to_db, check_user, query_result_is_none
@@ -22,7 +23,7 @@ def explore(search_filter, word):
             "num_lectures": 0}
   """
   ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
-  endpoint = url_for('explore', search_filter=search_filter, word=word)  # '/explore/<search_filter>/<word>'
+  endpoint = API_ROOT + url_for('explore', search_filter=search_filter, word=word)
 
   try:
     connection = login_to_db()

@@ -1,3 +1,4 @@
+from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification, slack_purchase_notification
 from global_things.functions.general import login_to_db, check_user, query_result_is_none
 from global_things.functions.purchase import get_import_access_token, data_to_assign_manager
@@ -17,7 +18,7 @@ def read_purchase_record(user_id):
   return: 현재 구독중인 플랜의 제목, 시작일, 마지막일
   """
   ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
-  endpoint = url_for('read_purchase_record', user_id=user_id)  # '/api/purchase/read/{user_id}'
+  endpoint = API_ROOT + url_for('read_purchase_record', user_id=user_id)  # '/api/purchase/read/{user_id}'
 
   try:
     connection = login_to_db()
@@ -87,7 +88,7 @@ def read_purchase_record(user_id):
 @api.route('/purchase/add', methods=['POST'])
 def add_purchase():
   ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
-  endpoint = url_for('add_purchase')  # '/api/purchase/read/{user_id}'
+  endpoint = API_ROOT + url_for('add_purchase')  # '/api/purchase/read/{user_id}'
   parameters = json.loads(request.get_data(), encoding='utf-8')
 
   user_id = parameters['user_id']
