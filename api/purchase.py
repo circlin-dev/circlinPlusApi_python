@@ -57,9 +57,7 @@ def read_purchase_record(user_id):
           subscribe_plans sp \
     WHERE \
           sp.id = p.user_id \
-      AND p.user_id = {user_id} \
-      AND p.expire_date > NOW() \
-      ORDER BY p.id DESC LIMIT 1"
+      AND p.user_id = {user_id}"
 
   cursor.execute(query)
   purchase_record = cursor.fetchall()
