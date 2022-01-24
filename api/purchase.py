@@ -74,11 +74,15 @@ def read_purchase_record(user_id):
   else:
     result_list = []
     for data in purchase_records:
+      if type(data[4]) != "NoneType":
+        deleted_at = data[4].strftime("%Y-%m-%d %H:%M:%S")
+      else:
+        deleted_at = data[4]
       each_dict = {"index": data[0],
                    "plan_title": data[1],
                    "start_date": data[2].strftime("%Y-%m-%d %H:%M:%S"),
                    "expire_date": data[3].strftime("%Y-%m-%d %H:%M:%S"),
-                   "deleted_at": data[4].strftime("%Y-%m-%d %H:%M:%S"),
+                   "deleted_at": deleted_at,
                    "status": data[5]}
       result_list.append(each_dict)
     result_dict = {
