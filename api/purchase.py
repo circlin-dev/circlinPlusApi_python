@@ -60,7 +60,7 @@ def read_purchase_record(user_id):
     WHERE \
           sp.id = p.user_id \
       AND p.user_id = {user_id} \
-    ORDER BY start_    "
+    ORDER BY start_date"
 
   cursor.execute(query)
   purchase_records = cursor.fetchall()
