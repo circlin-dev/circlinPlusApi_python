@@ -51,7 +51,9 @@ def read_purchase_record(user_id):
           p.id, \
           sp.title, \
           p.start_date, \
-          p.expire_date \
+          p.expire_date, \
+          p.deleted_at, \
+          p.status \
       from \
           purchases p, \
           subscribe_plans sp \
@@ -75,7 +77,9 @@ def read_purchase_record(user_id):
       each_dict = {"index": data[0],
                    "plan_title": data[1],
                    "start_date": data[2].strftime("%Y-%m-%d %H:%M:%S"),
-                   "expire_date": data[3].strftime("%Y-%m-%d %H:%M:%S")}
+                   "expire_date": data[3].strftime("%Y-%m-%d %H:%M:%S"),
+                   "deleted_at": data[4].strftime("%Y-%m-%d %H:%M:%S"),
+                   "status": data[5]}
       result_list.append(each_dict)
     result_dict = {
       "result": True,
