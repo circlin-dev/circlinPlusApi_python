@@ -202,7 +202,7 @@ def add_purchase():
   """
 
   query = "SELECT sales_price FROM subscribe_plans WHERE title=%s"
-  values = tuple(user_subscribed_plan)
+  values = (user_subscribed_plan)
   cursor.execute(query, values)
   sales_price = cursor.fetchall()
 
