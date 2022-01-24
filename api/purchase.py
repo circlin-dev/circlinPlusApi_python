@@ -201,9 +201,8 @@ def add_purchase():
     ==> IMPORT 모듈을 이용하는 현재 구조상 클라이언트에서 처리해야 할듯
   """
 
-  query = "SELECT sales_price FROM subscribe_plans WHERE title=%s"
-  values = (user_subscribed_plan)
-  cursor.execute(query, values)
+  query = "SELECT sales_price FROM subscribe_plans WHERE title={user_subscribed_plan}"
+  cursor.execute(query)
   sales_price = cursor.fetchall()
 
   if query_result_is_none(sales_price) is True:
