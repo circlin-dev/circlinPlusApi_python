@@ -45,20 +45,29 @@ def read_purchase_record(user_id):
   elif is_valid_user['result'] is True:
     pass
 
-# 2. 해당 유저에게 구독중인(기간이 만료되지 않은) 플랜이 있는지 확인
+  # 2. 해당 유저에게 구독중인(기간이 만료되지 않은) 플랜이 있는지 확인
   query = f"\
-    SELECT \
+    SELECT DISTINCT \
           p.id, \
           sp.title, \
+          sp.total_price, \
           p.start_date, \
           p.expire_date, \
           p.deleted_at, \
-          p.status \
+          p.buyer_email, \
+          p.buyer_name, \
+          p.buyer_tel, \
+          p.status, \
+          pd.post_code, \
+          pd.address, \
+          pd.comment \
       from \
           purchases p, \
-          subscribe_plans sp \
+          subscribe_plans sp, \
+          purchase_delivery pd \
     WHERE \
           sp.id = p.user_id \
+      AND p.id = pd.purchase_id \
       AND p.user_id = {user_id} \
     ORDER BY start_date"
 
@@ -71,20 +80,34 @@ def read_purchase_record(user_id):
       'purchase_data': None
     }
     return json.dumps(result, ensure_ascii=False), 200
-  # elif len(purchase_record) > 0 and purchase_record[0][1] != 'success':
   else:
     result_list = []
     for data in purchase_records:
-      if data[4] is not None:
-        deleted_at = data[4].strftime("%Y-%m-%d %H:%M:%S")
+      if data[5] is not None:
+        deleted_at = data[5].strftime("%Y-%m-%d %H:%M:%S")
       else:
-        deleted_at = data[4]
+        deleted_at = data[5]
       each_dict = {"index": data[0],
-                   "plan_title": data[1],
-                   "start_date": data[2].strftime("%Y-%m-%d %H:%M:%S"),
-                   "expire_date": data[3].strftime("%Y-%m-%d %H:%M:%S"),
-                   "deleted_at": deleted_at,
-                   "status": data[5]}
+                   "payment_information": {
+                     "plan_title": data[1],
+                     "total_price": data[2],  # 정상가
+                     "start_date": data[3].strftime("%Y-%m-%d %H:%M:%S"),
+                     "expire_date": data[4].strftime("%Y-%m-%d %H:%M:%S"),
+                     "deleted_at": deleted_at,
+                     "buyer_email": data[6],  # 결제자 이메일
+                     "buyer_name": data[7],  # 결제자 이름
+                     "buyer_phone": data[8],  # 결제자 전화번호
+                     "status": data[9],
+                     "installment": "일시불",  # 이용권
+                     "interest_free_installment": "해당없음",  # 무이자 할부 여부(일시불은 무조건 해당 없음
+                     "option": "비렌탈"  # 선택옵션
+                   },
+                   "delivery_information": {
+                     "recipient_postcode": data[10],  # 배송지 우편번호
+                     "recipient_address": data[11],  # 배송지 주소
+                     "recipient_comment": data[12],
+                   }
+                   }
       result_list.append(each_dict)
     result_dict = {
       "result": True,
@@ -116,7 +139,7 @@ def add_purchase():
   post_code = delivery_info['post_code'].strip()  # 스타터 키트 배송지 주소(우편번호)
   address = delivery_info['address'].strip()  # 스타터 키트 배송지 주소(주소)
   recipient_phone = delivery_info['recipient_phone'].strip()  # 결제자 휴대폰 번호
-  # recipient_phone = payment_info['buyer_tel'].strip()  # 결제자 휴대폰 번호
+
   comment = delivery_info['comment'].strip()  # 배송 요청사항
 
   # 기구 정보 변수
@@ -189,6 +212,9 @@ def add_purchase():
   payment_status = payment_validation_import['response']['status']
   user_paid_amount = int(payment_validation_import['response']['amount'])
   user_subscribed_plan = payment_validation_import['response']['name']
+  buyer_email = payment_validation_import['response']['buyer_email']
+  buyer_name = payment_validation_import['response']['buyer_name']
+  buyer_tel = payment_validation_import['response']['buyer_tel']
 
   # 3. 결제 정보 검증(DB ~ import 결제액)
   """
@@ -248,14 +274,17 @@ def add_purchase():
                                   user_id, plan_id, \
                                   start_date, expire_date, \
                                   total_payment, imp_uid, \
-                                  merchant_uid, status) \
+                                  merchant_uid, status, \
+                                  buyer_email, buyer_name, buyer_tel) \
                           VALUES(%s, (SELECT id FROM subscribe_plans WHERE title=%s), \
                                 (SELECT NOW()), (SELECT NOW() + INTERVAL {subscription_days} DAY), \
                                 %s, %s, \
-                                %s, %s)"
+                                %s, %s, \
+                                %s, %s, %s)"
   values = (int(user_id), plan_title,
             user_paid_amount, imp_uid,
-            merchant_uid, payment_status)
+            merchant_uid, payment_status,
+            buyer_email, buyer_name, buyer_tel)
   # user_id, payment_info, delivery_info
   try:
     cursor.execute(query, values)
