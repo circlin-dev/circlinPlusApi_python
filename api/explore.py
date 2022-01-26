@@ -96,7 +96,8 @@ def explore():
       "title": title,
       "thumbnail": thumbnail,
       "thumbnails": thumbnails_list,
-      "num_lectures": num_lectures
+      "num_lectures": num_lectures,
+      "query": query
     }
     result_list.append(result)
 
