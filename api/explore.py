@@ -106,6 +106,7 @@ def explore():
     "query": query,
     "filter_list_exercises": filter_list_exercises,
     "filter_list_purposes" : filter_list_purposes,
-    "filter_list_equipments": filter_list_equipments
+    "filter_list_equipments": filter_list_equipments,
+    "program_ids": program_ids
   }
   return json.dumps(result_dict, ensure_ascii=False), 200
