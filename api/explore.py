@@ -76,6 +76,7 @@ def explore():
     programs_df = programs_df[programs_df['exercise'].isin(filter_list_exercises) &
                               programs_df['purposes'].isin(filter_list_purposes) &
                               programs_df['equipments'].isin(filter_list_equipments)]
+
   program_ids = programs_df['program_id'].unique()
 
   result_list = []

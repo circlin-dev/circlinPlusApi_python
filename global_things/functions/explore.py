@@ -56,8 +56,8 @@ def explore_query(word: str = "", sort_by: str = "latest"):
           p.created_at,
           p.title,
           ex.title AS exercise,
-          JSON_ARRAYAGG(JSON_OBJECT('equipments', eq.name)) AS equipments,
-          JSON_ARRAYAGG(JSON_OBJECT('purposes', pur.title)) AS purposes,
+          eq.name AS equipments,
+          pur.title AS purposes,
           (SELECT pathname FROM files WHERE id = p.thumbnail_id) AS thumbnail,
           JSON_ARRAYAGG(JSON_OBJECT('pathname', f.pathname)) AS thumbnails,
           (SELECT COUNT(*) FROM program_lectures WHERE program_id = p.id) AS num_lectures
@@ -81,7 +81,7 @@ def explore_query(word: str = "", sort_by: str = "latest"):
         AND
           (pur.id = ppu.purpose_id AND ppu.program_id = p.id)
     GROUP BY 
-          p.id
+          p.id, ex.id, eq.id, pur.id
     ORDER BY 
           {sort_standard} DESC"""
   return query
