@@ -96,13 +96,13 @@ def explore():
       "title": title,
       "thumbnail": thumbnail,
       "thumbnails": thumbnails_list,
-      "num_lectures": num_lectures,
-      "query": query
+      "num_lectures": num_lectures
     }
     result_list.append(result)
 
   result_dict = {
     "result": True,
-    "search_results": result_list
+    "search_results": result_list,
+    "query": query
   }
   return json.dumps(result_dict, ensure_ascii=False), 200
