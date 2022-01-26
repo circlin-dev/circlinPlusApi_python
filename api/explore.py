@@ -59,7 +59,7 @@ def explore():
     pass
   elif len(filter_list_exercises) > 0 and len(filter_list_purposes) == 0 and len(filter_list_equipments) == 0:
     programs_df = programs_df[programs_df['exercise'].isin([filter_list_exercises])]
-  elif  len(filter_list_exercises) == 0 and len(filter_list_purposes) > 0 and len(filter_list_equipments) == 0:
+  elif len(filter_list_exercises) == 0 and len(filter_list_purposes) > 0 and len(filter_list_equipments) == 0:
     programs_df = programs_df[programs_df['purposes'].isin([filter_list_purposes])]
   elif len(filter_list_exercises) == 0 and len(filter_list_purposes) == 0 and len(filter_list_equipments) > 0:
     programs_df = programs_df[programs_df['equipments'].isin([filter_list_equipments])]
@@ -103,6 +103,7 @@ def explore():
   result_dict = {
     "result": True,
     "search_results": result_list,
-    "query": query
+    "query": query,
+    "filter": parameters['filter']
   }
   return json.dumps(result_dict, ensure_ascii=False), 200
