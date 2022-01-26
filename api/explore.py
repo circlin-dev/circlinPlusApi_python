@@ -84,19 +84,18 @@ def explore():
     df_by_id = programs_df[programs_df['program_id'] == each_id]
     title = df_by_id['title'].unique()[0]  # For error 'TypeError: Object of type int64 is not JSON serializable'
     thumbnail = df_by_id['thumbnail'].unique()[0]
-    thumbnails = df_by_id['thumbnails']
+    thumbnails = list(set(df_by_id['thumbnails'].values.tolist()[0].strip('][').split(', ')))
     thumbnails = sorted(thumbnails, key=lambda x: int(x.split('_')[1].split('w')[0]), reverse=True)  # Thumbnails needs be sorted from big size to small size(1080 -> ... 150).
     num_lectures = int(df_by_id['num_lectures'].unique()[0])
-    # thumbnails_list = []
-    # for image in thumbnails:
-    #   each_dict = {"pathname": image}
-    #   thumbnails_list.append(each_dict)
+    thumbnails_list = []
+    for image in thumbnails:
+      thumbnails_list.append(json.loads(image))
 
     result = {
       "id": each_id,
       "title": title,
       "thumbnail": thumbnail,
-      "thumbnails": json.dumps(thumbnails).strip('][').split(', '),
+      "thumbnails": thumbnails_list,
       "num_lectures": num_lectures
     }
     result_list.append(result)
