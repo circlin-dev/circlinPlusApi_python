@@ -23,7 +23,8 @@ app.register_blueprint(api, url_prefix="/api")
 
 @app.route('/testing')
 def hello_world():
-  ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+  # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+  ip = request.headers["X-Forwarded-For"]
   return f'Hello, {ip} !'
 
 

@@ -1,15 +1,17 @@
 from . import api
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
-from global_things.functions.general import login_to_db, check_user, query_result_is_none
+from global_things.functions.general import login_to_db, check_token, query_result_is_none
 from flask import request, url_for
 import json
 
 
 @api.route('/user-question/add', methods=['POST'])
 def add_user_question():
-  ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+  # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+  ip = request.headers["X-Forwarded-For"]  # Both public & private.
   endpoint = API_ROOT + url_for('api.add_user_question')
+  token = request.headers['Authorization']
   parameters = json.loads(request.get_data(), encoding='utf-8')
 
   user_id = parameters['user_id']
@@ -70,7 +72,7 @@ def add_user_question():
   cursor = connection.cursor()
 
   # Verify user is valid or not.
-  is_valid_user = check_user(cursor, user_id)
+  is_valid_user = check_token(cursor, user_id, token)
   if is_valid_user['result'] is False:
     connection.close()
     result = {
@@ -117,8 +119,10 @@ def add_user_question():
 
 @api.route('/user-question/read/<user_id>', methods=['GET'])
 def read_user_question(user_id):
-  ip = request.remote_addr
+  # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+  ip = request.headers["X-Forwarded-For"]  # Both public & private.
   endpoint = API_ROOT + url_for('api.read_user_question', user_id=user_id)
+  token = request.headers['token']
 
   try:
     connection = login_to_db()
@@ -134,12 +138,12 @@ def read_user_question(user_id):
   cursor = connection.cursor()
 
   # Verify user is valid or not.
-  is_valid_user = check_user(cursor, user_id)
+  is_valid_user = check_token(cursor, user_id, token)
   if is_valid_user['result'] is False:
     connection.close()
     result = {
       'result': False,
-      'error': f"Cannot find user {user_id}: No such user."
+      'error': f"Invalid request: Unauthorized token or no such user({user_id})"
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
     return json.dumps(result, ensure_ascii=False), 401

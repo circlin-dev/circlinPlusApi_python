@@ -1,7 +1,7 @@
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.explore import explore_query
-from global_things.functions.general import login_to_db, check_user, query_result_is_none
+from global_things.functions.general import login_to_db, check_token, query_result_is_none
 from . import api
 import datetime
 from flask import url_for, request
@@ -11,8 +11,8 @@ import pymysql
 import requests
 
 
-@api.route('/explore/<search_filter>/<word>', methods=['GET'])
-def explore(search_filter, word):
+@api.route('/explore', methods=['POST'])
+def explore():
   """
   :param search_filter: 필터명(잠정: program, exercise, coach, equipment, purpose)
   :param word: 검색어
@@ -22,8 +22,17 @@ def explore(search_filter, word):
             "thumbnails": [{pathname: "320w.png"}, {pathname: "240w.png",}],
             "num_lectures": 0}
   """
-  ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
-  endpoint = API_ROOT + url_for('api.explore', search_filter=search_filter, word=word)
+  # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+  ip = request.headers["X-Forwarded-For"]  # Both public & private.
+  endpoint = API_ROOT + url_for('api.explore')
+  token = request.headers['Authorization']
+  parameters = json.loads(request.get_data(), encoding='utf-8')
+  # {"filter": {"exercises": [], "purposes": [], "equipments": []}, "word": "", "sort_by": ""}
+  filter_list_exercises = parameters['filter']['exercises'] #default: Everything
+  filter_list_purposes = parameters['filter']['purposes'] #default: everything
+  filter_list_equipments = parameters['filter']['equipments']
+  sort_by = parameters["sort_by"]
+  word_for_search = parameters["word"]
 
   try:
     connection = login_to_db()
@@ -38,10 +47,35 @@ def explore(search_filter, word):
 
   cursor = connection.cursor()
 
-  query = explore_query(search_filter, word)
-
+  query = explore_query(word_for_search, sort_by)
   cursor.execute(query)
-  programs_df = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'title', 'thumbnail', 'thumbnails', 'num_lectures'])
+
+  programs_df = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
+                                                         'exercise', 'equipments', 'purposes',
+                                                         'thumbnail', 'thumbnails', 'num_lectures'])
+
+  # Apply search filter ==> 필터 순서에 따라 결과가 달라질까???
+  if len(filter_list_exercises) == 0 and len(filter_list_purposes) == 0 and len(filter_list_equipments) == 0:
+    pass
+  elif len(filter_list_exercises) > 0 and len(filter_list_purposes) == 0 and len(filter_list_equipments) == 0:
+    programs_df = programs_df[programs_df['exercise'].isin([filter_list_exercises])]
+  elif  len(filter_list_exercises) == 0 and len(filter_list_purposes) > 0 and len(filter_list_equipments) == 0:
+    programs_df = programs_df[programs_df['purposes'].isin([filter_list_purposes])]
+  elif len(filter_list_exercises) == 0 and len(filter_list_purposes) == 0 and len(filter_list_equipments) > 0:
+    programs_df = programs_df[programs_df['equipments'].isin([filter_list_equipments])]
+  elif len(filter_list_exercises) > 0 and len(filter_list_purposes) > 0 and len(filter_list_equipments) == 0:
+    programs_df = programs_df[programs_df['exercise'].isin([filter_list_exercises]) &
+                              programs_df['purposes'].isin([filter_list_purposes])]
+  elif len(filter_list_exercises) > 0 and len(filter_list_purposes) == 0 and len(filter_list_equipments) > 0:
+    programs_df = programs_df[programs_df['exercise'].isin([filter_list_exercises]) &
+                              programs_df['equipments'].isin([filter_list_equipments])]
+  elif len(filter_list_exercises) == 0 and len(filter_list_purposes) > 0 and len(filter_list_equipments) > 0:
+    programs_df = programs_df[programs_df['purposes'].isin([filter_list_purposes]) &
+                              programs_df['equipments'].isin([filter_list_equipments])]
+  else:
+    programs_df = programs_df[programs_df['exercise'].isin([filter_list_exercises]) &
+                              programs_df['purposes'].isin([filter_list_purposes]) &
+                              programs_df['equipments'].isin([filter_list_equipments])]
   program_ids = programs_df['program_id'].unique()
 
   result_list = []

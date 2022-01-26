@@ -1,6 +1,6 @@
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification, slack_purchase_notification
-from global_things.functions.general import login_to_db, check_user, query_result_is_none
+from global_things.functions.general import login_to_db, check_token, query_result_is_none
 from global_things.functions.purchase import amount_to_be_paid, get_import_access_token, data_to_assign_manager
 from global_things.constants import IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET
 from . import api
@@ -17,8 +17,10 @@ def read_purchase_record(user_id):
 
   return: 현재 구독중인 플랜의 제목, 시작일, 마지막일
   """
-  ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+  # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+  ip = request.headers["X-Forwarded-For"] # Both public & private.
   endpoint = API_ROOT + url_for('api.read_purchase_record', user_id=user_id)
+  token = request.headers['Authorization']
 
   try:
     connection = login_to_db()
@@ -33,12 +35,13 @@ def read_purchase_record(user_id):
 
   cursor = connection.cursor()
   # 1. 유저 정보 확인
-  is_valid_user = check_user(cursor, user_id)
+  # Verify user is valid or not.
+  is_valid_user = check_token(cursor, user_id, token)
   if is_valid_user['result'] is False:
     connection.close()
     result = {
       'result': False,
-      'error': f"Cannot find user {user_id}: No such user."
+      'error': f"Invalid request: Unauthorized token or no such user({user_id})"
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
     return json.dumps(result, ensure_ascii=False), 401
@@ -118,8 +121,10 @@ def read_purchase_record(user_id):
 
 @api.route('/purchase/add', methods=['POST'])
 def add_purchase():
-  ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+  # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+  ip = request.headers["X-Forwarded-For"]  # Both public & private.
   endpoint = API_ROOT + url_for('api.add_purchase')  # '/api/purchase/read/{user_id}'
+  token = request.headers['Authorization']
   parameters = json.loads(request.get_data(), encoding='utf-8')
 
   user_id = parameters['user_id']
@@ -183,17 +188,18 @@ def add_purchase():
 
   cursor = connection.cursor()
 
-  is_valid_user = check_user(cursor, user_id)
+  # Verify user is valid or not.
+  is_valid_user = check_token(cursor, user_id, token)
   if is_valid_user['result'] is False:
     connection.close()
     result = {
       'result': False,
-      'error': f"Cannot find user {user_id}: No such user."
+      'error': f"Invalid request: Unauthorized token or no such user({user_id})"
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
     return json.dumps(result, ensure_ascii=False), 401
-  else:
-    user_sex = data_to_assign_manager(connection, user_id)
+  elif is_valid_user['result'] is True:
+    pass
 
   # 2. 결제 정보 조회(import)
   get_token = json.loads(get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET))
@@ -408,7 +414,8 @@ def update_payment_status_by_webhook():
     - 관리자 콘솔에서 환불되었을 때: cancelled
   :return:
   """
-  ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+  # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+  ip = request.headers["X-Forwarded-For"]  # Both public & private.
   endpoint = API_ROOT + url_for('api.update_payment_status_by_webhook')
 
   try:

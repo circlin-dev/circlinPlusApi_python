@@ -1,4 +1,5 @@
 from config.database import DB_CONFIG
+import hashlib
 import pymysql
 
 
@@ -15,11 +16,18 @@ def login_to_db():
 
 
 # User verification by exploring user table.
-def check_user(cursor, user_id):
-  query = f"SELECT * FROM users WHERE id={user_id}"
-  cursor.execute(query)
-  user_id_tuple = cursor.fetchall()
-  if len(user_id_tuple) == 0 or user_id_tuple == ():
+def check_token(cursor, user_id, token):
+  hashed_token = hashlib.sha256(token.encode()).hexdigest()
+
+  query = f"SELECT tokenable_id, token FROM personal_access_tokens WHERE token=%s"
+  values = (hashed_token)
+  cursor.execute(query, values)
+  personal_token = cursor.fetchall()
+
+  if len(personal_token) == 0 or personal_token == ():
+    result = {'result': False}
+    return result
+  elif personal_token != hashed_token:
     result = {'result': False}
     return result
   else:

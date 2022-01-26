@@ -1,6 +1,6 @@
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
-from global_things.functions.general import login_to_db, check_user, query_result_is_none
+from global_things.functions.general import login_to_db, check_token, query_result_is_none
 from global_things.functions.bodylab import analyze_image, get_date_range_from_week
 from . import api
 from flask import url_for, request
@@ -9,8 +9,10 @@ import json
 
 @api.route('/bodylab/add', methods=['POST'])
 def add_weekly_data():
-  ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+  # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+  ip = request.headers["X-Forwarded-For"]  # Both public & private.
   endpoint = API_ROOT + url_for('api.add_weekly_data')
+  token = request.headers['Authorization']
   """
   요청이 html form으로부터가 아닌, axios나 fetch로 온다면 파라미터를 아래와 같이 다뤄야 할 수도 있다.
   -> parameters = json.loads(request.get_data(), encoding='utf-8')
@@ -61,15 +63,15 @@ def add_weekly_data():
     cursor = connection.cursor()
 
     # Verify user is valid or not.
-    is_valid_user = check_user(cursor, user_id)
+    is_valid_user = check_token(cursor, user_id, token)
     if is_valid_user['result'] is False:
       connection.close()
       result = {
         'result': False,
-        'error': f"Cannot find user {user_id}: No such user."
+        'error': f"Invalid request: Unauthorized token or no such user({user_id})"
       }
       slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-      return json.dumps(result, ensure_ascii=False), 500
+      return json.dumps(result, ensure_ascii=False), 401
     elif is_valid_user['result'] is True:
       pass
 
@@ -263,10 +265,12 @@ def add_weekly_data():
     ##########################################################
   '''
 
-# @api.route('/bodylab/weekly/<user_id>/<period>', methods=['GET'])
+# @api.route('/bodylab/weekly/<user_id>/<period>', methods=['GET'])    #check_token 추가하기!!!!!
 # def read_weekly_score(user_id, period):
 #   endpoint = API_ROOT + url_for('api.read_weekly_score', user_id=user_id, period=period)
 #   ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+#   ip = request.headers["X-Forwarded-For"]  # Both public & private.
+#   token = request.headers['Authorization']
 #   user_id = request.args.get(user_id)
 #   period = request.args.get(period)
 #
@@ -282,6 +286,20 @@ def add_weekly_data():
 #     return json.dumps(result, ensure_ascii=False), 500
 #
 #   cursor = connection.cursor()
+#
+# # Verify user is valid or not.
+# is_valid_user = check_token(cursor, user_id, token)
+# if is_valid_user['result'] is False:
+#   connection.close()
+#   result = {
+#     'result': False,
+#     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
+#   }
+#   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+#   return json.dumps(result, ensure_ascii=False), 401
+# elif is_valid_user['result'] is True:
+#   pass
+
 #   query = f'''
 #     SELECT * FROM bodylab
 #             (user_id,
