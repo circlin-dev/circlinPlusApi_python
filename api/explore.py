@@ -28,8 +28,8 @@ def explore():
   # token = request.headers['Authorization']
   parameters = json.loads(request.get_data(), encoding='utf-8')
   # {"filter": {"exercises": [], "purposes": [], "equipments": []}, "word": "", "sort_by": ""}
-  filter_list_exercises = parameters['filter']['exercises'] #default: Everything
-  filter_list_purposes = parameters['filter']['purposes'] #default: everything
+  filter_list_exercises = parameters['filter']['exercise']  # default: Everything
+  filter_list_purposes = parameters['filter']['purposes']  # default: everything
   filter_list_equipments = parameters['filter']['equipments']
   sort_by = parameters["sort_by"]
   word_for_search = parameters["word"]
@@ -104,6 +104,8 @@ def explore():
     "result": True,
     "search_results": result_list,
     "query": query,
-    "filter": parameters['filter']
+    "filter_list_exercises": filter_list_exercises,
+    "filter_list_purposes" : filter_list_purposes,
+    "filter_list_equipments": filter_list_equipments
   }
   return json.dumps(result_dict, ensure_ascii=False), 200
