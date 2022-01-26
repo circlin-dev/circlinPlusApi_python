@@ -25,7 +25,7 @@ def explore():
   # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
   ip = request.headers["X-Forwarded-For"]  # Both public & private.
   endpoint = API_ROOT + url_for('api.explore')
-  token = request.headers['Authorization']
+  # token = request.headers['Authorization']
   parameters = json.loads(request.get_data(), encoding='utf-8')
   # {"filter": {"exercises": [], "purposes": [], "equipments": []}, "word": "", "sort_by": ""}
   filter_list_exercises = parameters['filter']['exercises'] #default: Everything
