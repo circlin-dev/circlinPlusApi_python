@@ -44,9 +44,9 @@ def explore_query(word: str = "", sort_by: str = "latest"):
   """
 
   if sort_by == "rating":
-    sort_standard = "average_rating"
+    sort_standard = "p.created_at"  # average_rating
   elif sort_by == "frequency":
-    sort_standard = "frequency_week"
+    sort_standard = "p.created_at"  # frequency_week
   else:
     sort_standard = "p.created_at"
 
