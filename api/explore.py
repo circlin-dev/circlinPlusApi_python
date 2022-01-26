@@ -96,7 +96,7 @@ def explore():
       "id": each_id,
       "title": title,
       "thumbnail": thumbnail,
-      "thumbnails": json.dumps(thumbnails),
+      "thumbnails": json.dumps(thumbnails).strip('][').split(', '),
       "num_lectures": num_lectures
     }
     result_list.append(result)
