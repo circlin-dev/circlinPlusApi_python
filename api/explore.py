@@ -86,16 +86,16 @@ def explore():
     thumbnail = df_by_id['thumbnail'].unique()[0]
     thumbnails = sorted(df_by_id['thumbnails'].tolist(), key=lambda x: int(x.split('_')[1].split('w')[0]), reverse=True)  # Thumbnails needs be sorted from big size to small size(1080 -> ... 150).
     num_lectures = int(df_by_id['num_lectures'].unique()[0])
-    thumbnails_list = []
-    for image in thumbnails:
-      each_dict = {"pathname": image}
-      thumbnails_list.append(each_dict)
+    # thumbnails_list = []
+    # for image in thumbnails:
+    #   each_dict = {"pathname": image}
+    #   thumbnails_list.append(each_dict)
 
     result = {
       "id": each_id,
       "title": title,
       "thumbnail": thumbnail,
-      "thumbnails": thumbnails_list,
+      "thumbnails": thumbnails,
       "num_lectures": num_lectures
     }
     result_list.append(result)
