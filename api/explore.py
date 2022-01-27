@@ -159,10 +159,12 @@ def get_releated_terms_list(word):
     exercise_dict = {'id': equipment[0], 'value': equipment[1]}
     related_equipments_list.append(exercise_dict)
 
+  all_searched_result = related_programs_list + related_coaches_list + related_exercises_list + related_equipments_list
   connection.close()
   result_dict = {
     "result": True,
     "related_terms": {
+      "all": all_searched_result,
       "programs": related_programs_list,
       "coaches": related_coaches_list,
       "exercises": related_exercises_list,
