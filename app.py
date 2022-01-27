@@ -7,7 +7,7 @@ from flask_cors import CORS
 import logging
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources=r'/api/*')
 
 #   For nginx log
 logging.basicConfig(filename=f'{APP_ROOT}/execution_log.log', filemode='a+',
