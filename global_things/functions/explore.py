@@ -2,7 +2,7 @@ import json
 import pandas as pd
 
 
-def explore_query(word: str = "", sort_by: str = "latest"):
+def make_explore_query(word: str = "", sort_by: str = "latest"):
   """
   WHERE == FILTER!
     (1) p.title LIKE "%피%"
@@ -169,19 +169,8 @@ def explore_query(word: str = "", sort_by: str = "latest"):
           {sort_standard} DESC"""
   return query_program, query_coach, query_exercise, query_equipment
 
-  # elif search_filter == 'exercise':
-  #   pass
-  # elif search_filter == 'coach':
-  #   pass
-  # elif search_filter == 'equipment':
-  #   pass
-  # elif search_filter == 'purpose':
-  #   pass
-  # else:
-  #   pass
 
-
-def filtering_dataframe(filter_exercise: list, filter_purpose: list, filter_equipment: list, programs_df: pd.DataFrame):
+def filter_dataframe(filter_exercise: list, filter_purpose: list, filter_equipment: list, programs_df: pd.DataFrame):
   programs = programs_df.copy()
   # Apply search filter ==> 필터 순서에 따라 결과가 달라질까???
   if len(filter_exercise) == 0 and len(filter_purpose) == 0 and len(filter_equipment) == 0:
@@ -231,3 +220,51 @@ def filtering_dataframe(filter_exercise: list, filter_purpose: list, filter_equi
     result_list.append(result)
 
   return result_list
+
+
+def make_query_to_find_related_terms(word: str):
+  query_program = f"""
+    SELECT
+          prog.id,
+          prog.title
+      FROM
+          programs prog
+      WHERE 
+          prog.title LIKE "%피%"
+  ORDER BY CHAR_LENGTH(prog.title)"""
+
+  query_coach = f"""
+    SELECT
+          c.id,
+          c.name
+      FROM
+          coaches c
+      WHERE 
+          c.name LIKE "%{word}%"
+  ORDER BY CHAR_LENGTH(c.name)"""
+
+  query_exercise = f"""
+    SELECT
+        ex.id,
+        ex.title
+    FROM
+        exercises ex
+    WHERE 
+        ex.title LIKE "%{word}%"
+  ORDER BY CHAR_LENGTH(ex.title)"""
+
+  query_equipment = f"""
+    SELECT
+          eq.id,
+          eq.name
+      FROM
+          equipments eq
+      WHERE 
+          eq.name LIKE "%{word}%"
+    ORDER BY CHAR_LENGTH(eq.name)"""
+
+  return query_program, query_coach, query_exercise, query_equipment
+
+
+def program_progress(user_id):
+  pass
