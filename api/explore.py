@@ -21,6 +21,7 @@ def explore():
   # token = request.headers['Authorization']
   parameters = json.loads(request.get_data(), encoding='utf-8')
   # 필터: {"filter": {"exercises": [], "purposes": [], "equipments": []}, "word": "", "sort_by": ""}
+  user_id = parameters['user_id']
   filter_list_exercises = parameters['filter']['exercise']  # default: Everything
   filter_list_purposes = parameters['filter']['purposes']  # default: everything
   filter_list_equipments = parameters['filter']['equipments']
@@ -73,6 +74,33 @@ def explore():
     for element in search_total:
       if element not in result_list:
         result_list.append(element)
+
+  # Store search logs.
+  ids = []
+  titles = []  # result: {id: [], program_title: []}
+  if len(result_list) > 0:
+    for data in result_list:
+      ids.append(data['id'])
+      titles.append(data['title'])
+  else:
+    pass
+  json_data = json.dumps({'id': ids, 'program_title': titles}, ensure_ascii=False)
+  query = f"""INSERT INTO search_logs(user_id, search_term, search_result) VALUES({user_id}, {word_for_search}, '{json_data}')"""
+
+  try:
+    cursor.execute(query)
+    connection.commit()
+  except Exception as e:
+    connection.rollback()
+    connection.close()
+    error = str(e)
+    result = {
+      'result': False,
+      'error': f'Server Error while executing INSERT query(bodylab): {error}'
+    }
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+    return json.dumps(result, ensure_ascii=False), 500
+
 
   connection.close()
   result_dict = {
@@ -148,5 +176,5 @@ def get_releated_terms_list(word):
 
 
 @api.route('/explore/delete/<term_id>', methods=['POST'])
-def delete_one_search_record(term_id):
+def delete_one_search_record(search_log_id):
   pass

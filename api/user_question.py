@@ -103,6 +103,7 @@ def add_user_question():
     cursor.execute(query)
     connection.commit()
   except Exception as e:
+    connection.rollback()
     connection.close()
     error = str(e)
     result = {
