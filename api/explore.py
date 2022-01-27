@@ -77,14 +77,12 @@ def explore():
 
   # Store search logs.
   ids = []
-  titles = []  # result: {id: [], program_title: []}
   if len(result_list) > 0:
     for data in result_list:
       ids.append(data['id'])
-      titles.append(data['title'])
   else:
     pass
-  json_data = json.dumps({"id": ids, "program_title": titles}, ensure_ascii=False)
+  json_data = json.dumps({"program_id": ids}, ensure_ascii=False)
   query = f"""INSERT INTO search_logs(user_id, search_term, search_result) VALUES({user_id}, '{word_for_search}', '{json_data}')"""
 
   try:
