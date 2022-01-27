@@ -126,14 +126,14 @@ def get_releated_terms_list(word):
     slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'])
     return json.dumps(result, ensure_ascii=False), 500
 
-  query_program, query_coach, query_exercise, query_equipment = make_query_to_find_related_terms(word)
+  query_program, query_coach, query_exercise, query_equipment = make_query_to_find_related_terms(word.strip())
 
   cursor = connection.cursor()
 
   cursor.execute(query_program)
   related_programs = cursor.fetchall()
   cursor.execute(query_coach)
-  related_coaches =cursor.fetchall()
+  related_coaches = cursor.fetchall()
   cursor.execute(query_exercise)
   related_exercises = cursor.fetchall()
   cursor.execute(query_equipment)
