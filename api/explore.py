@@ -114,22 +114,22 @@ def get_releated_terms_list(word):
   related_equipments = cursor.fetchall()
 
   related_programs_list = []
-  for program in related_programs_list:
+  for program in related_programs:
     program_dict = {'id': program[0], 'value': program[1]}
     related_programs_list.append(program_dict)
 
   related_coaches_list = []
-  for coach in related_coaches_list:
+  for coach in related_coaches:
     coach_dict = {'id': coach[0], 'value': coach[1]}
     related_coaches_list.append(coach_dict)
 
   related_exercises_list = []
-  for exercise in related_exercises_list:
+  for exercise in related_exercises:
     exercise_dict = {'id': exercise[0], 'value': exercise[1]}
     related_exercises_list.append(exercise_dict)
 
   related_equipments_list = []
-  for equipment in related_equipments_list:
+  for equipment in related_equipments:
     exercise_dict = {'id': equipment[0], 'value': equipment[1]}
     related_equipments_list.append(exercise_dict)
 
