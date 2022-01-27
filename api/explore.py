@@ -40,7 +40,9 @@ def explore():
 
   cursor = connection.cursor()
   result_list = []
-  if word_for_search != "" or len(word_for_search) >= 0 or word_for_search is not None:
+  if word_for_search == "" or len(word_for_search) == 0 or word_for_search is None:
+    pass
+  else:
     query_program, query_coach, query_exercise, query_equipment = explore_query(word_for_search, sort_by)
 
     cursor.execute(query_program)
@@ -71,8 +73,6 @@ def explore():
     for element in search_total:
       if element not in result_list:
         result_list.append(element)
-  else:
-    pass
 
   result_dict = {
     "result": True,
