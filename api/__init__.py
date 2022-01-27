@@ -2,6 +2,6 @@ from flask import Blueprint
 from flask_cors import CORS
 
 api = Blueprint('api', __name__)
-CORS(api)
+CORS(api, supports_credentials=True)
 
 from . import bodylab, user_question, purchase, explore

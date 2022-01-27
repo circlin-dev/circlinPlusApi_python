@@ -25,7 +25,7 @@ def explore():
   filter_list_purposes = parameters['filter']['purposes']  # default: everything
   filter_list_equipments = parameters['filter']['equipments']
   sort_by = parameters["sort_by"]
-  word_for_search = parameters["word"]
+  word_for_search = parameters["word"].strip()
 
   try:
     connection = login_to_db()
@@ -39,40 +39,44 @@ def explore():
     return json.dumps(result, ensure_ascii=False), 500
 
   cursor = connection.cursor()
-  query_program, query_coach, query_exercise, query_equipment = explore_query(word_for_search, sort_by)
+  result_list = []
+  if word_for_search != "" or len(word_for_search) >= 0 or word_for_search is not None:
+    query_program, query_coach, query_exercise, query_equipment = explore_query(word_for_search, sort_by)
 
-  cursor.execute(query_program)
-  programs_by_program = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
-                                                                 'exercise', 'equipments', 'purposes',
-                                                                 'thumbnail', 'thumbnails', 'num_lectures'])
-  program_list_by_program = filtering_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_program)
-
-  cursor.execute(query_coach)
-  programs_by_coach = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
-                                                               'exercise', 'equipments', 'purposes',
-                                                               'thumbnail', 'thumbnails', 'num_lectures'])
-  program_list_by_coach = filtering_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_coach)
-
-  cursor.execute(query_exercise)
-  programs_by_exercise = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
-                                                                  'exercise', 'equipments', 'purposes',
-                                                                  'thumbnail', 'thumbnails', 'num_lectures'])
-  program_list_by_exercise = filtering_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_exercise)
-
-  cursor.execute(query_equipment)
-  programs_by_equipment = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
+    cursor.execute(query_program)
+    programs_by_program = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
                                                                    'exercise', 'equipments', 'purposes',
                                                                    'thumbnail', 'thumbnails', 'num_lectures'])
-  program_list_by_equipment = filtering_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_equipment)
+    program_list_by_program = filtering_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_program)
 
-  search_total = program_list_by_program + program_list_by_coach + program_list_by_exercise + program_list_by_equipment
-  result_list = []
-  for element in search_total:
-    if element not in result_list:
-      result_list.append(element)
+    cursor.execute(query_coach)
+    programs_by_coach = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
+                                                                 'exercise', 'equipments', 'purposes',
+                                                                 'thumbnail', 'thumbnails', 'num_lectures'])
+    program_list_by_coach = filtering_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_coach)
+
+    cursor.execute(query_exercise)
+    programs_by_exercise = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
+                                                                    'exercise', 'equipments', 'purposes',
+                                                                    'thumbnail', 'thumbnails', 'num_lectures'])
+    program_list_by_exercise = filtering_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_exercise)
+
+    cursor.execute(query_equipment)
+    programs_by_equipment = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
+                                                                     'exercise', 'equipments', 'purposes',
+                                                                     'thumbnail', 'thumbnails', 'num_lectures'])
+    program_list_by_equipment = filtering_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_equipment)
+
+    search_total = program_list_by_program + program_list_by_coach + program_list_by_exercise + program_list_by_equipment
+    for element in search_total:
+      if element not in result_list:
+        result_list.append(element)
+  else:
+    pass
 
   result_dict = {
     "result": True,
     "search_results": result_list
   }
+
   return json.dumps(result_dict, ensure_ascii=False), 200

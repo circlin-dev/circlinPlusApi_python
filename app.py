@@ -1,13 +1,12 @@
 from api import api
 from global_things.constants import APP_ROOT
 from global_things.functions.slack import slack_error_notification
-
-from flask import Flask, render_template, request, url_for
+from flask import Flask, render_template, request
 from flask_cors import CORS
 import logging
 
 app = Flask(__name__)
-CORS(app, resources={r"*": {"origins": "*"}}, supports_credentials=True)
+CORS(app, supports_credentials=True)
 
 #   For nginx log
 logging.basicConfig(filename=f'{APP_ROOT}/execution_log.log', filemode='a+',
