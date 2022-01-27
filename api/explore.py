@@ -65,7 +65,7 @@ def explore():
                                                                    'thumbnail', 'thumbnails', 'num_lectures'])
   program_list_by_equipment = filtering_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_equipment)
 
-  result_list = list(OrderedDict.fromkeys(program_list_by_program + program_list_by_coach + program_list_by_exercise + program_list_by_equipment))
+  result_list = list(dict.fromkeys(program_list_by_program + program_list_by_coach + program_list_by_exercise + program_list_by_equipment))
   result_dict = {
     "result": True,
     "search_results": result_list
