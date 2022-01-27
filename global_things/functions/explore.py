@@ -230,7 +230,7 @@ def make_query_to_find_related_terms(word: str):
       FROM
           programs prog
       WHERE 
-          prog.title LIKE "%피%"
+          prog.title LIKE "%{word}%"
   ORDER BY CHAR_LENGTH(prog.title)"""
 
   query_coach = f"""
