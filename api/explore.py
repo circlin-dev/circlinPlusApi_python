@@ -85,7 +85,7 @@ def explore():
   else:
     pass
   json_data = json.dumps({'id': ids, 'program_title': titles}, ensure_ascii=False)
-  query = f"""INSERT INTO search_logs(user_id, search_term, search_result) VALUES({user_id}, {word_for_search}, '{json_data}')"""
+  query = f"""INSERT INTO search_logs(user_id, search_term, search_result) VALUES({user_id}, '{word_for_search}', '{json_data}')"""
 
   try:
     cursor.execute(query)
@@ -96,7 +96,7 @@ def explore():
     error = str(e)
     result = {
       'result': False,
-      'error': f'Server Error while executing INSERT query(bodylab): {error}'
+      'error': f'Server Error while executing INSERT query(explore): {error}'
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
     return json.dumps(result, ensure_ascii=False), 500
