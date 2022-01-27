@@ -85,7 +85,7 @@ def explore():
   else:
     pass
   json_data = json.dumps({"id": ids, "program_title": titles}, ensure_ascii=False)
-  query = f"""INSERT INTO search_logs(user_id, search_term, search_result) VALUES({user_id}, '{word_for_search}', `{json_data}`)"""
+  query = f"""INSERT INTO search_logs(user_id, search_term, search_result) VALUES({user_id}, '{word_for_search}', '{json_data}')"""
 
   try:
     cursor.execute(query)
