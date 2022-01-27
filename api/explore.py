@@ -76,7 +76,6 @@ def explore():
 
   result_dict = {
     "result": True,
-    "word": word_for_search,
     "search_results": result_list
   }
 
