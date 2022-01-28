@@ -210,7 +210,7 @@ def delete_one_search_record(user_id:int, search_term: str):
       SET
           deleted_at = (SELECT NOW())
     WHERE
-        search_term = {search_term}
+        search_term = '{search_term}'
       AND
         user_id = {user_id}
       AND
@@ -240,11 +240,13 @@ def delete_one_search_record(user_id:int, search_term: str):
   return json.dumps(result_dict, ensure_ascii=False), 200
 
 
-@api.route('/explore/delete/logs/<user_id>', methods=['PATCH'])
+@api.route('/explore/delete/logs', methods=['PATCH'])
 def delete_all_search_record(user_id: int):
   ip = request.headers["X-Forwarded-For"]  # Both public & private.
-  endpoint = API_ROOT + url_for('api.delete_all_search_record', user_id=user_id)
+  endpoint = API_ROOT + url_for('api.delete_all_search_record')
   # token = request.headers['Authorization']
+  parameters = json.loads(request.get_data(), encoding="utf-8")
+  user_id = parameters['user_id']
 
   try:
     connection = login_to_db()

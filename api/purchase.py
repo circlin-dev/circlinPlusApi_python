@@ -250,7 +250,6 @@ def add_purchase():
   total_amount = amount_to_be_paid()
   if total_amount != user_paid_amount:  # Test value: 1004
     connection.close()
-
     # Failed validation: Request import to cancel the payment.
 
     result = {
@@ -275,8 +274,8 @@ def add_purchase():
   """
   기구 신청을 했을 경우, 기구 신청 내역을 저장하는 쿼리를 만들어야 함!
   """
-  query = f"INSERT INTO purchases( \
-                                  user_id, plan_id, \
+
+  query = f"INSERT INTO purchases(user_id, plan_id, \
                                   start_date, expire_date, \
                                   total_payment, imp_uid, \
                                   merchant_uid, status, \
@@ -295,15 +294,58 @@ def add_purchase():
     cursor.execute(query, values)
     purchase_id = cursor.lastrowid
   except Exception as e:
+    """
+      user_id = parameters['user_id']
+  period = int(parameters['subscription_period'])
+  payment_info = parameters['payment_info']  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
+  delivery_info = parameters['delivery_info']  # int  # for plan_id 'purchases'
+  # equipment_info = parameters('equipment_info')  # boolean  # for plan_id at table 'purchases'
+
+  # 결제 정보 변수
+  plan_title = payment_info['name']
+  total_payment = payment_info['amount']
+  imp_uid = payment_info['imp_uid']
+  merchant_uid = payment_info['merchant_uid']
+
+  # 배송 정보 변수
+  recipient_name = delivery_info['recipient_name'].strip()  # 결제자 이름
+  post_code = delivery_info['post_code'].strip()  # 스타터 키트 배송지 주소(우편번호)
+  address = delivery_info['address'].strip()  # 스타터 키트 배송지 주소(주소)
+  recipient_phone = delivery_info['recipient_phone'].strip()  # 결제자 휴대폰 번호
+
+  comment = delivery_info['comment'].strip()  # 배송 요청사항
+  
+  payment_validation_import
+    """
     connection.rollback()
     connection.close()
     error = str(e)
     result = {
       'result': False,
-      'error': f'Server error while executing INSERT query(purchases): {error}'
+      'error': f'Server error while executing INSERT query(purchases): {error}, {parameters}, {payment_validation_import}'
     }
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
     return json.dumps(result, ensure_ascii=False), 500
+
+######################FOR ERROR CHECK###########################
+  # 3. DB에서 결제 내역 조회
+  query = "SELECT total_payment FROM purchases WHERE imp_uid=%s AND merchant_uid=%s"
+  values = (imp_uid, merchant_uid)
+  cursor.execute(query, values)
+  db_paid_amount = cursor.fetchall()
+
+  if query_result_is_none(db_paid_amount) is True:
+    connection.close()
+    result = {
+      'result': False,
+      'error': f'No purchase record exists for imp_uid={imp_uid}, merchant_uid={merchant_uid}'
+    }
+    slack_error_notification(user_ip=ip, user_id='', api=endpoint, error_log=result['error'], query=query)
+    return json.dumps(result, ensure_ascii=False), 400
+
+
+
+
 
   query = f"""INSERT INTO purchase_delivery(
                                   purchase_id, post_code,
@@ -477,7 +519,16 @@ def update_payment_status_by_webhook():
   query = "SELECT total_payment FROM purchases WHERE imp_uid=%s AND merchant_uid=%s"
   values = (imp_uid, merchant_uid)
   cursor.execute(query, values)
-  db_paid_amount = cursor.fetchall()[0]
+  db_paid_amount = cursor.fetchall()
+
+  if query_result_is_none(db_paid_amount) is True:
+    connection.close()
+    result = {
+      'result': False,
+      'error': f'No purchase record exists for imp_uid={imp_uid}, merchant_uid={merchant_uid}'
+    }
+    slack_error_notification(user_ip=ip, user_id='', api=endpoint, error_log=result['error'], query=query)
+    return json.dumps(result, ensure_ascii=False), 400
 
   if int(db_paid_amount) == int(import_paid_amount):
     if updated_status == 'cancelled':
