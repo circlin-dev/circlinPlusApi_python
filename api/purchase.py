@@ -292,6 +292,7 @@ def add_purchase():
   # user_id, payment_info, delivery_info
   try:
     cursor.execute(query, values)
+    connection.commit()
     purchase_id = cursor.lastrowid
   except Exception as e:
     """
@@ -345,9 +346,6 @@ def add_purchase():
     return json.dumps(result, ensure_ascii=False), 400
 
 
-
-
-
   query = f"""INSERT INTO purchase_delivery(
                                   purchase_id, post_code,
                                   address, recipient_name, 
@@ -360,6 +358,7 @@ def add_purchase():
             recipient_phone, comment)
   try:
     cursor.execute(query, values)
+    connection.commit()
   except Exception as e:
     connection.rollback()
     connection.close()
@@ -422,6 +421,7 @@ def add_purchase():
     query = "INSERT INTO chat_rooms(created_at, updated_at) VALUES((SELECT NOW()), (SELECT NOW()))"
     try:
       cursor.execute(query)
+      connection.commit()
       chat_room_id = cursor.lastrowid
     except Exception as e:
       connection.rollback()
@@ -434,11 +434,12 @@ def add_purchase():
       slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
       return json.dumps(result, ensure_ascii=False), 500
 
-    query = f"INSERT INTO chat_users(created_at, updated_at, chat_room_id, user_id) \
-                    VALUES(NOW(), NOW(), {chat_room_id}, {manager_id}), \
-                          (NOW(), NOW(), {chat_room_id}, {user_id})"
     try:
+      query = f"INSERT INTO chat_users(created_at, updated_at, chat_room_id, user_id) \
+                      VALUES(SELECT(NOW()), SELECT(NOW()), {chat_room_id}, {manager_id}), \
+                            (SELECT(NOW()), SELECT(NOW()), {chat_room_id}, {user_id})"
       cursor.execute(query)
+      connection.commit()
     except Exception as e:
       connection.rollback()
       connection.close()
@@ -452,7 +453,7 @@ def add_purchase():
   else:
     chat_room_id = existing_chat_room[0][0]
 
-  connection.commit()
+  # connection.commit()
   slack_purchase_notification(cursor, user_id, manager_id, purchase_id)
   connection.close()
   result = {
