@@ -243,7 +243,7 @@ def delete_one_search_record(user_id:int, search_term: str):
 @api.route('/explore/delete/logs/<user_id>', methods=['PATCH'])
 def delete_all_search_record(user_id):
   ip = request.headers["X-Forwarded-For"]  # Both public & private.
-  endpoint = API_ROOT + url_for('api.delete_all_search_record')
+  endpoint = API_ROOT + url_for('api.delete_all_search_record', user_id=user_id)
   # token = request.headers['Authorization']
   # parameters = json.loads(request.get_data(), encoding="utf-8")
   # user_id = parameters['user_id']
