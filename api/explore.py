@@ -15,12 +15,11 @@ def explore():
   header: Authorization
   body: filter{exercises, purposes, equipments}, sort_by, word,
   """
-  # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
   ip = request.headers["X-Forwarded-For"]  # Both public & private.
   endpoint = API_ROOT + url_for('api.explore')
   # token = request.headers['Authorization']
   parameters = json.loads(request.get_data(), encoding='utf-8')
-  # 필터: {"filter": {"exercises": [], "purposes": [], "equipments": []}, "word": "", "sort_by": ""}
+
   user_id = parameters['user_id']
   filter_list_exercises = parameters['filter']['exercise']  # default: Everything
   filter_list_purposes = parameters['filter']['purposes']  # default: everything

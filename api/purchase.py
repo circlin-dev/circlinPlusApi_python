@@ -121,9 +121,11 @@ def read_purchase_record(user_id):
 @api.route('/purchase/add', methods=['POST'])
 def add_purchase():
   ip = request.headers["X-Forwarded-For"]  # Both public & private.
-  endpoint = API_ROOT + url_for('api.add_purchase')  # '/api/purchase/read/{user_id}'
+  endpoint = API_ROOT + url_for('api.add_purchase')
   # token = request.headers['Authorization']
   parameters = json.loads(request.get_data(), encoding='utf-8')
+
+  slack_error_notification(user_ip=ip, user_id='', api=endpoint, error_log=f"Mobile received parameters: {parameters}")
 
   user_id = parameters['user_id']
   period = int(parameters['subscription_period'])
