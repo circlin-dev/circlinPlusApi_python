@@ -313,16 +313,6 @@ def read_search_record(user_id: int):
     return json.dumps(result, ensure_ascii=False), 500
 
   cursor = connection.cursor()
-  # query = f"""
-  #   SELECT
-  #         id, search_term
-  #     FROM
-  #         search_logs
-  #   WHERE
-  #       user_id={user_id}
-  #     AND
-  #       deleted_at IS NULL"""
-
   """
   중복을 제거하려면 아래와 같이 한다.
   """
@@ -333,7 +323,9 @@ def read_search_record(user_id: int):
               FROM 
                   search_logs sl
              WHERE 
-                  sl.user_id={user_id} 
+                  sl.user_id={user_id}
+              AND
+                  sl.deleted_at IS NULL
           GROUP BY search_term
           ORDER BY sl.created_at DESC"""
   try:
