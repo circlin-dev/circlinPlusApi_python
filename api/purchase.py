@@ -125,7 +125,7 @@ def add_purchase():
   # token = request.headers['Authorization']
   parameters = json.loads(request.get_data(), encoding='utf-8')
 
-  slack_error_notification(user_ip=ip, user_id='', api=endpoint, error_log=f"Mobile received parameters: {parameters}")
+  slack_error_notification(user_ip=ip, user_id='', api=endpoint, error_log=f"Mobile received parameters")
 
   user_id = parameters['user_id']
   period = int(parameters['subscription_period'])
