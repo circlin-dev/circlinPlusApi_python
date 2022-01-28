@@ -247,7 +247,6 @@ def delete_all_search_record(user_id: int):
   # token = request.headers['Authorization']
   parameters = json.loads(request.get_data(), encoding="utf-8")
   user_id = parameters['user_id']
-
   try:
     connection = login_to_db()
   except Exception as e:
@@ -328,15 +327,15 @@ def read_search_record(user_id: int):
   중복을 제거하려면 아래와 같이 한다.
   """
   query = f"""
-    SELECT DISTINCT 
+    SELECT DISTINCT
+                  sl.id, 
                   sl.search_term 
               FROM 
-                  search_logs sl 
+                  search_logs sl
              WHERE 
                   sl.user_id={user_id} 
           GROUP BY search_term
           ORDER BY sl.created_at DESC"""
-
   try:
     cursor.execute(query)
     search_records = cursor.fetchall()
