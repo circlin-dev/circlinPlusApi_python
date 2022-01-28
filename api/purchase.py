@@ -476,7 +476,7 @@ def update_payment_status_by_webhook():
   query = "SELECT total_payment FROM purchases WHERE imp_uid=%s AND merchant_uid=%s"
   values = (imp_uid, merchant_uid)
   cursor.execute(query, values)
-  db_paid_amount = cursor.fetchall()[0]
+  db_paid_amount = cursor.fetchall()[0][0]
   #
   # if query_result_is_none(db_paid_amount) is True:
   #   connection.close()
