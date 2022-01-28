@@ -338,8 +338,9 @@ def add_purchase():
     connection.close()
     result = {
       'result': False,
-      'error': f'No purchase record exists for imp_uid={imp_uid}, merchant_uid={merchant_uid}'
+      'error': f'Server error while executing INSERT query(purchases): {parameters}, {payment_validation_import}'
     }
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
     slack_error_notification(user_ip=ip, user_id='', api=endpoint, error_log=result['error'], query=query)
     return json.dumps(result, ensure_ascii=False), 400
 
