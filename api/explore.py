@@ -225,6 +225,7 @@ def delete_one_search_record(search_log_id: int):
     slack_error_notification(user_ip=ip, user_id='', api=endpoint, error_log=result['error'], query=query)
     return json.dumps(result, ensure_ascii=False), 400
 
+  connection.commit()
   connection.close()
   result_dict = {
     'result': True,
