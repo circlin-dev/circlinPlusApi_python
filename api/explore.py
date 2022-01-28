@@ -69,6 +69,12 @@ def explore():
       programs_by_equipment = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
                                                                        'exercise', 'equipments', 'purposes',
                                                                        'thumbnail', 'thumbnails', 'num_lectures'])
+      program_list_by_equipment = filter_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_equipment)
+
+      search_total = program_list_by_program + program_list_by_coach + program_list_by_exercise + program_list_by_equipment
+      for element in search_total:
+        if element not in result_list:
+          result_list.append(element)
     except Exception as e:
       connection.rollback()
       connection.close()
@@ -77,13 +83,6 @@ def explore():
         'result': False,
         'error': f'Server Error while executing INSERT query(explore): {error}'
       }
-      # slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
-    program_list_by_equipment = filter_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_equipment)
-
-    search_total = program_list_by_program + program_list_by_coach + program_list_by_exercise + program_list_by_equipment
-    for element in search_total:
-      if element not in result_list:
-        result_list.append(element)
 
   # Store search logs.
   ids = []
@@ -109,7 +108,6 @@ def explore():
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
     return json.dumps(result, ensure_ascii=False), 500
 
-
   connection.close()
   result_dict = {
     "result": True,
@@ -120,9 +118,9 @@ def explore():
 
 
 @api.route('/explore/related/<word>', methods=['GET'])
-def get_releated_terms_list(word):
+def get_related_terms_list(word):
   ip = request.headers["X-Forwarded-For"]  # Both public & private.
-  endpoint = API_ROOT + url_for('api.get_releated_terms_list', word=word)
+  endpoint = API_ROOT + url_for('api.get_related_terms_list', word=word)
   # token = request.headers['Authorization']
 
   try:
