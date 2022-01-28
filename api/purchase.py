@@ -294,29 +294,38 @@ def add_purchase():
     cursor.execute(query, values)
     connection.commit()
     purchase_id = cursor.lastrowid
+
+    connection.close()
+    #error = str(e)
+    result = {
+      'result': False,
+      'error': f'Server error while executing INSERT query(purchases): {purchase_id}, {parameters}, {payment_validation_import}'
+    }
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+    return json.dumps(result, ensure_ascii=False), 500
   except Exception as e:
     """
       user_id = parameters['user_id']
-  period = int(parameters['subscription_period'])
-  payment_info = parameters['payment_info']  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
-  delivery_info = parameters['delivery_info']  # int  # for plan_id 'purchases'
-  # equipment_info = parameters('equipment_info')  # boolean  # for plan_id at table 'purchases'
-
-  # 결제 정보 변수
-  plan_title = payment_info['name']
-  total_payment = payment_info['amount']
-  imp_uid = payment_info['imp_uid']
-  merchant_uid = payment_info['merchant_uid']
-
-  # 배송 정보 변수
-  recipient_name = delivery_info['recipient_name'].strip()  # 결제자 이름
-  post_code = delivery_info['post_code'].strip()  # 스타터 키트 배송지 주소(우편번호)
-  address = delivery_info['address'].strip()  # 스타터 키트 배송지 주소(주소)
-  recipient_phone = delivery_info['recipient_phone'].strip()  # 결제자 휴대폰 번호
-
-  comment = delivery_info['comment'].strip()  # 배송 요청사항
-  
-  payment_validation_import
+      period = int(parameters['subscription_period'])
+      payment_info = parameters['payment_info']  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
+      delivery_info = parameters['delivery_info']  # int  # for plan_id 'purchases'
+      # equipment_info = parameters('equipment_info')  # boolean  # for plan_id at table 'purchases'
+    
+      # 결제 정보 변수
+      plan_title = payment_info['name']
+      total_payment = payment_info['amount']
+      imp_uid = payment_info['imp_uid']
+      merchant_uid = payment_info['merchant_uid']
+    
+      # 배송 정보 변수
+      recipient_name = delivery_info['recipient_name'].strip()  # 결제자 이름
+      post_code = delivery_info['post_code'].strip()  # 스타터 키트 배송지 주소(우편번호)
+      address = delivery_info['address'].strip()  # 스타터 키트 배송지 주소(주소)
+      recipient_phone = delivery_info['recipient_phone'].strip()  # 결제자 휴대폰 번호
+    
+      comment = delivery_info['comment'].strip()  # 배송 요청사항
+      
+      payment_validation_import
     """
     connection.rollback()
     connection.close()
