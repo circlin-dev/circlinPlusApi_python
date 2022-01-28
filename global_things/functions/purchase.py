@@ -29,18 +29,3 @@ def amount_to_be_paid():
   :return: Total amount to be paid(int).
   """
   return 1004  # Calculate sales price by purchase options.
-
-
-def data_to_assign_manager(connection, user_id: int):
-  cursor = connection.cursor()
-  query = f"""SELECT
-                    data
-                FROM
-                    user_questions
-              WHERE
-                    user_id={user_id}
-              ORDER BY id DESC LIMIT 1"""
-  cursor.execute(query)
-  latest_answers = json.loads(cursor.fetchall()[0][0].replace("\\", "\\\\"), strict=False)
-  user_sex = latest_answers['sex']
-  return user_sex

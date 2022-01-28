@@ -1,7 +1,7 @@
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification, slack_purchase_notification
 from global_things.functions.general import login_to_db, check_token, query_result_is_none
-from global_things.functions.purchase import amount_to_be_paid, get_import_access_token, data_to_assign_manager
+from global_things.functions.purchase import amount_to_be_paid, get_import_access_token
 from global_things.constants import IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET
 from . import api
 from flask import url_for, request
@@ -36,7 +36,7 @@ def read_purchase_record(user_id):
   cursor = connection.cursor()
   # 1. 유저 정보 확인
   # Verify user is valid or not.
-  is_valid_user = check_token(cursor, user_id, token)
+  is_valid_user = check_token(cursor, token)
   if is_valid_user['result'] is False:
     connection.close()
     result = {
@@ -337,6 +337,27 @@ def add_purchase():
   4. 채팅룸 id를 리턴한다.
   """
 
+  query = f"""
+    SELECT
+          data
+      FROM
+          user_questions
+    WHERE
+          user_id={user_id}
+    ORDER BY id DESC LIMIT 1"""
+  cursor.execute(query)
+  answer_data = cursor.fetchall()
+  if query_result_is_none(answer_data) is True:
+    connection.close()
+    result = {
+      'result': False,
+      'error': f': No pre-survey data of user({user_id})'
+    }
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+    return json.dumps(result, ensure_ascii=False), 403
+
+  user_sex = json.loads(answer_data[0].replace("\\", "\\\\"), strict=False)['sex']
+
   if user_sex == 'M':
     manager_id = 1  # 1 = 대표님, 2 = 희정님
   else:
@@ -483,7 +504,7 @@ def update_payment_status_by_webhook():
     connection.close()
     result = {
       'result': False,
-      'error': f': Error while validating payment information: Paid amount that was sent from import is {import_paid_amount} WON(imp_uid: {imp_uid}), but purchase record from DB says {db_paid_amount} WON.'
+      'error': f': Error while validating payment information: Paid amount that was sent from IMPORT is {import_paid_amount} WON(imp_uid: {imp_uid}), but purchase record from DB says {db_paid_amount} WON.'
     }
     slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'])
     return json.dumps(result, ensure_ascii=False), 403

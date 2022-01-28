@@ -1,7 +1,7 @@
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.explore import make_explore_query, filter_dataframe, make_query_to_find_related_terms
-from global_things.functions.general import login_to_db, check_token
+from global_things.functions.general import login_to_db, check_token, query_result_is_none
 from . import api
 from collections import OrderedDict
 from flask import url_for, request
@@ -36,7 +36,7 @@ def explore():
       'result': False,
       'error': f'Server Error while connecting to DB: {error}'
     }
-    slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'])
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
     return json.dumps(result, ensure_ascii=False), 500
 
   cursor = connection.cursor()
@@ -46,28 +46,38 @@ def explore():
   else:
     query_program, query_coach, query_exercise, query_equipment = make_explore_query(word_for_search, sort_by)
 
-    cursor.execute(query_program)
-    programs_by_program = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
-                                                                   'exercise', 'equipments', 'purposes',
-                                                                   'thumbnail', 'thumbnails', 'num_lectures'])
-    program_list_by_program = filter_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_program)
-
-    cursor.execute(query_coach)
-    programs_by_coach = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
-                                                                 'exercise', 'equipments', 'purposes',
-                                                                 'thumbnail', 'thumbnails', 'num_lectures'])
-    program_list_by_coach = filter_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_coach)
-
-    cursor.execute(query_exercise)
-    programs_by_exercise = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
-                                                                    'exercise', 'equipments', 'purposes',
-                                                                    'thumbnail', 'thumbnails', 'num_lectures'])
-    program_list_by_exercise = filter_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_exercise)
-
-    cursor.execute(query_equipment)
-    programs_by_equipment = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
+    try:
+      cursor.execute(query_program)
+      programs_by_program = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
                                                                      'exercise', 'equipments', 'purposes',
                                                                      'thumbnail', 'thumbnails', 'num_lectures'])
+      program_list_by_program = filter_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_program)
+
+      cursor.execute(query_coach)
+      programs_by_coach = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
+                                                                   'exercise', 'equipments', 'purposes',
+                                                                   'thumbnail', 'thumbnails', 'num_lectures'])
+      program_list_by_coach = filter_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_coach)
+
+      cursor.execute(query_exercise)
+      programs_by_exercise = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
+                                                                      'exercise', 'equipments', 'purposes',
+                                                                      'thumbnail', 'thumbnails', 'num_lectures'])
+      program_list_by_exercise = filter_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_exercise)
+
+      cursor.execute(query_equipment)
+      programs_by_equipment = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
+                                                                       'exercise', 'equipments', 'purposes',
+                                                                       'thumbnail', 'thumbnails', 'num_lectures'])
+    except Exception as e:
+      connection.rollback()
+      connection.close()
+      error = str(e)
+      result = {
+        'result': False,
+        'error': f'Server Error while executing INSERT query(explore): {error}'
+      }
+      # slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
     program_list_by_equipment = filter_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_equipment)
 
     search_total = program_list_by_program + program_list_by_coach + program_list_by_exercise + program_list_by_equipment
@@ -112,7 +122,7 @@ def explore():
 @api.route('/explore/related/<word>', methods=['GET'])
 def get_releated_terms_list(word):
   ip = request.headers["X-Forwarded-For"]  # Both public & private.
-  endpoint = API_ROOT + url_for('api.explore')
+  endpoint = API_ROOT + url_for('api.get_releated_terms_list', word=word)
   # token = request.headers['Authorization']
 
   try:
@@ -123,7 +133,7 @@ def get_releated_terms_list(word):
       'result': False,
       'error': f'Server Error while connecting to DB: {error}'
     }
-    slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'])
+    slack_error_notification(user_ip=ip, user_id='', api=endpoint, error_log=result['error'])
     return json.dumps(result, ensure_ascii=False), 500
 
   query_program, query_coach, query_exercise, query_equipment = make_query_to_find_related_terms(word.strip())
@@ -175,6 +185,112 @@ def get_releated_terms_list(word):
   return json.dumps(result_dict, ensure_ascii=False), 200
 
 
-@api.route('/explore/delete/<term_id>', methods=['POST'])
-def delete_one_search_record(search_log_id):
-  pass
+@api.route('/explore/delete/log/<search_log_id>', methods=['PATCH'])
+def delete_one_search_record(search_log_id: int):
+  ip = request.headers["X-Forwarded-For"]  # Both public & private.
+  endpoint = API_ROOT + url_for('api.delete_one_search_record', search_log_id=search_log_id)
+  # token = request.headers['Authorization']
+
+  try:
+    connection = login_to_db()
+  except Exception as e:
+    error = str(e)
+    result = {
+      'result': False,
+      'error': f'Server Error while connecting to DB: {error}'
+    }
+    slack_error_notification(user_ip=ip, user_id='', api=endpoint, error_log=result['error'])
+    return json.dumps(result, ensure_ascii=False), 500
+
+  query = f"""
+    UPDATE 
+          search_logs
+      SET
+          deleted_at = (SELECT NOW())  
+    WHERE
+        id={search_log_id}"""
+
+  cursor = connection.cursor()
+
+  try:
+    cursor.execute(query)
+  except Exception as e:
+    connection.rollback()
+    connection.close()
+    error = str(e)
+    result = {
+      'result': False,
+      'error': f'Cannot delete the requested search record: {error}'
+    }
+    slack_error_notification(user_ip=ip, user_id='', api=endpoint, error_log=result['error'], query=query)
+    return json.dumps(result, ensure_ascii=False), 400
+
+  connection.close()
+  result_dict = {
+    'result': True,
+    'message': "Successfully deleted the requested search record"
+  }
+  return json.dumps(result_dict, ensure_ascii=False), 200
+
+
+@api.route('/explore/read/log/<user_id>', methods=['GET'])
+def read_search_record(user_id: int):
+  ip = request.headers["X-Forwarded-For"]  # Both public & private.
+  endpoint = API_ROOT + url_for('api.read_search_record', user_id=user_id)
+  # token = request.headers['Authorization']
+
+  try:
+    connection = login_to_db()
+  except Exception as e:
+    error = str(e)
+    result = {
+      'result': False,
+      'error': f'Server Error while connecting to DB: {error}'
+    }
+    slack_error_notification(user_ip=ip, user_id='', api=endpoint, error_log=result['error'])
+    return json.dumps(result, ensure_ascii=False), 500
+
+  cursor = connection.cursor()
+  query = f"""
+    SELECT 
+          id, search_term 
+      FROM
+          serach_logs
+    WHERE
+        user_id={user_id}
+      AND
+        deleted_at IS NULL"""
+
+  try:
+    cursor.execute(query)
+    search_records = cursor.fetchall()
+  except Exception as e:
+    connection.rollback()
+    connection.close()
+    error = str(e)
+    result = {
+      'result': False,
+      'error': f'Cannot delete the requested search record: {error}'
+    }
+    slack_error_notification(user_ip=ip, user_id='', api=endpoint, error_log=result['error'], query=query)
+    return json.dumps(result, ensure_ascii=False), 400
+
+  if query_result_is_none(search_records) is True:
+    connection.close()
+    result = {
+      'result': True,
+      'logs': []
+    }
+    return json.dumps(result, ensure_ascii=False), 200
+
+  logs = []
+  for log in search_records:
+    data = {'id': log[0], 'searched_word': log[1]}
+    logs.append(data)
+
+  connection.close()
+  result_dict = {
+    'result': True,
+    'logs': logs
+  }
+  return json.dumps(result_dict, ensure_ascii=False), 200

@@ -16,7 +16,7 @@ def login_to_db():
 
 
 # User verification by exploring user table.
-def check_token(cursor, user_id, token):
+def check_token(cursor, token):
   hashed_token = hashlib.sha256(token.encode()).hexdigest()
 
   query = f"SELECT tokenable_id, token FROM personal_access_tokens WHERE token=%s"
