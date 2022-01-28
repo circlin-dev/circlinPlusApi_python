@@ -132,8 +132,6 @@ def add_purchase():
   # equipment_info = parameters('equipment_info')  # boolean  # for plan_id at table 'purchases'
 
   # 결제 정보 변수
-  plan_title = payment_info['name']
-  total_payment = payment_info['amount']
   imp_uid = payment_info['imp_uid']
   merchant_uid = payment_info['merchant_uid']
 
@@ -284,7 +282,7 @@ def add_purchase():
                                 %s, %s, \
                                 %s, %s, \
                                 %s, %s, %s)"
-  values = (int(user_id), plan_title,
+  values = (int(user_id), user_subscribed_plan,
             user_paid_amount, imp_uid,
             merchant_uid, payment_status,
             buyer_email, buyer_name, buyer_tel)
@@ -478,7 +476,7 @@ def update_payment_status_by_webhook():
   query = "SELECT total_payment FROM purchases WHERE imp_uid=%s AND merchant_uid=%s"
   values = (imp_uid, merchant_uid)
   cursor.execute(query, values)
-  db_paid_amount = cursor.fetchall()
+  db_paid_amount = cursor.fetchall()[0]
   #
   # if query_result_is_none(db_paid_amount) is True:
   #   connection.close()
