@@ -355,7 +355,7 @@ def add_purchase():
     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
     return json.dumps(result, ensure_ascii=False), 403
 
-  user_sex = json.loads(answer_data[0].replace("\\", "\\\\"), strict=False)['sex']
+  user_sex = json.loads(answer_data[0][0].replace("\\", "\\\\"), strict=False)['sex']
 
   if user_sex == 'M':
     manager_id = 1  # 1 = 대표님, 2 = 희정님
@@ -477,7 +477,7 @@ def update_payment_status_by_webhook():
   query = "SELECT total_payment FROM purchases WHERE imp_uid=%s AND merchant_uid=%s"
   values = (imp_uid, merchant_uid)
   cursor.execute(query, values)
-  db_paid_amount = cursor.fetchall()[0][0]
+  db_paid_amount = cursor.fetchall()[0]
 
   if int(db_paid_amount) == int(import_paid_amount):
     if updated_status == 'cancelled':
