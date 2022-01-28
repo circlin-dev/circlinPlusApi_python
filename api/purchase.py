@@ -17,10 +17,9 @@ def read_purchase_record(user_id):
 
   return: 현재 구독중인 플랜의 제목, 시작일, 마지막일
   """
-  # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
   ip = request.headers["X-Forwarded-For"] # Both public & private.
   endpoint = API_ROOT + url_for('api.read_purchase_record', user_id=user_id)
-  token = request.headers['Authorization']
+  # token = request.headers['Authorization']
 
   try:
     connection = login_to_db()
@@ -36,17 +35,17 @@ def read_purchase_record(user_id):
   cursor = connection.cursor()
   # 1. 유저 정보 확인
   # Verify user is valid or not.
-  is_valid_user = check_token(cursor, token)
-  if is_valid_user['result'] is False:
-    connection.close()
-    result = {
-      'result': False,
-      'error': f"Invalid request: Unauthorized token or no such user({user_id})"
-    }
-    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-    return json.dumps(result, ensure_ascii=False), 401
-  elif is_valid_user['result'] is True:
-    pass
+  # is_valid_user = check_token(cursor, token)
+  # if is_valid_user['result'] is False:
+  #   connection.close()
+  #   result = {
+  #     'result': False,
+  #     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
+  #   }
+  #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+  #   return json.dumps(result, ensure_ascii=False), 401
+  # elif is_valid_user['result'] is True:
+  #   pass
 
   # 2. 해당 유저에게 구독중인(기간이 만료되지 않은) 플랜이 있는지 확인
   query = f"\
