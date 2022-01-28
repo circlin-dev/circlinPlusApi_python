@@ -240,13 +240,13 @@ def delete_one_search_record(user_id:int, search_term: str):
   return json.dumps(result_dict, ensure_ascii=False), 200
 
 
-@api.route('/explore/delete/logs', methods=['PATCH'])
+@api.route('/explore/delete/logs/<user_id>', methods=['PATCH'])
 def delete_all_search_record(user_id: int):
   ip = request.headers["X-Forwarded-For"]  # Both public & private.
   endpoint = API_ROOT + url_for('api.delete_all_search_record')
   # token = request.headers['Authorization']
-  parameters = json.loads(request.get_data(), encoding="utf-8")
-  user_id = parameters['user_id']
+  # parameters = json.loads(request.get_data(), encoding="utf-8")
+  # user_id = parameters['user_id']
   try:
     connection = login_to_db()
   except Exception as e:
@@ -255,7 +255,7 @@ def delete_all_search_record(user_id: int):
       'result': False,
       'error': f'Server Error while connecting to DB: {error}'
     }
-    slack_error_notification(user_ip=ip, user_id='', api=endpoint, error_log=result['error'])
+    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
     return json.dumps(result, ensure_ascii=False), 500
 
   """
