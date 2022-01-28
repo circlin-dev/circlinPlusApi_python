@@ -476,11 +476,11 @@ def update_payment_status_by_webhook():
   ).json()
   import_paid_amount = int(payment_validation_import['response']['amount'])
 
-  # # 3. DB에서 결제 내역 조회
-  # query = "SELECT total_payment FROM purchases WHERE imp_uid=%s AND merchant_uid=%s"
-  # values = (imp_uid, merchant_uid)
-  # cursor.execute(query, values)
-  # db_paid_amount = cursor.fetchall()
+  # 3. DB에서 결제 내역 조회
+  query = "SELECT total_payment FROM purchases WHERE imp_uid=%s AND merchant_uid=%s"
+  values = (imp_uid, merchant_uid)
+  cursor.execute(query, values)
+  db_paid_amount = cursor.fetchall()
   #
   # if query_result_is_none(db_paid_amount) is True:
   #   connection.close()
