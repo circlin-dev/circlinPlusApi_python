@@ -256,7 +256,7 @@ def read_search_record(user_id: int):
     SELECT 
           id, search_term 
       FROM
-          serach_logs
+          search_logs
     WHERE
         user_id={user_id}
       AND
