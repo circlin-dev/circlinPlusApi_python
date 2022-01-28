@@ -183,10 +183,10 @@ def get_related_terms_list(word):
   return json.dumps(result_dict, ensure_ascii=False), 200
 
 
-@api.route('/explore/delete/log/<search_log_id>', methods=['PATCH'])
-def delete_one_search_record(search_log_id: int):
+@api.route('/explore/delete/log/<user_id>/<search_term>', methods=['PATCH'])
+def delete_one_search_record(user_id:int, search_term: str):
   ip = request.headers["X-Forwarded-For"]  # Both public & private.
-  endpoint = API_ROOT + url_for('api.delete_one_search_record', search_log_id=search_log_id)
+  endpoint = API_ROOT + url_for('api.delete_one_search_record', user_id=user_id, search_term=search_term)
   # token = request.headers['Authorization']
 
   try:
@@ -200,26 +200,21 @@ def delete_one_search_record(search_log_id: int):
     slack_error_notification(user_ip=ip, user_id='', api=endpoint, error_log=result['error'])
     return json.dumps(result, ensure_ascii=False), 500
 
-  query = f"""
-    UPDATE 
-          search_logs
-      SET
-          deleted_at = (SELECT NOW())  
-    WHERE
-        id={search_log_id}"""
   """
   만약 검색기록 조회 결과를 중복을 제거해서 보내준다면, id만으로 삭제하면 다음 번에 삭제한 단어를 또 보게 될 수 있다.
   따라서 아래와 같이 search_log_id가 아닌 user_id와 search_term을 함께 조회하여, 중복되는 단어를 전부 삭제 처리한다.
   """
-  # query = f"""
-  #   UPDATE
-  #         search_logs
-  #     SET
-  #         deleted_at = (SELECT NOW())
-  #   WHERE
-  #       search_term = {search_term}
-  #     AND
-  #       user_id = {user_id}"""
+  query = f"""
+    UPDATE
+          search_logs
+      SET
+          deleted_at = (SELECT NOW())
+    WHERE
+        search_term = {search_term}
+      AND
+        user_id = {user_id}
+      AND
+        deleted_at IS NULL"""
 
   cursor = connection.cursor()
 
@@ -245,6 +240,60 @@ def delete_one_search_record(search_log_id: int):
   return json.dumps(result_dict, ensure_ascii=False), 200
 
 
+@api.route('/explore/delete/logs/<user_id>', methods=['PATCH'])
+def delete_one_search_record(user_id: int):
+  ip = request.headers["X-Forwarded-For"]  # Both public & private.
+  endpoint = API_ROOT + url_for('api.delete_one_search_record', user_id=user_id)
+  # token = request.headers['Authorization']
+
+  try:
+    connection = login_to_db()
+  except Exception as e:
+    error = str(e)
+    result = {
+      'result': False,
+      'error': f'Server Error while connecting to DB: {error}'
+    }
+    slack_error_notification(user_ip=ip, user_id='', api=endpoint, error_log=result['error'])
+    return json.dumps(result, ensure_ascii=False), 500
+
+  """
+  만약 검색기록 조회 결과를 중복을 제거해서 보내준다면, id만으로 삭제하면 다음 번에 삭제한 단어를 또 보게 될 수 있다.
+  따라서 아래와 같이 search_log_id가 아닌 user_id와 search_term을 함께 조회하여, 중복되는 단어를 전부 삭제 처리한다.
+  """
+  query = f"""
+    UPDATE
+          search_logs
+      SET
+          deleted_at = (SELECT NOW())
+    WHERE
+        user_id = {user_id}
+    AND
+        deleted_at IS NULL"""
+
+  cursor = connection.cursor()
+
+  try:
+    cursor.execute(query)
+  except Exception as e:
+    connection.rollback()
+    connection.close()
+    error = str(e)
+    result = {
+      'result': False,
+      'error': f'Cannot delete the requested search record: {error}'
+    }
+    slack_error_notification(user_ip=ip, user_id='', api=endpoint, error_log=result['error'], query=query)
+    return json.dumps(result, ensure_ascii=False), 400
+
+  connection.commit()
+  connection.close()
+  result_dict = {
+    'result': True,
+    'message': "Successfully deleted the requested search record"
+  }
+  return json.dumps(result_dict, ensure_ascii=False), 200
+
 @api.route('/explore/read/log/<user_id>', methods=['GET'])
 def read_search_record(user_id: int):
   ip = request.headers["X-Forwarded-For"]  # Both public & private.
@@ -263,20 +312,28 @@ def read_search_record(user_id: int):
     return json.dumps(result, ensure_ascii=False), 500
 
   cursor = connection.cursor()
-  query = f"""
-    SELECT 
-          id, search_term 
-      FROM
-          search_logs
-    WHERE
-        user_id={user_id}
-      AND
-        deleted_at IS NULL"""
+  # query = f"""
+  #   SELECT
+  #         id, search_term
+  #     FROM
+  #         search_logs
+  #   WHERE
+  #       user_id={user_id}
+  #     AND
+  #       deleted_at IS NULL"""
 
   """
   중복을 제거하려면 아래와 같이 한다.
   """
-  # query = f"""SELECT DISTINCT search_term from search_logs where user_id={user_id} GROUP BY search_term"""
+  query = f"""
+    SELECT DISTINCT 
+                  sl.search_term 
+              FROM 
+                  search_logs sl 
+             WHERE 
+                  sl.user_id={user_id} 
+          GROUP BY search_term
+          ORDER BY sl.created_at DESC"""
 
   try:
     cursor.execute(query)
