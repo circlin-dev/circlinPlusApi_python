@@ -476,20 +476,20 @@ def update_payment_status_by_webhook():
   ).json()
   import_paid_amount = int(payment_validation_import['response']['amount'])
 
-  # 3. DB에서 결제 내역 조회
-  query = "SELECT total_payment FROM purchases WHERE imp_uid=%s AND merchant_uid=%s"
-  values = (imp_uid, merchant_uid)
-  cursor.execute(query, values)
-  db_paid_amount = cursor.fetchall()
-
-  if query_result_is_none(db_paid_amount) is True:
-    connection.close()
-    result = {
-      'result': False,
-      'error': f'No purchase record exists for imp_uid={imp_uid}, merchant_uid={merchant_uid}'
-    }
-    slack_error_notification(user_ip=ip, user_id='', api=endpoint, error_log=result['error'], query=query)
-    return json.dumps(result, ensure_ascii=False), 400
+  # # 3. DB에서 결제 내역 조회
+  # query = "SELECT total_payment FROM purchases WHERE imp_uid=%s AND merchant_uid=%s"
+  # values = (imp_uid, merchant_uid)
+  # cursor.execute(query, values)
+  # db_paid_amount = cursor.fetchall()
+  #
+  # if query_result_is_none(db_paid_amount) is True:
+  #   connection.close()
+  #   result = {
+  #     'result': False,
+  #     'error': f'No purchase record exists for imp_uid={imp_uid}, merchant_uid={merchant_uid}'
+  #   }
+  #   slack_error_notification(user_ip=ip, user_id='', api=endpoint, error_log=result['error'], query=query)
+  #   return json.dumps(result, ensure_ascii=False), 400
 
   if int(db_paid_amount) == int(import_paid_amount):
     if updated_status == 'cancelled':
