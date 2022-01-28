@@ -11,7 +11,7 @@ def add_user_question():
   # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
   ip = request.headers["X-Forwarded-For"]  # Both public & private.
   endpoint = API_ROOT + url_for('api.add_user_question')
-  token = request.headers['Authorization']
+  # token = request.headers['Authorization']
   parameters = json.loads(request.get_data(), encoding='utf-8')
 
   user_id = parameters['user_id']
@@ -123,7 +123,7 @@ def read_user_question(user_id):
   # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
   ip = request.headers["X-Forwarded-For"]  # Both public & private.
   endpoint = API_ROOT + url_for('api.read_user_question', user_id=user_id)
-  token = request.headers['token']
+  # token = request.headers['token']
 
   try:
     connection = login_to_db()

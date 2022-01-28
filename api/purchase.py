@@ -123,7 +123,7 @@ def add_purchase():
   # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
   ip = request.headers["X-Forwarded-For"]  # Both public & private.
   endpoint = API_ROOT + url_for('api.add_purchase')  # '/api/purchase/read/{user_id}'
-  token = request.headers['Authorization']
+  # token = request.headers['Authorization']
   parameters = json.loads(request.get_data(), encoding='utf-8')
 
   user_id = parameters['user_id']

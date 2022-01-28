@@ -207,6 +207,19 @@ def delete_one_search_record(search_log_id: int):
           deleted_at = (SELECT NOW())  
     WHERE
         id={search_log_id}"""
+  """
+  만약 검색기록 조회 결과를 중복을 제거해서 보내준다면, id만으로 삭제하면 다음 번에 삭제한 단어를 또 보게 될 수 있다.
+  따라서 아래와 같이 search_log_id가 아닌 user_id와 search_term을 함께 조회하여, 중복되는 단어를 전부 삭제 처리한다.
+  """
+  # query = f"""
+  #   UPDATE
+  #         search_logs
+  #     SET
+  #         deleted_at = (SELECT NOW())
+  #   WHERE
+  #       search_term = {search_term}
+  #     AND
+  #       user_id = {user_id}"""
 
   cursor = connection.cursor()
 
@@ -259,6 +272,11 @@ def read_search_record(user_id: int):
         user_id={user_id}
       AND
         deleted_at IS NULL"""
+
+  """
+  중복을 제거하려면 아래와 같이 한다.
+  """
+  # query = f"""SELECT DISTINCT search_term from search_logs where user_id={user_id} GROUP BY search_term"""
 
   try:
     cursor.execute(query)
