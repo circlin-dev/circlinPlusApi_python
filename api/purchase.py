@@ -188,17 +188,17 @@ def add_purchase():
   cursor = connection.cursor()
 
   # Verify user is valid or not.
-  is_valid_user = check_token(cursor, user_id, token)
-  if is_valid_user['result'] is False:
-    connection.close()
-    result = {
-      'result': False,
-      'error': f"Invalid request: Unauthorized token or no such user({user_id})"
-    }
-    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-    return json.dumps(result, ensure_ascii=False), 401
-  elif is_valid_user['result'] is True:
-    pass
+  # is_valid_user = check_token(cursor, user_id, token)
+  # if is_valid_user['result'] is False:
+  #   connection.close()
+  #   result = {
+  #     'result': False,
+  #     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
+  #   }
+  #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+  #   return json.dumps(result, ensure_ascii=False), 401
+  # elif is_valid_user['result'] is True:
+  #   pass
 
   # 2. 결제 정보 조회(import)
   get_token = json.loads(get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET))

@@ -12,7 +12,7 @@ def add_weekly_data():
   # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
   ip = request.headers["X-Forwarded-For"]  # Both public & private.
   endpoint = API_ROOT + url_for('api.add_weekly_data')
-  token = request.headers['Authorization']
+  # token = request.headers['Authorization']
   """
   요청이 html form으로부터가 아닌, axios나 fetch로 온다면 파라미터를 아래와 같이 다뤄야 할 수도 있다.
   -> parameters = json.loads(request.get_data(), encoding='utf-8')
@@ -63,17 +63,17 @@ def add_weekly_data():
     cursor = connection.cursor()
 
     # Verify user is valid or not.
-    is_valid_user = check_token(cursor, user_id, token)
-    if is_valid_user['result'] is False:
-      connection.close()
-      result = {
-        'result': False,
-        'error': f"Invalid request: Unauthorized token or no such user({user_id})"
-      }
-      slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-      return json.dumps(result, ensure_ascii=False), 401
-    elif is_valid_user['result'] is True:
-      pass
+    # is_valid_user = check_token(cursor, user_id, token)
+    # if is_valid_user['result'] is False:
+    #   connection.close()
+    #   result = {
+    #     'result': False,
+    #     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
+    #   }
+    #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+    #   return json.dumps(result, ensure_ascii=False), 401
+    # elif is_valid_user['result'] is True:
+    #   pass
 
     query = f"INSERT INTO bodylab( \
                           user_id, year, \
