@@ -177,6 +177,11 @@ def get_related_terms_list():
     all_searched_result = related_programs_list + related_coaches_list + related_exercises_list + related_equipments_list
 
     if len(all_searched_result) == 0:
+        """
+        MySQL LIKE 연산자로 추려낸 연관검색어의 결과가 0건일 경우, 
+        각 카테고리의 모든 목록 이름과 검색어의 형태적 유사도를 자모단위로 쪼개 비교하여, 
+        가장 비슷한 순(=jamo_levenshtein() 수치가 낮은 순)으로 정렬하여 반환한다.
+        """
         query_programs, query_coaches, query_exercises, query_equipments = make_query_get_every_titles()
         cursor.execute(query_programs)
         programs = cursor.fetchall()
@@ -203,11 +208,11 @@ def get_related_terms_list():
             equipment_dict = {'id': equipment[0], 'value': equipment[1], 'similarity': jamo_levenshtein(word, equipment[1])}
             related_equipments_list.append(equipment_dict)
 
-        related_programs_list = sorted(related_programs_list, key=lambda x: x['similarity'], reverse=True)[:3]
-        related_coaches_list = sorted(related_coaches_list, key=lambda x: x['similarity'], reverse=True)[:3]
-        related_exercises_list = sorted(related_exercises_list, key=lambda x: x['similarity'], reverse=True)[:3]
-        related_equipments_list = sorted(related_equipments_list, key=lambda x: x['similarity'], reverse=True)[:3]
-        all_searched_result = sorted(related_programs_list + related_coaches_list + related_exercises_list + related_equipments_list, key=lambda x: x['similarity'], reverse=True)
+        related_programs_list = sorted(related_programs_list, key=lambda x: x['similarity'])[:3]
+        related_coaches_list = sorted(related_coaches_list, key=lambda x: x['similarity'])[:3]
+        related_exercises_list = sorted(related_exercises_list, key=lambda x: x['similarity'])[:3]
+        related_equipments_list = sorted(related_equipments_list, key=lambda x: x['similarity'])[:3]
+        all_searched_result = sorted(related_programs_list + related_coaches_list + related_exercises_list + related_equipments_list, key=lambda x: x['similarity'])
 
 
     connection.close()
