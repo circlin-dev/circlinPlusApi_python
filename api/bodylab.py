@@ -6,13 +6,8 @@ from . import api
 from flask import url_for, request
 import json
 
-# /bodylab/add -> POST /bodylab
-# /boaylab/weekly/<user_id>/<period> -> GET /bodylab
-# /bodylab/feedback: POST
-# /bodylab/feedback/<week>: GET
 
-
-@api.route('/bodylab/add', methods=['POST'])
+@api.route('/bodylab', methods=['POST'])
 def add_weekly_data():
     # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
@@ -270,7 +265,7 @@ def add_weekly_data():
       ##########################################################
     '''
 
-# @api.route('/bodylab/weekly/<user_id>/<period>', methods=['GET'])    #check_token 추가하기!!!!!
+# @api.route('/bodylab/<user_id>/<week>', methods=['GET'])    #check_token 추가하기!!!!!
 # def read_weekly_score(user_id, period):
 #   endpoint = API_ROOT + url_for('api.read_weekly_score', user_id=user_id, period=period)
 #   ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)

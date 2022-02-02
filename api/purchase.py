@@ -9,7 +9,7 @@ import json
 import requests
 
 
-@api.route('/purchase/read/<user_id>', methods=['GET'])
+@api.route('/purchase/<user_id>', methods=['GET'])
 def read_purchase_record(user_id):
     """
     검증 조건 1: 존재하는 유저인지 확인
@@ -118,7 +118,7 @@ def read_purchase_record(user_id):
         return json.dumps(result_dict, ensure_ascii=False), 200
 
 
-@api.route('/purchase/add', methods=['POST'])
+@api.route('/purchase', methods=['POST'])
 def add_purchase():
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.add_purchase')

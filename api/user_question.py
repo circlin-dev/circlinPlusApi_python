@@ -6,10 +6,9 @@ from flask import request, url_for
 import json
 
 
-@api.route('/user-question/add', methods=['POST'])
+@api.route('/user-question', methods=['POST'])
 def add_user_question():
-    # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
-    ip = request.headers["X-Forwarded-For"]  # Both public & private.
+    ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
     endpoint = API_ROOT + url_for('api.add_user_question')
     # session_id = request.headers['Authorization']
     parameters = json.loads(request.get_data(), encoding='utf-8')
@@ -118,7 +117,7 @@ def add_user_question():
     return json.dumps(result, ensure_ascii=False), 201
 
 
-@api.route('/user-question/read/<user_id>', methods=['GET'])
+@api.route('/user-question/<user_id>', methods=['GET'])
 def read_user_question(user_id):
     # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
