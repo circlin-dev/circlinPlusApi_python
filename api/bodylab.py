@@ -6,6 +6,11 @@ from . import api
 from flask import url_for, request
 import json
 
+# /bodylab/add -> POST /bodylab
+# /boaylab/weekly/<user_id>/<period> -> GET /bodylab
+# /bodylab/feedback: POST
+# /bodylab/feedback/<week>: GET
+
 
 @api.route('/bodylab/add', methods=['POST'])
 def add_weekly_data():

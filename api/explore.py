@@ -3,10 +3,20 @@ from global_things.functions.slack import slack_error_notification
 from global_things.functions.explore import make_explore_query, filter_dataframe, make_query_to_find_related_terms
 from global_things.functions.general import login_to_db, check_token, query_result_is_none
 from . import api
-from collections import OrderedDict
 from flask import url_for, request
 import json
 import pandas as pd
+
+# POST /explore
+#
+# GET /explore/related/<word>
+#
+# PATCH /explore/delete/log/<user_id>/<search_term> -> DELETE
+#
+# PATCH /explore/delete/logs/<user_id> -> DELETE
+#
+# GET /explore/read/log/<user_id>
+
 
 
 @api.route('/explore', methods=['POST'])

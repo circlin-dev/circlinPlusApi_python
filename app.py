@@ -24,7 +24,12 @@ app.register_blueprint(api, url_prefix="/api")
 def hello_world():
   # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
   ip = request.headers["X-Forwarded-For"]
-  return f'Hello, {ip} !'
+
+  query_parameter_dict = request.args.to_dict()
+  values = ''
+  for key in query_parameter_dict.keys():
+    values += request.args[key]
+  return f'Hello, {ip} ! || {values}'
 
 
 @app.route('/bodylab_form')
