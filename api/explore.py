@@ -1,11 +1,12 @@
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
-from global_things.functions.explore import make_explore_query, filter_dataframe, make_query_to_find_related_terms
+from global_things.functions.explore import make_explore_query, filter_dataframe, make_query_to_find_related_terms, make_query_get_every_titles
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
 from . import api
 from flask import url_for, request
 import json
 import pandas as pd
+from soynlp.hangle import jamo_levenshtein
 
 
 @api.route('/explore', methods=['POST'])
@@ -115,7 +116,6 @@ def explore():
     return json.dumps(result_dict, ensure_ascii=False), 200
 
 
-######################################################연관검색어 수정중
 @api.route('/explore/related', methods=['GET'])
 def get_related_terms_list():
     ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
@@ -139,18 +139,16 @@ def get_related_terms_list():
     for key in query_parameter.keys():
         if key == 'word':
             word += request.args[key].strip()
-
     related_programs_list = []
     related_coaches_list = []
     related_exercises_list = []
     related_equipments_list = []
+
+    cursor = connection.cursor()
     if word == "" or len(word) == 0 or word is None:
         pass
     else:
         query_program, query_coach, query_exercise, query_equipment = make_query_to_find_related_terms(word)
-
-        cursor = connection.cursor()
-
         cursor.execute(query_program)
         related_programs = cursor.fetchall()
         cursor.execute(query_coach)
@@ -177,6 +175,40 @@ def get_related_terms_list():
             related_equipments_list.append(exercise_dict)
 
     all_searched_result = related_programs_list + related_coaches_list + related_exercises_list + related_equipments_list
+
+    if len(all_searched_result) == 0:
+        query_programs, query_coaches, query_exercises, query_equipments = make_query_get_every_titles()
+        cursor.execute(query_programs)
+        programs = cursor.fetchall()
+        cursor.execute(query_coaches)
+        coaches = cursor.fetchall()
+        cursor.execute(query_exercises)
+        exercises = cursor.fetchall()
+        cursor.execute(query_equipments)
+        equipments = cursor.fetchall()
+
+        for program in programs:
+            program_dict = {'id': program[0], 'value': program[1], 'similarity': jamo_levenshtein(word, program[1])}
+            related_programs_list.append(program_dict)
+
+        for coach in coaches:
+            coach_dict = {'id': coach[0], 'value': coach[1], 'similarity': jamo_levenshtein(word, coach[1])}
+            related_coaches_list.append(coach_dict)
+
+        for exercise in exercises:
+            exercise_dict = {'id': exercise[0], 'value': exercise[1], 'similarity': jamo_levenshtein(word, exercise[1])}
+            related_exercises_list.append(exercise_dict)
+
+        for equipment in equipments:
+            equipment_dict = {'id': equipment[0], 'value': equipment[1], 'similarity': jamo_levenshtein((word, equipment[1]))}
+            related_equipments_list.append(equipment_dict)
+
+        related_programs_list = sorted(related_programs_list, key=lambda x: x['similarity'], reverse=True)[:3]
+        related_coaches_list = sorted(related_coaches_list, key=lambda x: x['similarity'], reverse=True)[:3]
+        related_exercises_list = sorted(related_exercises_list, key=lambda x: x['similarity'], reverse=True)[:3]
+        related_equipments_list = sorted(related_equipments_list, key=lambda x: x['similarity'], reverse=True)[:3]
+        all_searched_result = related_programs_list + related_coaches_list + related_exercises_list + related_equipments_list
+
     connection.close()
     result_dict = {
         "result": True,
@@ -191,7 +223,7 @@ def get_related_terms_list():
 
     return json.dumps(result_dict, ensure_ascii=False), 200
 
-##################################################################################### 검색기록 API 수정중
+
 @api.route('/explore/log/<user_id>', methods=['DELETE', 'GET'])
 def explore_log(user_id: int):
     ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)

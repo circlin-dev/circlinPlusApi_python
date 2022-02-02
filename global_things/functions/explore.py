@@ -266,5 +266,41 @@ def make_query_to_find_related_terms(word: str):
     return query_program, query_coach, query_exercise, query_equipment
 
 
+def make_query_get_every_titles():
+    query_programs = f"""
+      SELECT
+            prog.id,
+            prog.title
+        FROM
+            programs prog
+    ORDER BY CHAR_LENGTH(prog.title)"""
+
+    query_coaches = f"""
+      SELECT
+            c.id,
+            c.name
+        FROM
+            coaches c
+    ORDER BY CHAR_LENGTH(c.name)"""
+
+    query_exercises = f"""
+      SELECT
+          ex.id,
+          ex.title
+      FROM
+          exercises ex
+    ORDER BY CHAR_LENGTH(ex.title)"""
+
+    query_equipments = f"""
+      SELECT
+            eq.id,
+            eq.name
+        FROM
+            equipments eq
+      ORDER BY CHAR_LENGTH(eq.name)"""
+
+    return query_programs, query_coaches, query_exercises, query_equipments
+
+
 def program_progress(user_id):
     pass
