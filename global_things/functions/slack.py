@@ -4,7 +4,7 @@ import requests
 
 
 # Slack notification: error
-def slack_error_notification(user_ip: str = '', user_id: str = '', nickname: str = '', api: str = '',
+def slack_error_notification(user_ip: str = '', user_id: int = 0, nickname: str = '', api: str = '',
                              error_log: str = '', query: str = ''):
   if user_ip == '' or user_id == '':
     user_ip = "Server error"

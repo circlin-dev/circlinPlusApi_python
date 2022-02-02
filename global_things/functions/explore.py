@@ -3,25 +3,25 @@ import pandas as pd
 
 
 def make_explore_query(word: str = "", sort_by: str = "latest"):
-  """
-  WHERE == FILTER!
-    (1) p.title LIKE "%피%"
-    (2) ex.title LIKE "%피%"
-    (3) eq.name LIKE "%피%"
-    (4) pur.title LIKE "%피%"
-  :param word:
-  :param sort_by:
-  :return:
-  """
+    """
+    WHERE == FILTER!
+      (1) p.title LIKE "%피%"
+      (2) ex.title LIKE "%피%"
+      (3) eq.name LIKE "%피%"
+      (4) pur.title LIKE "%피%"
+    :param word:
+    :param sort_by:
+    :return:
+    """
 
-  if sort_by == "rating":
-    sort_standard = "p.created_at"  # average_rating
-  elif sort_by == "frequency":
-    sort_standard = "p.created_at"  # frequency_week
-  else:
-    sort_standard = "p.created_at"
+    if sort_by == "rating":
+        sort_standard = "p.created_at"  # average_rating
+    elif sort_by == "frequency":
+        sort_standard = "p.created_at"  # frequency_week
+    else:
+        sort_standard = "p.created_at"
 
-  query_program = f"""
+    query_program = f"""
     SELECT
           p.id AS program_id,
           p.created_at,
@@ -56,7 +56,7 @@ def make_explore_query(word: str = "", sort_by: str = "latest"):
     ORDER BY 
           {sort_standard} DESC"""
 
-  query_coach = f"""
+    query_coach = f"""
     SELECT
           p.id AS program_id,
           p.created_at,
@@ -94,7 +94,7 @@ def make_explore_query(word: str = "", sort_by: str = "latest"):
     ORDER BY 
           {sort_standard} DESC"""
 
-  query_exercise = f"""
+    query_exercise = f"""
     SELECT
           p.id AS program_id,
           p.created_at,
@@ -131,7 +131,7 @@ def make_explore_query(word: str = "", sort_by: str = "latest"):
     ORDER BY 
           {sort_standard} DESC"""
 
-  query_equipment = f"""
+    query_equipment = f"""
     SELECT
           p.id AS program_id,
           p.created_at,
@@ -167,63 +167,63 @@ def make_explore_query(word: str = "", sort_by: str = "latest"):
           p.id, ex.id, eq.id, pur.id
     ORDER BY 
           {sort_standard} DESC"""
-  return query_program, query_coach, query_exercise, query_equipment
+    return query_program, query_coach, query_exercise, query_equipment
 
 
 def filter_dataframe(filter_exercise: list, filter_purpose: list, filter_equipment: list, programs_df: pd.DataFrame):
-  programs = programs_df.copy()
-  # Apply search filter ==> 필터 순서에 따라 결과가 달라질까???
-  if len(filter_exercise) == 0 and len(filter_purpose) == 0 and len(filter_equipment) == 0:
-    pass
-  elif len(filter_exercise) > 0 and len(filter_purpose) == 0 and len(filter_equipment) == 0:
-    programs = programs[programs['exercise'].isin(filter_exercise)]
-  elif len(filter_exercise) == 0 and len(filter_purpose) > 0 and len(filter_equipment) == 0:
-    programs = programs[programs['purposes'].isin(filter_purpose)]
-  elif len(filter_exercise) == 0 and len(filter_purpose) == 0 and len(filter_equipment) > 0:
-    programs = programs[programs['equipments'].isin(filter_equipment)]
-  elif len(filter_exercise) > 0 and len(filter_purpose) > 0 and len(filter_equipment) == 0:
-    programs = programs[programs['exercise'].isin(filter_exercise) &
-                        programs['purposes'].isin(filter_purpose)]
-  elif len(filter_exercise) > 0 and len(filter_purpose) == 0 and len(filter_equipment) > 0:
-    programs = programs[programs['exercise'].isin(filter_exercise) &
-                        programs['equipments'].isin(filter_equipment)]
-  elif len(filter_exercise) == 0 and len(filter_purpose) > 0 and len(filter_equipment) > 0:
-    programs = programs[programs['purposes'].isin(filter_purpose) &
-                        programs['equipments'].isin(filter_equipment)]
-  else:
-    programs = programs[programs['exercise'].isin(filter_exercise) &
-                        programs['purposes'].isin(filter_purpose) &
-                        programs['equipments'].isin(filter_equipment)]
+    programs = programs_df.copy()
+    # Apply search filter ==> 필터 순서에 따라 결과가 달라질까???
+    if len(filter_exercise) == 0 and len(filter_purpose) == 0 and len(filter_equipment) == 0:
+        pass
+    elif len(filter_exercise) > 0 and len(filter_purpose) == 0 and len(filter_equipment) == 0:
+        programs = programs[programs['exercise'].isin(filter_exercise)]
+    elif len(filter_exercise) == 0 and len(filter_purpose) > 0 and len(filter_equipment) == 0:
+        programs = programs[programs['purposes'].isin(filter_purpose)]
+    elif len(filter_exercise) == 0 and len(filter_purpose) == 0 and len(filter_equipment) > 0:
+        programs = programs[programs['equipments'].isin(filter_equipment)]
+    elif len(filter_exercise) > 0 and len(filter_purpose) > 0 and len(filter_equipment) == 0:
+        programs = programs[programs['exercise'].isin(filter_exercise) &
+                            programs['purposes'].isin(filter_purpose)]
+    elif len(filter_exercise) > 0 and len(filter_purpose) == 0 and len(filter_equipment) > 0:
+        programs = programs[programs['exercise'].isin(filter_exercise) &
+                            programs['equipments'].isin(filter_equipment)]
+    elif len(filter_exercise) == 0 and len(filter_purpose) > 0 and len(filter_equipment) > 0:
+        programs = programs[programs['purposes'].isin(filter_purpose) &
+                            programs['equipments'].isin(filter_equipment)]
+    else:
+        programs = programs[programs['exercise'].isin(filter_exercise) &
+                            programs['purposes'].isin(filter_purpose) &
+                            programs['equipments'].isin(filter_equipment)]
 
-  program_ids = programs['program_id'].unique()
+    program_ids = programs['program_id'].unique()
 
-  result_list = []
-  for each_id in program_ids:
-    each_id = int(each_id)
-    df_by_id = programs[programs['program_id'] == each_id]
-    title = df_by_id['title'].unique()[0]  # For error 'TypeError: Object of type int64 is not JSON serializable'
-    thumbnail = df_by_id['thumbnail'].unique()[0]
-    thumbnails = list(set(df_by_id['thumbnails'].values.tolist()[0].strip('][').split(', ')))
-    thumbnails = sorted(thumbnails, key=lambda x: int(x.split('_')[1].split('w')[0]), reverse=True)  # Thumbnails needs be sorted from big size to small size(1080 -> ... 150).
-    num_lectures = int(df_by_id['num_lectures'].unique()[0])
-    thumbnails_list = []
-    for image in thumbnails:
-      thumbnails_list.append(json.loads(image))
+    result_list = []
+    for each_id in program_ids:
+        each_id = int(each_id)
+        df_by_id = programs[programs['program_id'] == each_id]
+        title = df_by_id['title'].unique()[0]  # For error 'TypeError: Object of type int64 is not JSON serializable'
+        thumbnail = df_by_id['thumbnail'].unique()[0]
+        thumbnails = list(set(df_by_id['thumbnails'].values.tolist()[0].strip('][').split(', ')))
+        thumbnails = sorted(thumbnails, key=lambda x: int(x.split('_')[1].split('w')[0]), reverse=True)  # Thumbnails needs be sorted from big size to small size(1080 -> ... 150).
+        num_lectures = int(df_by_id['num_lectures'].unique()[0])
+        thumbnails_list = []
+        for image in thumbnails:
+            thumbnails_list.append(json.loads(image))
 
-    result = {
-      "id": each_id,
-      "title": title,
-      "thumbnail": thumbnail,
-      "thumbnails": thumbnails_list,
-      "num_lectures": num_lectures
-    }
-    result_list.append(result)
+        result = {
+            "id": each_id,
+            "title": title,
+            "thumbnail": thumbnail,
+            "thumbnails": thumbnails_list,
+            "num_lectures": num_lectures
+        }
+        result_list.append(result)
 
-  return result_list
+    return result_list
 
 
 def make_query_to_find_related_terms(word: str):
-  query_program = f"""
+    query_program = f"""
     SELECT
           prog.id,
           prog.title
@@ -233,7 +233,7 @@ def make_query_to_find_related_terms(word: str):
           prog.title LIKE "%{word}%"
   ORDER BY CHAR_LENGTH(prog.title)"""
 
-  query_coach = f"""
+    query_coach = f"""
     SELECT
           c.id,
           c.name
@@ -243,7 +243,7 @@ def make_query_to_find_related_terms(word: str):
           c.name LIKE "%{word}%"
   ORDER BY CHAR_LENGTH(c.name)"""
 
-  query_exercise = f"""
+    query_exercise = f"""
     SELECT
         ex.id,
         ex.title
@@ -253,7 +253,7 @@ def make_query_to_find_related_terms(word: str):
         ex.title LIKE "%{word}%"
   ORDER BY CHAR_LENGTH(ex.title)"""
 
-  query_equipment = f"""
+    query_equipment = f"""
     SELECT
           eq.id,
           eq.name
@@ -263,8 +263,8 @@ def make_query_to_find_related_terms(word: str):
           eq.name LIKE "%{word}%"
     ORDER BY CHAR_LENGTH(eq.name)"""
 
-  return query_program, query_coach, query_exercise, query_equipment
+    return query_program, query_coach, query_exercise, query_equipment
 
 
 def program_progress(user_id):
-  pass
+    pass

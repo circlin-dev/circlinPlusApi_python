@@ -1,6 +1,6 @@
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
-from global_things.functions.general import login_to_db, check_token, query_result_is_none
+from global_things.functions.general import login_to_db, check_session, query_result_is_none
 from global_things.functions.bodylab import analyze_image, get_date_range_from_week
 from . import api
 from flask import url_for, request
@@ -14,73 +14,73 @@ import json
 
 @api.route('/bodylab/add', methods=['POST'])
 def add_weekly_data():
-  # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
-  ip = request.headers["X-Forwarded-For"]  # Both public & private.
-  endpoint = API_ROOT + url_for('api.add_weekly_data')
-  # token = request.headers['Authorization']
-  """
-  요청이 html form으로부터가 아닌, axios나 fetch로 온다면 파라미터를 아래와 같이 다뤄야 할 수도 있다.
-  -> parameters = json.loads(request.get_data(), encoding='utf-8')
-  """
-  period = request.form.get('period')  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
-  user_id = request.form.get('user_id')
-  height = request.form.get('height')
-  weight = request.form.get('weight')
-  bmi = request.form.get('bmi')
-  muscle_mass = request.form.get('muscle_mass')
-  fat_mass = request.form.get('fat_mass')
-  body_image = request.form.get('body_image')
+    # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+    ip = request.headers["X-Forwarded-For"]  # Both public & private.
+    endpoint = API_ROOT + url_for('api.add_weekly_data')
+    # token = request.headers['Authorization']
+    """
+    요청이 html form으로부터가 아닌, axios나 fetch로 온다면 파라미터를 아래와 같이 다뤄야 할 수도 있다.
+    -> parameters = json.loads(request.get_data(), encoding='utf-8')
+    """
+    period = request.form.get('period')  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
+    user_id = request.form.get('user_id')
+    height = request.form.get('height')
+    weight = request.form.get('weight')
+    bmi = request.form.get('bmi')
+    muscle_mass = request.form.get('muscle_mass')
+    fat_mass = request.form.get('fat_mass')
+    body_image = request.form.get('body_image')
 
-  # Verify if mandatory information is not null.
-  if request.method == 'POST':
-    if not(period and user_id and height and weight and bmi and muscle_mass and fat_mass and body_image):
-      result = {
-        'result': False,
-        'error': f'Missing data in request.',
-        'values': {
-          'period': period,
-          'user_id': user_id,
-          'height': height,
-          'weight': weight,
-          'bmi': bmi,
-          'muscle_mass': muscle_mass,
-          'fat_mass': fat_mass,
-          'body_image': body_image
-        }
-      }
-      return json.dumps(result, ensure_ascii=False), 400
+    # Verify if mandatory information is not null.
+    if request.method == 'POST':
+        if not(period and user_id and height and weight and bmi and muscle_mass and fat_mass and body_image):
+            result = {
+                'result': False,
+                'error': f'Missing data in request.',
+                'values': {
+                    'period': period,
+                    'user_id': user_id,
+                    'height': height,
+                    'weight': weight,
+                    'bmi': bmi,
+                    'muscle_mass': muscle_mass,
+                    'fat_mass': fat_mass,
+                    'body_image': body_image
+                }
+            }
+            return json.dumps(result, ensure_ascii=False), 400
 
-    year = period.split('-W')[0]
-    week_number_of_year = period.split('-W')[1]
-    firstdate_of_week, lastdate_of_week = get_date_range_from_week(year, week_number_of_year)
+        year = period.split('-W')[0]
+        week_number_of_year = period.split('-W')[1]
+        firstdate_of_week, lastdate_of_week = get_date_range_from_week(year, week_number_of_year)
 
-    try:
-      connection = login_to_db()
-    except Exception as e:
-      error = str(e)
-      result = {
-        'result': False,
-        'error': f'Server Error while connecting to DB: {error}'
-      }
-      slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-      return json.dumps(result, ensure_ascii=False), 500
+        try:
+            connection = login_to_db()
+        except Exception as e:
+            error = str(e)
+            result = {
+                'result': False,
+                'error': f'Server Error while connecting to DB: {error}'
+            }
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+            return json.dumps(result, ensure_ascii=False), 500
 
-    cursor = connection.cursor()
+        cursor = connection.cursor()
 
-    # Verify user is valid or not.
-    # is_valid_user = check_token(cursor, user_id, token)
-    # if is_valid_user['result'] is False:
-    #   connection.close()
-    #   result = {
-    #     'result': False,
-    #     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
-    #   }
-    #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-    #   return json.dumps(result, ensure_ascii=False), 401
-    # elif is_valid_user['result'] is True:
-    #   pass
+        # Verify user is valid or not.
+        # is_valid_user = check_token(cursor, user_id, token)
+        # if is_valid_user['result'] is False:
+        #   connection.close()
+        #   result = {
+        #     'result': False,
+        #     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
+        #   }
+        #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+        #   return json.dumps(result, ensure_ascii=False), 401
+        # elif is_valid_user['result'] is True:
+        #   pass
 
-    query = f"INSERT INTO bodylab( \
+        query = f"INSERT INTO bodylab( \
                           user_id, year, \
                           week_number_of_year, firstdate_of_week, \
                           lastdate_of_week, height,\
@@ -91,26 +91,26 @@ def add_weekly_data():
                         %s, %s, \
                         %s, %s, \
                         %s, %s)"
-    values = (user_id, int(year),
-              int(week_number_of_year), firstdate_of_week,
-              lastdate_of_week, height,
-              weight, bmi,
-              muscle_mass, fat_mass)
-    try:
-      cursor.execute(query, values)
-    except Exception as e:
-      connection.rollback()
-      connection.close()
-      error = str(e)
-      result = {
-        'result': False,
-        'error': f'Server Error while executing INSERT query(bodylab): {error}'
-      }
-      slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
-      return json.dumps(result, ensure_ascii=False), 500
+        values = (user_id, int(year),
+                  int(week_number_of_year), firstdate_of_week,
+                  lastdate_of_week, height,
+                  weight, bmi,
+                  muscle_mass, fat_mass)
+        try:
+            cursor.execute(query, values)
+        except Exception as e:
+            connection.rollback()
+            connection.close()
+            error = str(e)
+            result = {
+                'result': False,
+                'error': f'Server Error while executing INSERT query(bodylab): {error}'
+            }
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+            return json.dumps(result, ensure_ascii=False), 500
 
-    # Get users latest bodylab data = User's data inserted just before.
-    query = f'''
+        # Get users latest bodylab data = User's data inserted just before.
+        query = f'''
       SELECT 
             id
         FROM
@@ -120,27 +120,27 @@ def add_weekly_data():
         ORDER BY id DESC
             LIMIT 1'''
 
-    cursor.execute(query)
-    latest_bodylab_id_tuple = cursor.fetchall()
-    if query_result_is_none(latest_bodylab_id_tuple) is True:
-      connection.rollback()
-      connection.close()
-      result = {
-        'result': False,
-        'error': f'Cannot find requested bodylab data of user(id: {user_id})(bodylab)'
-      }
-      slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
-      return json.dumps(result, ensure_ascii=False), 400
-    else:
-      latest_bodylab_id = latest_bodylab_id_tuple[0][0]
+        cursor.execute(query)
+        latest_bodylab_id_tuple = cursor.fetchall()
+        if query_result_is_none(latest_bodylab_id_tuple) is True:
+            connection.rollback()
+            connection.close()
+            result = {
+                'result': False,
+                'error': f'Cannot find requested bodylab data of user(id: {user_id})(bodylab)'
+            }
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+            return json.dumps(result, ensure_ascii=False), 400
+        else:
+            latest_bodylab_id = latest_bodylab_id_tuple[0][0]
 
-    # Analyze user's image and store the result.
-    image_analysis_result = analyze_image(user_id, body_image)
-    image_analysis_result_json = json.loads(image_analysis_result)
-    status_code = image_analysis_result_json['status_code']
-    if status_code == 200:
-      analyze_result = image_analysis_result_json['result']
-      query = f" \
+        # Analyze user's image and store the result.
+        image_analysis_result = analyze_image(user_id, body_image)
+        image_analysis_result_json = json.loads(image_analysis_result)
+        status_code = image_analysis_result_json['status_code']
+        if status_code == 200:
+            analyze_result = image_analysis_result_json['result']
+            query = f" \
         INSERT INTO bodylab_image \
                 (bodylab_id, original_url, \
                 analyzed_url, shoulder_ratio, \
@@ -154,121 +154,121 @@ def add_weekly_data():
                 %s, %s, \
                 %s, %s, \
                 %s, %s)"
-      values = (latest_bodylab_id, body_image,
-                analyze_result['output_url'], analyze_result['shoulder_ratio'],
-                analyze_result['hip_ratio'], analyze_result['shoulder_width'],
-                analyze_result['hip_width'], analyze_result['nose_to_shoulder_center'],
-                analyze_result['shoulder_center_to_hip_center'], analyze_result['hip_center_to_ankle_center'],
-                analyze_result['whole_body_length'], analyze_result['upper_body_lower_body'])
-      try:
-        cursor.execute(query, values)
-      except Exception as e:
-        connection.rollback()
-        connection.close()
-        error = str(e)
+            values = (latest_bodylab_id, body_image,
+                      analyze_result['output_url'], analyze_result['shoulder_ratio'],
+                      analyze_result['hip_ratio'], analyze_result['shoulder_width'],
+                      analyze_result['hip_width'], analyze_result['nose_to_shoulder_center'],
+                      analyze_result['shoulder_center_to_hip_center'], analyze_result['hip_center_to_ankle_center'],
+                      analyze_result['whole_body_length'], analyze_result['upper_body_lower_body'])
+            try:
+                cursor.execute(query, values)
+            except Exception as e:
+                connection.rollback()
+                connection.close()
+                error = str(e)
+                result = {
+                    'result': False,
+                    'error': f'Server error while executing INSERT query(bodylab_image): {error}'
+                }
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+                return json.dumps(result, ensure_ascii=False), 400
+
+            connection.commit()
+            connection.close()
+            result = {'result': True}
+            return json.dumps(result, ensure_ascii=False), 201
+        elif status_code == 400:
+            connection.rollback()
+            connection.close()
+            result = {
+                'result': False,
+                'error': f"Failed to analysis requested image({body_image}): {image_analysis_result_json['error']}"
+            }
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+            return json.dumps(result, ensure_ascii=False), 400
+        elif status_code == 500:
+            connection.rollback()
+            connection.close()
+            result = {
+                'result': False,
+                'error': f"Failed to analysis requested image({body_image}): {image_analysis_result_json['error']}"
+            }
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+            return json.dumps(result, ensure_ascii=False), 500
+
+    else:
         result = {
-          'result': False,
-          'error': f'Server error while executing INSERT query(bodylab_image): {error}'
+            'result': False,
+            'error': 'Method Not Allowed'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
-        return json.dumps(result, ensure_ascii=False), 400
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+        return json.dumps(result, ensure_ascii=False), 403
 
-      connection.commit()
-      connection.close()
-      result = {'result': True}
-      return json.dumps(result, ensure_ascii=False), 201
-    elif status_code == 400:
-      connection.rollback()
-      connection.close()
-      result = {
-        'result': False,
-        'error': f"Failed to analysis requested image({body_image}): {image_analysis_result_json['error']}"
+
+    # region body lab score calculating
+    '''
+    * 바디랩: 총점, 순위 ==> 월요일 기준 갱신! 이지만 일요일에 운동하는 사람이 있을 수 있으니 월요일 정오 기준으로 계산한다.
+      (1) 바디점수(바디랩 총점): 신체점수 & 매력점수 평균(정수), (전체 동성 유저의 신체 + 매력 점수 합산 결과에 대한)순위
+      (2) 신체점수: 총점, (전체 동성 유저 중)순위
+          - BMI, 체지방, 근육량 가중평균
+      (3) 매력점수: 총점, (전체 동성 유저 중)순위
+          - BMI, 체지방, 근육량, 사진분석값 가중평균  ==> 사진분석값을 활용한 눈바디 점수 계산식 확인 요망
+      (4) BMI:
+          - 수치에 따른 상단 한줄 코멘트
+          - 나의 수치 & 권장수치/이성 선호/동성 선호 각각과의 차이(절대량)
+          - 권장수치
+          - 신체점수
+          - 이성 선호(이성이 좋아하는 나와의 동성 1등의 금주 BMI), 동성 선호(동성이 좋아하는 나와의 동성 1등의 금주 BMI),
+          - 매력점수
+          - 최근 1주일의 날짜 & 일자별 내 점수
+      (5) 체지방
+          - 수치에 따른 상단 한줄 코멘트
+          - 나의 수치 & 권장수치/이성 선호/동성 선호 각각과의 차이(절대량)
+          - 권장수치
+          - 신체점수
+          - 이성 선호(이성이 좋아하는 나와의 동성 1등의 금주 체지방), 동성 선호(동성이 좋아하는 나와의 동성 1등의 금주 체지방)
+          - 매력점수
+          - 최근 1주일의 날짜 & 일자별 내 점수
+      (6) 근육량:
+          - 수치에 따른 상단 한줄 코멘트
+          - 나의 수치 & 권장수치/이성 선호/동성 선호 각각과의 차이(절대량)
+          - 권장수치
+          - 신체점수
+          - 이성 선호(이성이 좋아하는 나와의 동성 1등의 금주 근육량), 동성 선호(동성이 좋아하는 나와의 동성 1등의 금주 근육량)
+          - 매력점수
+          - 최근 1주일의 날짜 & 일자별 내 점수
+      (7) 사진분석값: 우선은 점수만 그대로 보내주는 것으로.
+      ##########################################################
+      - 입력값: period(default: 금주), 유저 id
+      - 반환값 예시
+      {
+        'WEEKLY_RECORD': {
+          'total_body_score': '',
+          'total_attractiveness_score': '',
+          'total_bodylab_score': '',
+          'weekly_body_rank': '',
+          'weekly_attractiveness_rank': '',
+          'weekly_bodylab_rank': ''
+        }
+        'BMI': {
+          'comment': '',
+          'amount_recommended': '',
+          'amount_mine': '',
+          'gap_with_recommended_amount': '',
+          'body_score': '',
+          'amount_of_person_most_preferred_by_same_sex': '',
+          'amount_of_person_most_preferred_by_other_sex': '',
+          'gap_with_person_most_preferred_by_same_sex': '',
+          'gap_with_person_most_preferred_by_other_sex': '',
+          'attractiveness_score': '',
+          'history_4weeks': {'2022-01-01': '', '2022-01-02': '', ...}     #입력받은 period 포함한 최근 4주치의 my_amount
+        },
+        'MUSCLE': {},
+        'FAT': {},
+        'picture_analysis': {}
       }
-      slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
-      return json.dumps(result, ensure_ascii=False), 400
-    elif status_code == 500:
-      connection.rollback()
-      connection.close()
-      result = {
-        'result': False,
-        'error': f"Failed to analysis requested image({body_image}): {image_analysis_result_json['error']}"
-      }
-      slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
-      return json.dumps(result, ensure_ascii=False), 500
-
-  else:
-    result = {
-      'result': False,
-      'error': 'Method Not Allowed'
-    }
-    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-    return json.dumps(result, ensure_ascii=False), 403
-
-
-# region body lab score calculating
-  '''
-  * 바디랩: 총점, 순위 ==> 월요일 기준 갱신! 이지만 일요일에 운동하는 사람이 있을 수 있으니 월요일 정오 기준으로 계산한다.
-    (1) 바디점수(바디랩 총점): 신체점수 & 매력점수 평균(정수), (전체 동성 유저의 신체 + 매력 점수 합산 결과에 대한)순위
-    (2) 신체점수: 총점, (전체 동성 유저 중)순위
-        - BMI, 체지방, 근육량 가중평균
-    (3) 매력점수: 총점, (전체 동성 유저 중)순위
-        - BMI, 체지방, 근육량, 사진분석값 가중평균  ==> 사진분석값을 활용한 눈바디 점수 계산식 확인 요망
-    (4) BMI:
-        - 수치에 따른 상단 한줄 코멘트
-        - 나의 수치 & 권장수치/이성 선호/동성 선호 각각과의 차이(절대량)
-        - 권장수치
-        - 신체점수
-        - 이성 선호(이성이 좋아하는 나와의 동성 1등의 금주 BMI), 동성 선호(동성이 좋아하는 나와의 동성 1등의 금주 BMI),
-        - 매력점수
-        - 최근 1주일의 날짜 & 일자별 내 점수
-    (5) 체지방
-        - 수치에 따른 상단 한줄 코멘트
-        - 나의 수치 & 권장수치/이성 선호/동성 선호 각각과의 차이(절대량)
-        - 권장수치
-        - 신체점수
-        - 이성 선호(이성이 좋아하는 나와의 동성 1등의 금주 체지방), 동성 선호(동성이 좋아하는 나와의 동성 1등의 금주 체지방)
-        - 매력점수
-        - 최근 1주일의 날짜 & 일자별 내 점수
-    (6) 근육량:
-        - 수치에 따른 상단 한줄 코멘트
-        - 나의 수치 & 권장수치/이성 선호/동성 선호 각각과의 차이(절대량)
-        - 권장수치
-        - 신체점수
-        - 이성 선호(이성이 좋아하는 나와의 동성 1등의 금주 근육량), 동성 선호(동성이 좋아하는 나와의 동성 1등의 금주 근육량)
-        - 매력점수
-        - 최근 1주일의 날짜 & 일자별 내 점수
-    (7) 사진분석값: 우선은 점수만 그대로 보내주는 것으로.
-    ##########################################################
-    - 입력값: period(default: 금주), 유저 id
-    - 반환값 예시
-    {
-      'WEEKLY_RECORD': {
-        'total_body_score': '',
-        'total_attractiveness_score': '',
-        'total_bodylab_score': '',
-        'weekly_body_rank': '',
-        'weekly_attractiveness_rank': '',
-        'weekly_bodylab_rank': ''
-      }
-      'BMI': {
-        'comment': '',
-        'amount_recommended': '',
-        'amount_mine': '',
-        'gap_with_recommended_amount': '',
-        'body_score': '',
-        'amount_of_person_most_preferred_by_same_sex': '',
-        'amount_of_person_most_preferred_by_other_sex': '',
-        'gap_with_person_most_preferred_by_same_sex': '',
-        'gap_with_person_most_preferred_by_other_sex': '',
-        'attractiveness_score': '',
-        'history_4weeks': {'2022-01-01': '', '2022-01-02': '', ...}     #입력받은 period 포함한 최근 4주치의 my_amount
-      },
-      'MUSCLE': {},
-      'FAT': {},
-      'picture_analysis': {}
-    }
-    ##########################################################
-  '''
+      ##########################################################
+    '''
 
 # @api.route('/bodylab/weekly/<user_id>/<period>', methods=['GET'])    #check_token 추가하기!!!!!
 # def read_weekly_score(user_id, period):
