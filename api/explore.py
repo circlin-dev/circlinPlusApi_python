@@ -176,7 +176,7 @@ def get_related_terms_list():
 
     all_searched_result = related_programs_list + related_coaches_list + related_exercises_list + related_equipments_list
 
-    if len(all_searched_result) == 0:
+    if len(all_searched_result) == 0 and word != '' and len(word) > 0:
         """
         MySQL LIKE 연산자로 추려낸 연관검색어의 결과가 0건일 경우, 
         각 카테고리의 모든 목록 이름과 검색어의 형태적 유사도를 자모단위로 쪼개 비교하여, 
