@@ -200,7 +200,7 @@ def get_related_terms_list():
             related_exercises_list.append(exercise_dict)
 
         for equipment in equipments:
-            equipment_dict = {'id': equipment[0], 'value': equipment[1], 'similarity': jamo_levenshtein((word, equipment[1]))}
+            equipment_dict = {'id': equipment[0], 'value': equipment[1], 'similarity': jamo_levenshtein(word, equipment[1])}
             related_equipments_list.append(equipment_dict)
 
         related_programs_list = sorted(related_programs_list, key=lambda x: x['similarity'], reverse=True)[:3]
