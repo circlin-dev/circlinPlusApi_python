@@ -207,7 +207,8 @@ def get_related_terms_list():
         related_coaches_list = sorted(related_coaches_list, key=lambda x: x['similarity'], reverse=True)[:3]
         related_exercises_list = sorted(related_exercises_list, key=lambda x: x['similarity'], reverse=True)[:3]
         related_equipments_list = sorted(related_equipments_list, key=lambda x: x['similarity'], reverse=True)[:3]
-        all_searched_result = related_programs_list + related_coaches_list + related_exercises_list + related_equipments_list
+        all_searched_result = sorted(related_programs_list + related_coaches_list + related_exercises_list + related_equipments_list, key=lambda x: x['similarity'], reverse=True)
+
 
     connection.close()
     result_dict = {
