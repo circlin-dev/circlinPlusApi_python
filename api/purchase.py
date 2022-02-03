@@ -332,16 +332,16 @@ def add_purchase():
     # query = f"INSERT INTO purchases(total_payment, imp_uid, \
     #                                 merchant_uid, status, \
     #                                 buyer_email, buyer_name, buyer_tel) \
-    query = f"INSERT INTO \
-                        purchases(user_id, plan_id, \
-                                  start_date, expire_date) \
-                  VALUES \
-                        (%s, (SELECT id FROM subscribe_plans WHERE title=%s), \
-                        (SELECT NOW()), (SELECT NOW() + INTERVAL {subscription_days} DAY)) \
-                    WHERE \
-                        imp_uid=%s \
-                    AND merchant_uid=%s"
-    values = (int(user_id), user_subscribed_plan, imp_uid, merchant_uid)
+    query = f"""INSERT INTO
+                        purchases(user_id, plan_id,
+                                  start_date, expire_date)
+                  VALUES
+                        (%s, (SELECT id FROM subscribe_plans WHERE title=%s),
+                        (SELECT NOW()), (SELECT NOW() + INTERVAL {subscription_days} DAY))
+                    WHERE
+                        imp_uid={imp_uid}
+                    AND merchant_uid={merchant_uid}"""
+    values = (int(user_id), user_subscribed_plan)
     # user_id, payment_info, delivery_info
     try:
         cursor.execute(query, values)
@@ -553,6 +553,8 @@ def update_payment_status_by_webhook():
             cursor.execute(query, values)
             connection.commit()
             connection.close()
+            result = {'result': True}
+            return json.dumps(result, ensure_ascii=False), 201
         except Exception as e:
             connection.rollback()
             connection.close()
