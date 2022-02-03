@@ -345,7 +345,6 @@ def add_purchase():
     try:
         cursor.execute(query, values)
         connection.commit()
-        purchase_id = cursor.lastrowid
     except Exception as e:
         connection.rollback()
         connection.close()
@@ -361,10 +360,10 @@ def add_purchase():
                                   purchase_id, post_code,
                                   address, recipient_name,
                                   recipient_phone, comment)
-                          VALUES(%s, %s,
+                          VALUES((SELECT id FROM purchases WHERE imp_uid={imp_uid} AND merchant_uid={merchant_uid}), %s,
                                 %s, %s,
                                 %s, %s)"""
-    values = (purchase_id, post_code,
+    values = (post_code,
               address, recipient_name,
               recipient_phone, comment)
     try:
