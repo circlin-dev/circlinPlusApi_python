@@ -276,7 +276,7 @@ def add_purchase():
         pass
 
     actual_amount = amount_to_be_paid(user_subscribed_plan)
-    if actual_amount is not None and actual_amount != user_paid_amount:  # Test value(actual_amount): 1004
+    if actual_amount != user_paid_amount:  # Test value(actual_amount): 1004
         query = f"INSERT INTO purchases(user_id, total_payment, \
                                                 imp_uid, merchant_uid, status, \
                                                 buyer_email, buyer_name, buyer_tel) \
@@ -321,19 +321,21 @@ def add_purchase():
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
             return json.dumps(result, ensure_ascii=False), 400
     else:
-        if payment_status == 'paid' or payment_status == 'failed':
-            result = {'result': False,
-                      'error': f"Invalid subscribing plan title: '{user_subscribed_plan}'"}
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-            return json.dumps(result, ensure_ascii=False), 400
-        else:
-            connection.close()
-            result = {
-                'result': False,
-                'error': f': Error while validating payment information: Payment status is "{payment_status}". Payment process will continue only when the status value is "paid".'
-            }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-            return json.dumps(result, ensure_ascii=False), 403
+        pass
+        # if payment_status == 'paid' or payment_status == 'failed':
+        #     connection.close()
+        #     result = {'result': False,
+        #               'error': f"Invalid subscribing plan title: '{user_subscribed_plan}'"}
+        #     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+        #     return json.dumps(result, ensure_ascii=False), 400
+        # else:
+        #     connection.close()
+        #     result = {
+        #         'result': False,
+        #         'error': f': Error while validating payment information: Payment status is "{payment_status}". Payment process will continue only when the status value is "paid".'
+        #     }
+        #     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+        #     return json.dumps(result, ensure_ascii=False), 403
 
     # 4. 결제 정보(-> purchases), 배송 정보(purchase_delivery) 저장
     """
