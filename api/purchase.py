@@ -355,8 +355,9 @@ def add_purchase():
         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
         return json.dumps(result, ensure_ascii=False), 500
 
-    query = f"SELECT p.id FROM purchases p WHERE p.imp_uid={imp_uid} AND p.merchant_uid={merchant_uid}"
-    cursor.execute(query)
+    query = f"SELECT p.id FROM purchases p WHERE p.imp_uid=%s AND p.merchant_uid=%s"
+    values = (imp_uid, merchant_uid)
+    cursor.execute(query, values)
     purchase_id = cursor.fetchall()[0][0]
     query = f"""INSERT INTO 
                             purchase_delivery(purchase_id, post_code,
