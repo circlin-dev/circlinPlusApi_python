@@ -225,7 +225,7 @@ def add_purchase():
       ==> 기구 렌탈 여부, 할인권 적용, 구독 기간 등의 정보 고려하여 올바르게 계산하도록 보완해야 함!
     (2) 결제 검증 수단: sales_price와 user_paid_amount의 비교는 테스트 결제액인 1004원으로 비교중.
       ==> 결제 가격 체계를 보완하여 1004원을 실제 판매가인 sales_price로 변경해야 함!
-    (3) 기존 결제한 플랜의 기간이 만료되지 않은 상태에서의 결제 막기 
+    (3) 기존 결제한 플랜의 기간이 만료되지 않은 상태에서의 결제 막기
       ==> IMPORT 모듈을 이용하는 현재 구조상 클라이언트에서 처리해야 할듯
     (4) 결제 검증 실패 시 기결제된 내용 환불하기
     """
@@ -235,29 +235,29 @@ def add_purchase():
     sales_price = cursor.fetchall()
 
     if query_result_is_none(sales_price) is True:
-        query = f"INSERT INTO purchases(user_id, total_payment, \
-                                        imp_uid, merchant_uid, status, \
-                                        buyer_email, buyer_name, buyer_tel) \
-                              VALUES(%s, %s, \
-                                    %s, %s, %s, \
-                                    %s, %s, %s)"
-        values = (int(user_id), user_paid_amount,
-                  imp_uid, merchant_uid, payment_status,
-                  buyer_email, buyer_name, buyer_tel)
-        # user_id, payment_info, delivery_info
-        try:
-            cursor.execute(query, values)
-            connection.commit()
-        except Exception as e:
-            connection.rollback()
-            connection.close()
-            error = str(e)
-            result = {
-                'result': False,
-                'error': f'Server error while validating : {error}'
-            }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
-            return json.dumps(result, ensure_ascii=False), 500
+        # query = f"INSERT INTO purchases(user_id, total_payment, \
+        #                                 imp_uid, merchant_uid, status, \
+        #                                 buyer_email, buyer_name, buyer_tel) \
+        #                       VALUES(%s, %s, \
+        #                             %s, %s, %s, \
+        #                             %s, %s, %s)"
+        # values = (int(user_id), user_paid_amount,
+        #           imp_uid, merchant_uid, payment_status,
+        #           buyer_email, buyer_name, buyer_tel)
+        # # user_id, payment_info, delivery_info
+        # try:
+        #     cursor.execute(query, values)
+        #     connection.commit()
+        # except Exception as e:
+        #     connection.rollback()
+        #     connection.close()
+        #     error = str(e)
+        #     result = {
+        #         'result': False,
+        #         'error': f'Server error while validating : {error}'
+        #     }
+        #     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+        #     return json.dumps(result, ensure_ascii=False), 500
 
         connection.close()
         refund_reason = "[결제검증 실패]: 주문 플랜명 불일치."
@@ -277,29 +277,29 @@ def add_purchase():
 
     actual_amount = amount_to_be_paid(user_subscribed_plan)
     if actual_amount != user_paid_amount:  # Test value(actual_amount): 1004
-        query = f"INSERT INTO purchases(user_id, total_payment, \
-                                                imp_uid, merchant_uid, status, \
-                                                buyer_email, buyer_name, buyer_tel) \
-                                      VALUES(%s, %s, \
-                                            %s, %s, %s, \
-                                            %s, %s, %s)"
-        values = (int(user_id), user_paid_amount,
-                  imp_uid, merchant_uid, payment_status,
-                  buyer_email, buyer_name, buyer_tel)
-        # user_id, payment_info, delivery_info
-        try:
-            cursor.execute(query, values)
-            connection.commit()
-        except Exception as e:
-            connection.rollback()
-            connection.close()
-            error = str(e)
-            result = {
-                'result': False,
-                'error': f'Server error while validating : {error}'
-            }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
-            return json.dumps(result, ensure_ascii=False), 500
+        # query = f"INSERT INTO purchases(user_id, total_payment, \
+        #                                         imp_uid, merchant_uid, status, \
+        #                                         buyer_email, buyer_name, buyer_tel) \
+        #                               VALUES(%s, %s, \
+        #                                     %s, %s, %s, \
+        #                                     %s, %s, %s)"
+        # values = (int(user_id), user_paid_amount,
+        #           imp_uid, merchant_uid, payment_status,
+        #           buyer_email, buyer_name, buyer_tel)
+        # # user_id, payment_info, delivery_info
+        # try:
+        #     cursor.execute(query, values)
+        #     connection.commit()
+        # except Exception as e:
+        #     connection.rollback()
+        #     connection.close()
+        #     error = str(e)
+        #     result = {
+        #         'result': False,
+        #         'error': f'Server error while validating : {error}'
+        #     }
+        #     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+        #     return json.dumps(result, ensure_ascii=False), 500
         connection.close()
         # Failed validation: Request import to cancel the payment.
         """
@@ -327,21 +327,14 @@ def add_purchase():
     """
     기구 신청을 했을 경우, 기구 신청 내역을 저장하는 쿼리를 만들어야 함!
     """
-
+    # query = f"INSERT INTO purchases(total_payment, imp_uid, \
+    #                                 merchant_uid, status, \
+    #                                 buyer_email, buyer_name, buyer_tel) \
     query = f"INSERT INTO purchases(user_id, plan_id, \
-                                  start_date, expire_date, \
-                                  total_payment, imp_uid, \
-                                  merchant_uid, status, \
-                                  buyer_email, buyer_name, buyer_tel) \
+                                  start_date, expire_date) \
                           VALUES(%s, (SELECT id FROM subscribe_plans WHERE title=%s), \
-                                (SELECT NOW()), (SELECT NOW() + INTERVAL {subscription_days} DAY), \
-                                %s, %s, \
-                                %s, %s, \
-                                %s, %s, %s)"
-    values = (int(user_id), user_subscribed_plan,
-              user_paid_amount, imp_uid,
-              merchant_uid, payment_status,
-              buyer_email, buyer_name, buyer_tel)
+                                (SELECT NOW()), (SELECT NOW() + INTERVAL {subscription_days} DAY))"
+    values = (int(user_id), user_subscribed_plan)
     # user_id, payment_info, delivery_info
     try:
         cursor.execute(query, values)
@@ -360,7 +353,7 @@ def add_purchase():
 
     query = f"""INSERT INTO purchase_delivery(
                                   purchase_id, post_code,
-                                  address, recipient_name, 
+                                  address, recipient_name,
                                   recipient_phone, comment)
                           VALUES(%s, %s,
                                 %s, %s,
@@ -534,41 +527,60 @@ def update_payment_status_by_webhook():
     cursor.execute(query, values)
     db_paid_amount = cursor.fetchall()
 
-    if query_result_is_none(db_paid_amount) is True:
-      connection.close()
-      result = {
-        'result': False,
-        'error': f"No purchase record exists for imp_uid={imp_uid}, merchant_uid={merchant_uid}, request_body={json.loads(request.get_data(), encoding='utf-8')}"
-      }
-      slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'], query=query)
-      return json.dumps(result, ensure_ascii=False), 400
-
-    if int(db_paid_amount[0][0]) == int(import_paid_amount):
-        if updated_status == 'cancelled':
-            query = f"""
-        UPDATE 
-              purchases
-          SET 
-              status=%s, 
-              deleted_at=(SELECT NOW())
-        WHERE 
-              imp_uid=%s 
-          AND merchant_uid=%s"""
-            values = (updated_status, imp_uid, merchant_uid)
+    if query_result_is_none(db_paid_amount) is True:   # 2. 결제 정보 조회(import)
+        payment_status = payment_validation_import['response']['status']
+        buyer_email = payment_validation_import['response']['buyer_email']
+        buyer_name = payment_validation_import['response']['buyer_name']
+        buyer_tel = payment_validation_import['response']['buyer_tel']
+        query = f"INSERT INTO purchases(total_payment, imp_uid, \
+                                        merchant_uid, status, \
+                                        buyer_email, buyer_name, buyer_tel) \
+                                      VALUES(%s, %s, \
+                                            %s, %s,\
+                                            %s, %s, %s)"
+        values = (import_paid_amount, imp_uid,
+                  merchant_uid, payment_status,
+                  buyer_email, buyer_name, buyer_tel)
+        # user_id, payment_info, delivery_info
+        try:
             cursor.execute(query, values)
-        else:
-            pass
-        connection.commit()
-        connection.close()
-
-        result = {'result': True}
-        return json.dumps(result, ensure_ascii=False), 201
+            connection.commit()
+        except Exception as e:
+            connection.rollback()
+            connection.close()
+            error = str(e)
+            result = {
+                'result': False,
+                'error': f'Server error while validating : {error}'
+            }
+            slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'], query=query)
+            return json.dumps(result, ensure_ascii=False), 500
     else:
-        connection.close()
-        result = {
-            'result': False,
-            'error': f': Error while validating payment information: Paid amount that was sent from IMPORT is {import_paid_amount} WON(imp_uid: {imp_uid}), but purchase record from DB says {db_paid_amount} WON.'
-        }
-        slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'])
-        return json.dumps(result, ensure_ascii=False), 403
+        if int(db_paid_amount[0][0]) == int(import_paid_amount):
+            if updated_status == 'cancelled':
+                query = f"""
+                    UPDATE 
+                          purchases
+                      SET 
+                          status=%s, 
+                          deleted_at=(SELECT NOW())
+                    WHERE 
+                          imp_uid=%s 
+                      AND merchant_uid=%s"""
+                values = (updated_status, imp_uid, merchant_uid)
+                cursor.execute(query, values)
+            else:
+                pass
+            connection.commit()
+            connection.close()
+            result = {'result': True}
+            return json.dumps(result, ensure_ascii=False), 201
+        else:
+            connection.close()
+            result = {
+                'result': False,
+                'error': f': Error while validating payment information: Paid amount that was sent from IMPORT is {import_paid_amount} WON(imp_uid: {imp_uid}), but purchase record from DB says {db_paid_amount} WON.'
+            }
+            slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'])
+            return json.dumps(result, ensure_ascii=False), 403
 
