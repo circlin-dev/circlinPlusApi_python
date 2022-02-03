@@ -238,14 +238,14 @@ def add_purchase():
         connection.close()
         refund_reason = "[결제검증 실패] 주문 플랜명 불일치."
         refund_result = request_import_refund(access_token, imp_uid, merchant_uid, user_paid_amount, user_subscribed_plan, refund_reason)
-        if refund_result == 0:
+        if refund_result['code'] == 0:
             result = {'result': False,
-                      'error': f"결제 검증 실패(주문 플랜명 불일치), 환불처리 성공: {response['message']}"}
+                      'error': f"결제 검증 실패(주문 플랜명 불일치), 환불처리 성공: {refund_result['message']}"}
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
             return json.dumps(result, ensure_ascii=False), 400
         else:
             result = {'result': False,
-                      'error': f"결제 검증 실패(주문 플랜명 불일치), 다음 사유로 인해 환불처리 실패: {response['message']}"}
+                      'error': f"결제 검증 실패(주문 플랜명 불일치), 다음 사유로 인해 환불처리 실패: {refund_result['message']}"}
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
             return json.dumps(result, ensure_ascii=False), 400
     else:
@@ -263,14 +263,14 @@ def add_purchase():
         """
         refund_reason = "[결제검증 실패] 판매가와 결제금액이 불일치합니다."
         refund_result = request_import_refund(access_token, imp_uid, merchant_uid, user_paid_amount, user_subscribed_plan, refund_reason)
-        if refund_result == 0:
+        if refund_result['code'] == 0:
             result = {'result': False,
-                      'error': f"결제 검증 실패(결제 금액 불일치), 환불처리 성공: {response['message']}"}
+                      'error': f"결제 검증 실패(결제 금액 불일치), 환불처리 성공: {refund_result['message']}"}
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
             return json.dumps(result, ensure_ascii=False), 400
         else:
             result = {'result': False,
-                      'error': f"결제 검증 실패(결제 금액 불일치), 다음 사유로 인해 환불처리 실패: {response['message']}"}
+                      'error': f"결제 검증 실패(결제 금액 불일치), 다음 사유로 인해 환불처리 실패: {refund_result['message']}"}
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
             return json.dumps(result, ensure_ascii=False), 400
     else:
@@ -498,15 +498,15 @@ def update_payment_status_by_webhook():
     values = (imp_uid, merchant_uid)
     cursor.execute(query, values)
     db_paid_amount = cursor.fetchall()[0][0]
-    #
-    # if query_result_is_none(db_paid_amount) is True:
-    #   connection.close()
-    #   result = {
-    #     'result': False,
-    #     'error': f'No purchase record exists for imp_uid={imp_uid}, merchant_uid={merchant_uid}'
-    #   }
-    #   slack_error_notification(user_ip=ip, user_id='', api=endpoint, error_log=result['error'], query=query)
-    #   return json.dumps(result, ensure_ascii=False), 400
+
+    if query_result_is_none(db_paid_amount) is True:
+      connection.close()
+      result = {
+        'result': False,
+        'error': f'No purchase record exists for imp_uid={imp_uid}, merchant_uid={merchant_uid}'
+      }
+      slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'], query=query)
+      return json.dumps(result, ensure_ascii=False), 400
 
     if int(db_paid_amount) == int(import_paid_amount):
         if updated_status == 'cancelled':

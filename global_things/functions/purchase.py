@@ -52,5 +52,4 @@ def request_import_refund(access_token: str, imp_uid: str, merchant_uid: str, am
             "amount": amount,  # 미입력 시 전액 환불됨
             "checksum": checksum,  # 환불 가능금액: 부분환불이 도입될 경우 DB상의 '현재 환불 가능액'을 체크할 것.
         }).json()
-    code = response['code']
-    return code
+    return response
