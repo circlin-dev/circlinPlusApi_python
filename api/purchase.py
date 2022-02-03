@@ -356,9 +356,9 @@ def add_purchase():
     user_sex = json.loads(answer_data[0][0].replace("\\", "\\\\"), strict=False)['sex']
 
     if user_sex == 'M':
-        manager_id = 1  # 1 = 대표님, 2 = 희정님
+        manager_id = 28  # 28 = 대표님, 18 = 희정님
     else:
-        manager_id = 2
+        manager_id = 18
 
     query = f"""
     SELECT 

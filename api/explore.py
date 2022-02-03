@@ -214,7 +214,6 @@ def get_related_terms_list():
         related_equipments_list = sorted(related_equipments_list, key=lambda x: x['similarity'])[:3]
         all_searched_result = sorted(related_programs_list + related_coaches_list + related_exercises_list + related_equipments_list, key=lambda x: x['similarity'])
 
-
     connection.close()
     result_dict = {
         "result": True,
