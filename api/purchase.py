@@ -235,41 +235,42 @@ def add_purchase():
     sales_price = cursor.fetchall()
 
     if query_result_is_none(sales_price) is True:
-        # query = f"INSERT INTO purchases(user_id, total_payment, \
-        #                                 imp_uid, merchant_uid, status, \
-        #                                 buyer_email, buyer_name, buyer_tel) \
-        #                       VALUES(%s, %s, \
-        #                             %s, %s, %s, \
-        #                             %s, %s, %s)"
-        # values = (int(user_id), user_paid_amount,
-        #           imp_uid, merchant_uid, payment_status,
-        #           buyer_email, buyer_name, buyer_tel)
-        # # user_id, payment_info, delivery_info
-        # try:
-        #     cursor.execute(query, values)
-        #     connection.commit()
-        # except Exception as e:
-        #     connection.rollback()
-        #     connection.close()
-        #     error = str(e)
-        #     result = {
-        #         'result': False,
-        #         'error': f'Server error while validating : {error}'
-        #     }
-        #     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
-        #     return json.dumps(result, ensure_ascii=False), 500
+        try:
+            query = f"""
+                    UPDATE 
+                          purchases
+                      SET 
+                          user_id=%s,
+                          status=%s, 
+                          deleted_at=(SELECT NOW())
+                    WHERE 
+                          imp_uid=%s 
+                      AND merchant_uid=%s"""
+            values = (user_id, "cancelled", imp_uid, merchant_uid)
+            cursor.execute(query, values)
+            connection.commit()
+        except Exception as e:
+            connection.rollback()
+            connection.close()
+            error = str(e)
+            result = {
+                'result': False,
+                'error': f'Server error while validating : {error}'
+            }
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+            return json.dumps(result, ensure_ascii=False), 500
 
         connection.close()
-        refund_reason = "[결제검증 실패]: 주문 플랜명 불일치."
+        refund_reason = "[결제검증 실패]: 결제 요청된 플랜명과 일치하는 플랜명이 없습니다."
         refund_result = request_import_refund(access_token, imp_uid, merchant_uid, user_paid_amount, user_subscribed_plan, refund_reason)
         if refund_result['code'] == 0:
             result = {'result': False,
-                      'error': f"결제 검증 실패(주문 플랜명 불일치), 환불처리 성공."}
+                      'error': f"결제 검증 실패(주문 플랜명 불일치), 환불처리 성공(imp_uid: {imp_uid}, merchant_uid: {merchant_uid})."}
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
             return json.dumps(result, ensure_ascii=False), 400
         else:
             result = {'result': False,
-                      'error': f"결제 검증 실패(주문 플랜명 불일치), 다음 사유로 인해 환불처리 실패: {refund_result['message']}"}
+                      'error': f"결제 검증 실패(주문 플랜명 불일치), 다음 사유로 인해 환불처리 실패하였으니 아임포트 어드민에서 직접 취소 요망(imp_uid: {imp_uid}, merchant_uid: {merchant_uid}) : {refund_result['message']}"}
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
             return json.dumps(result, ensure_ascii=False), 400
     else:
@@ -277,31 +278,6 @@ def add_purchase():
 
     actual_amount = amount_to_be_paid(user_subscribed_plan)
     if actual_amount != user_paid_amount:  # Test value(actual_amount): 1004
-        # query = f"INSERT INTO purchases(user_id, total_payment, \
-        #                                         imp_uid, merchant_uid, status, \
-        #                                         buyer_email, buyer_name, buyer_tel) \
-        #                               VALUES(%s, %s, \
-        #                                     %s, %s, %s, \
-        #                                     %s, %s, %s)"
-        # values = (int(user_id), user_paid_amount,
-        #           imp_uid, merchant_uid, payment_status,
-        #           buyer_email, buyer_name, buyer_tel)
-        # # user_id, payment_info, delivery_info
-        # try:
-        #     cursor.execute(query, values)
-        #     connection.commit()
-        # except Exception as e:
-        #     connection.rollback()
-        #     connection.close()
-        #     error = str(e)
-        #     result = {
-        #         'result': False,
-        #         'error': f'Server error while validating : {error}'
-        #     }
-        #     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
-        #     return json.dumps(result, ensure_ascii=False), 500
-        connection.close()
-        # Failed validation: Request import to cancel the payment.
         """
         1. '부분환불' 도입 시
             - DB에 canceled_amount 추가하기.
@@ -311,13 +287,39 @@ def add_purchase():
         refund_reason = "[결제검증 실패]: 판매가와 결제금액이 불일치합니다."
         refund_result = request_import_refund(access_token, imp_uid, merchant_uid, user_paid_amount, user_subscribed_plan, refund_reason)
         if refund_result['code'] == 0:
+            try:
+                query = f"""
+                    UPDATE 
+                          purchases
+                      SET 
+                          user_id=%s,
+                          status=%s, 
+                          deleted_at=(SELECT NOW())
+                    WHERE 
+                          imp_uid=%s 
+                      AND merchant_uid=%s"""
+                values = (user_id, "cancelled", imp_uid, merchant_uid)
+                cursor.execute(query, values)
+                connection.commit()
+            except Exception as e:
+                connection.rollback()
+                connection.close()
+                error = str(e)
+                result = {
+                    'result': False,
+                    'error': f'Server error while validating : {error}'
+                }
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+                return json.dumps(result, ensure_ascii=False), 500
+            connection.close()
             result = {'result': False,
-                      'error': f"결제 검증 실패(결제 금액 불일치), 환불처리 성공."}
+                      'error': f"결제 검증 실패(결제 금액 불일치), 환불처리 성공(imp_uid: {imp_uid}, merchant_uid: {merchant_uid})."}
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
             return json.dumps(result, ensure_ascii=False), 400
         else:
+            # IMPORT 서버의 오류로 인해 환불 요청이 실패할 경우 직접 환불한다.
             result = {'result': False,
-                      'error': f"결제 검증 실패(결제 금액 불일치), 다음 사유로 인해 환불처리 실패: {refund_result['message']}"}
+                      'error': f"결제 검증 실패(결제 금액 불일치), 다음 사유로 인해 환불처리 실패하였으니 아임포트 어드민에서 직접 취소 요망(imp_uid: {imp_uid}, merchant_uid: {merchant_uid}) : {refund_result['message']}"}
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
             return json.dumps(result, ensure_ascii=False), 400
     else:
@@ -330,11 +332,16 @@ def add_purchase():
     # query = f"INSERT INTO purchases(total_payment, imp_uid, \
     #                                 merchant_uid, status, \
     #                                 buyer_email, buyer_name, buyer_tel) \
-    query = f"INSERT INTO purchases(user_id, plan_id, \
+    query = f"INSERT INTO \
+                        purchases(user_id, plan_id, \
                                   start_date, expire_date) \
-                          VALUES(%s, (SELECT id FROM subscribe_plans WHERE title=%s), \
-                                (SELECT NOW()), (SELECT NOW() + INTERVAL {subscription_days} DAY))"
-    values = (int(user_id), user_subscribed_plan)
+                  VALUES \
+                        (%s, (SELECT id FROM subscribe_plans WHERE title=%s), \
+                        (SELECT NOW()), (SELECT NOW() + INTERVAL {subscription_days} DAY)) \
+                    WHERE \
+                        imp_uid=%s \
+                    AND merchant_uid=%s"
+    values = (int(user_id), user_subscribed_plan, imp_uid, merchant_uid)
     # user_id, payment_info, delivery_info
     try:
         cursor.execute(query, values)
@@ -545,6 +552,7 @@ def update_payment_status_by_webhook():
         try:
             cursor.execute(query, values)
             connection.commit()
+            connection.close()
         except Exception as e:
             connection.rollback()
             connection.close()
@@ -555,7 +563,7 @@ def update_payment_status_by_webhook():
             }
             slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'], query=query)
             return json.dumps(result, ensure_ascii=False), 500
-    else:
+    else:  # 결제 취소 이벤트가 아임포트 어드민(https://admin.iamport.kr/)에서 "취소하기" 버튼을 클릭하여 발생한 경우에만 트리거됨.
         if int(db_paid_amount[0][0]) == int(import_paid_amount):
             if updated_status == 'cancelled':
                 query = f"""
