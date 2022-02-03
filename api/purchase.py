@@ -322,20 +322,6 @@ def add_purchase():
             return json.dumps(result, ensure_ascii=False), 400
     else:
         pass
-        # if payment_status == 'paid' or payment_status == 'failed':
-        #     connection.close()
-        #     result = {'result': False,
-        #               'error': f"Invalid subscribing plan title: '{user_subscribed_plan}'"}
-        #     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-        #     return json.dumps(result, ensure_ascii=False), 400
-        # else:
-        #     connection.close()
-        #     result = {
-        #         'result': False,
-        #         'error': f': Error while validating payment information: Payment status is "{payment_status}". Payment process will continue only when the status value is "paid".'
-        #     }
-        #     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-        #     return json.dumps(result, ensure_ascii=False), 403
 
     # 4. 결제 정보(-> purchases), 배송 정보(purchase_delivery) 저장
     """
@@ -552,7 +538,7 @@ def update_payment_status_by_webhook():
       connection.close()
       result = {
         'result': False,
-        'error': f'No purchase record exists for imp_uid={imp_uid}, merchant_uid={merchant_uid}'
+        'error': f"No purchase record exists for imp_uid={imp_uid}, merchant_uid={merchant_uid}, request_body={json.loads(request.get_data(), encoding='utf-8')}"
       }
       slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'], query=query)
       return json.dumps(result, ensure_ascii=False), 400
