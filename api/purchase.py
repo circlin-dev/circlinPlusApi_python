@@ -333,10 +333,10 @@ def add_purchase():
         UPDATE 
               purchases
           SET 
-              user_id=%s, 
+              user_id=%s,
               plan_id=(SELECT id FROM subscribe_plans WHERE title=%s),
               start_date=(SELECT NOW()),
-              expire_date=(SELECT NOW() + INTERVAL {subscription_days} DAY))
+              expire_date=(SELECT NOW() + INTERVAL {subscription_days} DAY)
         WHERE 
               imp_uid=%s 
           AND merchant_uid=%s"""
