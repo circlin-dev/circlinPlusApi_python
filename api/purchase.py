@@ -451,8 +451,8 @@ def add_purchase():
             query = f"""
                 INSERT INTO 
                             chat_users(created_at, updated_at, chat_room_id, user_id)
-                    VALUES((SELECT(NOW()), SELECT(NOW()), %s, %s),
-                            (SELECT(NOW()), SELECT(NOW()), %s, %s))"""
+                    VALUES(((SELECT NOW()), (SELECT NOW()), %s, %s),
+                            ((SELECT NOW()), (SELECT NOW()), %s, %s))"""
             values = (chat_room_id, manager_id, chat_room_id, user_id)
             cursor.execute(query, values)
             connection.commit()
