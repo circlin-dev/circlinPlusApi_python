@@ -337,8 +337,7 @@ def add_purchase():
               plan_id=(SELECT id FROM subscribe_plans WHERE title=%s),
               start_date=(SELECT NOW()),
               expire_date=(SELECT NOW() + INTERVAL {subscription_days} DAY)
-        WHERE 
-              imp_uid=%s 
+        WHERE imp_uid=%s 
           AND merchant_uid=%s"""
     values = (int(user_id), user_subscribed_plan, imp_uid, merchant_uid)
     # user_id, payment_info, delivery_info
@@ -356,14 +355,17 @@ def add_purchase():
         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
         return json.dumps(result, ensure_ascii=False), 500
 
-    query = f"""INSERT INTO purchase_delivery(
-                                  purchase_id, post_code,
-                                  address, recipient_name,
-                                  recipient_phone, comment)
-                          VALUES((SELECT id FROM purchases WHERE imp_uid={imp_uid} AND merchant_uid={merchant_uid}), %s,
-                                %s, %s,
-                                %s, %s)"""
-    values = (post_code,
+    query = f"SELECT id FROM purchases WHERE imp_uid={imp_uid} AND merchant_uid={merchant_uid}"
+    cursor.execute(query)
+    purchase_id = cursor.fetchall()[0][0]
+    query = f"""INSERT INTO 
+                            purchase_delivery(purchase_id, post_code,
+                                              address, recipient_name,
+                                              recipient_phone, comment)
+                      VALUES(%s, %s,
+                            %s, %s,
+                            %s, %s)"""
+    values = (purchase_id, post_code,
               address, recipient_name,
               recipient_phone, comment)
     try:
@@ -389,13 +391,13 @@ def add_purchase():
     """
 
     query = f"""
-    SELECT
-          data
-      FROM
-          user_questions
-    WHERE
-          user_id={user_id}
-    ORDER BY id DESC LIMIT 1"""
+        SELECT
+              data
+          FROM
+              user_questions
+        WHERE
+              user_id={user_id}
+        ORDER BY id DESC LIMIT 1"""
     cursor.execute(query)
     answer_data = cursor.fetchall()
     if query_result_is_none(answer_data) is True:
@@ -415,14 +417,14 @@ def add_purchase():
         manager_id = 18
 
     query = f"""
-    SELECT 
-        manager.chat_room_id
-    FROM
-        chat_users customer, chat_users manager
-    WHERE
-        customer.chat_room_id = manager.chat_room_id 
-        AND customer.user_id = {user_id}
-        AND manager.user_id = {manager_id}"""
+        SELECT 
+            manager.chat_room_id
+        FROM
+            chat_users customer, chat_users manager
+        WHERE
+            customer.chat_room_id = manager.chat_room_id 
+            AND customer.user_id = {user_id}
+            AND manager.user_id = {manager_id}"""
 
     cursor.execute(query)
     existing_chat_room = cursor.fetchall()
