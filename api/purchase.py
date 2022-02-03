@@ -393,12 +393,12 @@ def add_purchase():
 
     query = f"""
         SELECT
-              data
+              uq.data
           FROM
-              user_questions
+              user_questions uq
         WHERE
-              user_id={user_id}
-        ORDER BY id DESC LIMIT 1"""
+              uq.user_id={user_id}
+        ORDER BY uq.id DESC LIMIT 1"""
     cursor.execute(query)
     answer_data = cursor.fetchall()
     if query_result_is_none(answer_data) is True:
@@ -448,10 +448,14 @@ def add_purchase():
             return json.dumps(result, ensure_ascii=False), 500
 
         try:
-            query = f"INSERT INTO chat_users(created_at, updated_at, chat_room_id, user_id) \
-                      VALUES(SELECT(NOW()), SELECT(NOW()), {chat_room_id}, {manager_id}), \
-                            (SELECT(NOW()), SELECT(NOW()), {chat_room_id}, {user_id})"
-            cursor.execute(query)
+            query = f"""
+                INSERT INTO 
+                            chat_users(created_at, updated_at, chat_room_id, user_id)
+                    VALUES
+                            (SELECT(NOW()), SELECT(NOW()), %s, %s),
+                            (SELECT(NOW()), SELECT(NOW()), %s, %s)"""
+            values = (chat_room_id, manager_id, chat_room_id, user_id)
+            cursor.execute(query, values)
             connection.commit()
         except Exception as e:
             connection.rollback()
