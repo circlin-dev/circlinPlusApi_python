@@ -329,14 +329,8 @@ def add_purchase():
     """
     기구 신청을 했을 경우, 기구 신청 내역을 저장하는 쿼리를 만들어야 함!
     """
-    # query = f"INSERT INTO purchases(total_payment, imp_uid, \
-    #                                 merchant_uid, status, \
-    #                                 buyer_email, buyer_name, buyer_tel) \
-    query = f"""INSERT INTO
-                        purchases(user_id, plan_id,
-                                  start_date, expire_date)
-                  VALUES
-                        (%s, (SELECT id FROM subscribe_plans WHERE title=%s),
+    query = f"""INSERT INTO purchases(user_id, plan_id, start_date, expire_date)
+                  VALUES(%s, (SELECT id FROM subscribe_plans WHERE title=%s),
                         (SELECT NOW()), (SELECT NOW() + INTERVAL {subscription_days} DAY))
                     WHERE
                         imp_uid='{imp_uid}'
