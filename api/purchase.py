@@ -235,12 +235,36 @@ def add_purchase():
     sales_price = cursor.fetchall()
 
     if query_result_is_none(sales_price) is True:
+        query = f"INSERT INTO purchases(user_id, total_payment, \
+                                        imp_uid, merchant_uid, status, \
+                                        buyer_email, buyer_name, buyer_tel) \
+                              VALUES(%s, %s, \
+                                    %s, %s, %s, \
+                                    %s, %s, %s)"
+        values = (int(user_id), user_paid_amount,
+                  imp_uid, merchant_uid, payment_status,
+                  buyer_email, buyer_name, buyer_tel)
+        # user_id, payment_info, delivery_info
+        try:
+            cursor.execute(query, values)
+            connection.commit()
+        except Exception as e:
+            connection.rollback()
+            connection.close()
+            error = str(e)
+            result = {
+                'result': False,
+                'error': f'Server error while validating : {error}'
+            }
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+            return json.dumps(result, ensure_ascii=False), 500
+
         connection.close()
-        refund_reason = "[결제검증 실패] 주문 플랜명 불일치."
+        refund_reason = "[결제검증 실패]: 주문 플랜명 불일치."
         refund_result = request_import_refund(access_token, imp_uid, merchant_uid, user_paid_amount, user_subscribed_plan, refund_reason)
         if refund_result['code'] == 0:
             result = {'result': False,
-                      'error': f"결제 검증 실패(주문 플랜명 불일치), 환불처리 성공: {refund_result['message']}"}
+                      'error': f"결제 검증 실패(주문 플랜명 불일치), 환불처리 성공."}
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
             return json.dumps(result, ensure_ascii=False), 400
         else:
@@ -253,6 +277,29 @@ def add_purchase():
 
     actual_amount = amount_to_be_paid(user_subscribed_plan)
     if actual_amount is not None and actual_amount != user_paid_amount:  # Test value(actual_amount): 1004
+        query = f"INSERT INTO purchases(user_id, total_payment, \
+                                                imp_uid, merchant_uid, status, \
+                                                buyer_email, buyer_name, buyer_tel) \
+                                      VALUES(%s, %s, \
+                                            %s, %s, %s, \
+                                            %s, %s, %s)"
+        values = (int(user_id), user_paid_amount,
+                  imp_uid, merchant_uid, payment_status,
+                  buyer_email, buyer_name, buyer_tel)
+        # user_id, payment_info, delivery_info
+        try:
+            cursor.execute(query, values)
+            connection.commit()
+        except Exception as e:
+            connection.rollback()
+            connection.close()
+            error = str(e)
+            result = {
+                'result': False,
+                'error': f'Server error while validating : {error}'
+            }
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+            return json.dumps(result, ensure_ascii=False), 500
         connection.close()
         # Failed validation: Request import to cancel the payment.
         """
@@ -261,11 +308,11 @@ def add_purchase():
             - 환불 요청의 checksum, amount 파라미터의 값이 변경되어야 함.
         2. 케이스별 환불사유 준비하기
         """
-        refund_reason = "[결제검증 실패] 판매가와 결제금액이 불일치합니다."
+        refund_reason = "[결제검증 실패]: 판매가와 결제금액이 불일치합니다."
         refund_result = request_import_refund(access_token, imp_uid, merchant_uid, user_paid_amount, user_subscribed_plan, refund_reason)
         if refund_result['code'] == 0:
             result = {'result': False,
-                      'error': f"결제 검증 실패(결제 금액 불일치), 환불처리 성공: {refund_result['message']}"}
+                      'error': f"결제 검증 실패(결제 금액 불일치), 환불처리 성공."}
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
             return json.dumps(result, ensure_ascii=False), 400
         else:
