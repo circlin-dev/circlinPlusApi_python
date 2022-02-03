@@ -227,6 +227,7 @@ def add_purchase():
       ==> 결제 가격 체계를 보완하여 1004원을 실제 판매가인 sales_price로 변경해야 함!
     (3) 기존 결제한 플랜의 기간이 만료되지 않은 상태에서의 결제 막기 
       ==> IMPORT 모듈을 이용하는 현재 구조상 클라이언트에서 처리해야 할듯
+    (4) 결제 검증 실패 시 기결제된 내용 환불하기
     """
 
     query = "SELECT sales_price FROM subscribe_plans WHERE title=%s"
@@ -244,20 +245,43 @@ def add_purchase():
     else:
         pass
 
-    total_amount = amount_to_be_paid()
-    if total_amount != user_paid_amount:  # Test value: 1004
+    actual_amount = amount_to_be_paid(user_subscribed_plan)
+    if actual_amount is not None and actual_amount != user_paid_amount:  # Test value(actual_amount): 1004
         connection.close()
         # Failed validation: Request import to cancel the payment.
-
-        result = {
-            'result': False,
-            'error': f': Error while validating payment information: For plan "{user_subscribed_plan}", actual sales price is "{total_amount}", but user paid "{user_paid_amount}". Automatically cancel this payment(imp_uid: {imp_uid}, merchant_uid: {merchant_uid}).'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-        return json.dumps(result, ensure_ascii=False), 403
+        """
+        1. '부분환불' 도입 시
+            - DB에 canceled_amount 추가하기.
+            - 환불 요청의 checksum, amount 파라미터의 값이 변경되어야 함.
+        2. 케이스별 환불사유 준비하기
+        """
+        response = requests.post(
+            "https://api.iamport.kr/payments/cancel",
+            headers={"Content-Type": "application/json", "Authorization": access_token},
+            json={
+                "reason": "[결제검증 실패] 판매가와 결제금액이 불일치합니다.",
+                "imp_uid": imp_uid,
+                "merchant_uid": merchant_uid,
+                "amount": user_paid_amount,   # 미입력 시 전액 환불됨
+                "checksum": user_paid_amount,  # 환불 가능금액: 부분환불이 도입될 경우 DB상의 '현재 환불 가능액'을 체크할 것.
+            }).json()
+        code = response['code']
+        if code == 0:
+            result = {'result': False,
+                      'error': f"결제 검증 실패(결제 금액 불일치), 환불처리 성공: {response['message']}"}
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+            return json.dumps(result, ensure_ascii=False), 400
+        else:
+            result = {'result': False,
+                      'error': f"결제 검증 실패(결제 금액 불일치), 다음 사유로 인해 환불처리 실패: {response['message']}"}
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+            return json.dumps(result, ensure_ascii=False), 400
     else:
         if payment_status == 'paid' or payment_status == 'failed':
-            pass
+            result = {'result': False,
+                      'error': f"Invalid subscribing plan title: '{user_subscribed_plan}'"}
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+            return json.dumps(result, ensure_ascii=False), 400
         else:
             connection.close()
             result = {
