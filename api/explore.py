@@ -43,31 +43,35 @@ def explore():
     if word_for_search == "" or len(word_for_search) == 0 or word_for_search is None:
         pass
     else:
-        query_program, query_coach, query_exercise, query_equipment = make_explore_query(word_for_search, sort_by)
+        query_program, query_coach, query_exercise, query_equipment = make_explore_query(word_for_search, user_id, sort_by)
 
         try:
             cursor.execute(query_program)
             programs_by_program = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
                                                                            'exercise', 'equipments', 'purposes',
-                                                                           'thumbnail', 'thumbnails', 'num_lectures'])
+                                                                           'thumbnail', 'thumbnails', 'num_lectures',
+                                                                           'num_completed_lectures'])
             program_list_by_program = filter_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_program)
 
             cursor.execute(query_coach)
             programs_by_coach = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
                                                                          'exercise', 'equipments', 'purposes',
-                                                                         'thumbnail', 'thumbnails', 'num_lectures'])
+                                                                         'thumbnail', 'thumbnails', 'num_lectures',
+                                                                         'num_completed_lectures'])
             program_list_by_coach = filter_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_coach)
 
             cursor.execute(query_exercise)
             programs_by_exercise = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
                                                                             'exercise', 'equipments', 'purposes',
-                                                                            'thumbnail', 'thumbnails', 'num_lectures'])
+                                                                            'thumbnail', 'thumbnails', 'num_lectures',
+                                                                            'num_completed_lectures'])
             program_list_by_exercise = filter_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_exercise)
 
             cursor.execute(query_equipment)
             programs_by_equipment = pd.DataFrame(cursor.fetchall(), columns=['program_id', 'created_at', 'title',
                                                                              'exercise', 'equipments', 'purposes',
-                                                                             'thumbnail', 'thumbnails', 'num_lectures'])
+                                                                             'thumbnail', 'thumbnails', 'num_lectures',
+                                                                             'num_completed_lectures'])
             program_list_by_equipment = filter_dataframe(filter_list_exercises, filter_list_purposes, filter_list_equipments, programs_by_equipment)
 
             search_total = program_list_by_program + program_list_by_coach + program_list_by_exercise + program_list_by_equipment
