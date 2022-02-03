@@ -339,8 +339,8 @@ def add_purchase():
                         (%s, (SELECT id FROM subscribe_plans WHERE title=%s),
                         (SELECT NOW()), (SELECT NOW() + INTERVAL {subscription_days} DAY))
                     WHERE
-                        imp_uid={imp_uid}
-                    AND merchant_uid={merchant_uid}"""
+                        imp_uid='{imp_uid}'
+                    AND merchant_uid='{merchant_uid}'"""
     values = (int(user_id), user_subscribed_plan)
     # user_id, payment_info, delivery_info
     try:
