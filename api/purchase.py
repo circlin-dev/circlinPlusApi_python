@@ -237,9 +237,8 @@ def add_purchase():
     if query_result_is_none(sales_price) is True:
         connection.close()
         refund_reason = "[결제검증 실패] 주문 플랜명 불일치."
-        response = request_import_refund(access_token, imp_uid, merchant_uid, user_paid_amount, user_subscribed_plan, refund_reason)
-        code = response['code']
-        if code == 0:
+        refund_result = request_import_refund(access_token, imp_uid, merchant_uid, user_paid_amount, user_subscribed_plan, refund_reason)
+        if refund_result == 0:
             result = {'result': False,
                       'error': f"결제 검증 실패(주문 플랜명 불일치), 환불처리 성공: {response['message']}"}
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
@@ -263,9 +262,8 @@ def add_purchase():
         2. 케이스별 환불사유 준비하기
         """
         refund_reason = "[결제검증 실패] 판매가와 결제금액이 불일치합니다."
-        response = request_import_refund(access_token, imp_uid, merchant_uid, user_paid_amount, user_subscribed_plan, refund_reason)
-        code = response['code']
-        if code == 0:
+        refund_result = request_import_refund(access_token, imp_uid, merchant_uid, user_paid_amount, user_subscribed_plan, refund_reason)
+        if refund_result == 0:
             result = {'result': False,
                       'error': f"결제 검증 실패(결제 금액 불일치), 환불처리 성공: {response['message']}"}
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
