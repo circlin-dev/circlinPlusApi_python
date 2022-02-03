@@ -1,7 +1,7 @@
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification, slack_purchase_notification
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
-from global_things.functions.purchase import amount_to_be_paid, get_import_access_token
+from global_things.functions.purchase import amount_to_be_paid, get_import_access_token, request_import_refund
 from global_things.constants import IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET
 from . import api
 from flask import url_for, request
@@ -236,12 +236,19 @@ def add_purchase():
 
     if query_result_is_none(sales_price) is True:
         connection.close()
-        result = {
-            'result': False,
-            'error': f': Error while validating payment information: Subscription plan "{user_subscribed_plan}" does not exist, but user purchased it. Check product list at IMPORT.'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-        return json.dumps(result, ensure_ascii=False), 403
+        refund_reason = "[결제검증 실패] 주문 플랜명 불일치."
+        response = request_import_refund(access_token, imp_uid, merchant_uid, user_paid_amount, user_subscribed_plan, refund_reason)
+        code = response['code']
+        if code == 0:
+            result = {'result': False,
+                      'error': f"결제 검증 실패(주문 플랜명 불일치), 환불처리 성공: {response['message']}"}
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+            return json.dumps(result, ensure_ascii=False), 400
+        else:
+            result = {'result': False,
+                      'error': f"결제 검증 실패(주문 플랜명 불일치), 다음 사유로 인해 환불처리 실패: {response['message']}"}
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+            return json.dumps(result, ensure_ascii=False), 400
     else:
         pass
 
@@ -255,16 +262,8 @@ def add_purchase():
             - 환불 요청의 checksum, amount 파라미터의 값이 변경되어야 함.
         2. 케이스별 환불사유 준비하기
         """
-        response = requests.post(
-            "https://api.iamport.kr/payments/cancel",
-            headers={"Content-Type": "application/json", "Authorization": access_token},
-            json={
-                "reason": "[결제검증 실패] 판매가와 결제금액이 불일치합니다.",
-                "imp_uid": imp_uid,
-                "merchant_uid": merchant_uid,
-                "amount": user_paid_amount,   # 미입력 시 전액 환불됨
-                "checksum": user_paid_amount,  # 환불 가능금액: 부분환불이 도입될 경우 DB상의 '현재 환불 가능액'을 체크할 것.
-            }).json()
+        refund_reason = "[결제검증 실패] 판매가와 결제금액이 불일치합니다."
+        response = request_import_refund(access_token, imp_uid, merchant_uid, user_paid_amount, user_subscribed_plan, refund_reason)
         code = response['code']
         if code == 0:
             result = {'result': False,
