@@ -316,7 +316,7 @@ def explore_log(user_id: int):
             if key == 'word':
                 word_to_delete += request.args[key].strip()
 
-        if len(word_to_delete) > 0 and word_to_delete != '' and word_to_delete is not None:
+        if word_to_delete != '' and word_to_delete is not None:
             # 단건 삭제
             """
             만약 검색기록 조회 결과를 중복을 제거해서 보내준다면, id만으로 삭제하면 다음 번에 삭제한 단어를 또 보게 될 수 있다.
