@@ -333,16 +333,16 @@ def explore_log(user_id: int):
                     user_id={user_id}
                   AND
                     deleted_at IS NULL"""
-            values =(word_to_delete)
+            values = (word_to_delete)
             try:
-                cursor.execute(query)
+                cursor.execute(query, values)
             except Exception as e:
                 connection.rollback()
                 connection.close()
                 error = str(e)
                 result = {
                     'result': False,
-                    'error': f'Cannot delete the requested search record: {error}'
+                    'error': f'Cannot delete the requested search term: {error}'
                 }
                 slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
                 return json.dumps(result, ensure_ascii=False), 400
@@ -351,7 +351,7 @@ def explore_log(user_id: int):
             connection.close()
             result_dict = {
                 'result': True,
-                'message': "Successfully deleted the requested search record"
+                'message': "Successfully deleted the requested search term."
             }
             return json.dumps(result_dict, ensure_ascii=False), 200
         else:
@@ -377,7 +377,7 @@ def explore_log(user_id: int):
                 error = str(e)
                 result = {
                     'result': False,
-                    'error': f'Cannot delete the requested search record: {error}'
+                    'error': f'Cannot delete the requested whole search record: {error}'
                 }
                 slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
                 return json.dumps(result, ensure_ascii=False), 400
@@ -386,7 +386,7 @@ def explore_log(user_id: int):
             connection.close()
             result_dict = {
                 'result': True,
-                'message': "Successfully deleted the requested search record"
+                'message': "Successfully deleted the requested whole search record."
             }
             return json.dumps(result_dict, ensure_ascii=False), 200
     else:
