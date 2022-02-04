@@ -59,7 +59,7 @@ def read_purchase_record(user_id):
           p.buyer_email, \
           p.buyer_name, \
           p.buyer_tel, \
-          p.status, \
+          p.state, \
           pd.post_code, \
           pd.address, \
           pd.comment \
@@ -99,7 +99,7 @@ def read_purchase_record(user_id):
                              "buyer_email": data[6],  # 결제자 이메일
                              "buyer_name": data[7],  # 결제자 이름
                              "buyer_phone": data[8],  # 결제자 전화번호
-                             "status": data[9],
+                             "state": data[9],
                              "installment": "일시불",  # 이용권
                              "interest_free_installment": "해당없음",  # 무이자 할부 여부(일시불은 무조건 해당 없음
                              "option": "비렌탈"  # 선택옵션
@@ -211,7 +211,7 @@ def add_purchase():
         f"https://api.iamport.kr/payments/{payment_info['imp_uid']}",
         headers={"Authorization": access_token}
     ).json()
-    payment_status = payment_validation_import['response']['status']
+    payment_state = payment_validation_import['response']['status']
     user_paid_amount = int(payment_validation_import['response']['amount'])
     user_subscribed_plan = payment_validation_import['response']['name']
     buyer_email = payment_validation_import['response']['buyer_email']
@@ -241,7 +241,7 @@ def add_purchase():
                           purchases
                       SET 
                           user_id=%s,
-                          status=%s, 
+                          state=%s, 
                           deleted_at=(SELECT NOW())
                     WHERE 
                           imp_uid=%s 
@@ -293,7 +293,7 @@ def add_purchase():
                           purchases
                       SET 
                           user_id=%s,
-                          status=%s, 
+                          state=%s, 
                           deleted_at=(SELECT NOW())
                     WHERE 
                           imp_uid=%s 
@@ -482,7 +482,7 @@ def add_purchase():
 
 
 @api.route('/purchase/update_notification', methods=['POST'])
-def update_payment_status_by_webhook():
+def update_payment_state_by_webhook():
     """
     POST parameter
     * imp_uid
@@ -497,7 +497,7 @@ def update_payment_status_by_webhook():
     """
     # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
-    endpoint = API_ROOT + url_for('api.update_payment_status_by_webhook')
+    endpoint = API_ROOT + url_for('api.update_payment_state_by_webhook')
 
     try:
         connection = login_to_db()
@@ -515,7 +515,7 @@ def update_payment_status_by_webhook():
 
     imp_uid = parameters['imp_uid']
     merchant_uid = parameters['merchant_uid']
-    updated_status = parameters['status']
+    updated_state = parameters['status']
 
     # 2. import에서 결제 정보 조회
     get_token = json.loads(get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET))
@@ -540,18 +540,18 @@ def update_payment_status_by_webhook():
     db_paid_amount = cursor.fetchall()
 
     if query_result_is_none(db_paid_amount) is True:   # 2. 결제 정보 조회(import)
-        payment_status = payment_validation_import['response']['status']
+        payment_state = payment_validation_import['response']['status']
         buyer_email = payment_validation_import['response']['buyer_email']
         buyer_name = payment_validation_import['response']['buyer_name']
         buyer_tel = payment_validation_import['response']['buyer_tel']
         query = f"INSERT INTO purchases(total_payment, imp_uid, \
-                                        merchant_uid, status, \
+                                        merchant_uid, state, \
                                         buyer_email, buyer_name, buyer_tel) \
                                       VALUES(%s, %s, \
                                             %s, %s,\
                                             %s, %s, %s)"
         values = (import_paid_amount, imp_uid,
-                  merchant_uid, payment_status,
+                  merchant_uid, payment_state,
                   buyer_email, buyer_name, buyer_tel)
         # user_id, payment_info, delivery_info
         try:
@@ -572,17 +572,17 @@ def update_payment_status_by_webhook():
             return json.dumps(result, ensure_ascii=False), 500
     else:  # 결제 취소 이벤트가 아임포트 어드민(https://admin.iamport.kr/)에서 "취소하기" 버튼을 클릭하여 발생한 경우에만 트리거됨.
         if int(db_paid_amount[0][0]) == int(import_paid_amount):
-            if updated_status == 'cancelled':
+            if updated_state == 'cancelled':
                 query = f"""
                     UPDATE 
                           purchases
                       SET 
-                          status=%s, 
+                          state=%s, 
                           deleted_at=(SELECT NOW())
                     WHERE 
                           imp_uid=%s 
                       AND merchant_uid=%s"""
-                values = (updated_status, imp_uid, merchant_uid)
+                values = (updated_state, imp_uid, merchant_uid)
                 cursor.execute(query, values)
             else:
                 pass
