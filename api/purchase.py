@@ -60,16 +60,16 @@ def read_purchase_record(user_id):
           p.buyer_name, \
           p.buyer_tel, \
           p.state, \
-          pd.post_code, \
-          pd.address, \
-          pd.comment \
+          sd.post_code, \
+          sd.address, \
+          sd.comment \
       from \
           purchases p, \
           subscribe_plans sp, \
-          purchase_delivery pd \
+          starterkit_delivery sd \
     WHERE \
           sp.id = p.user_id \
-      AND p.id = pd.purchase_id \
+      AND p.id = sd.purchase_id \
       AND p.user_id = {user_id} \
     ORDER BY start_date"
 
@@ -325,7 +325,7 @@ def add_purchase():
     else:
         pass
 
-    # 4. 결제 정보(-> purchases), 배송 정보(purchase_delivery) 저장
+    # 4. 결제 정보(-> purchases), 배송 정보(starterkit_delivery) 저장
     """
     기구 신청을 했을 경우, 기구 신청 내역을 저장하는 쿼리를 만들어야 함!
     """
@@ -360,7 +360,7 @@ def add_purchase():
     cursor.execute(query, values)
     purchase_id = cursor.fetchall()[0][0]
     query = f"""INSERT INTO 
-                            purchase_delivery(purchase_id, post_code,
+                            starterkit_delivery(purchase_id, post_code,
                                               address, recipient_name,
                                               recipient_phone, comment)
                       VALUES(%s, %s,
@@ -378,7 +378,7 @@ def add_purchase():
         error = str(e)
         result = {
             'result': False,
-            'error': f'Server error while executing INSERT query(purchase_delivery): {error}'
+            'error': f'Server error while executing INSERT query(starterkit_delivery): {error}'
         }
         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
         return json.dumps(result, ensure_ascii=False), 500
