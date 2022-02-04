@@ -322,19 +322,19 @@ def explore_log(user_id: int):
             만약 검색기록 조회 결과를 중복을 제거해서 보내준다면, id만으로 삭제하면 다음 번에 삭제한 단어를 또 보게 될 수 있다.
             따라서 아래와 같이 search_log_id가 아닌 user_id와 search_term을 함께 조회하여, 중복되는 단어를 전부 삭제 처리한다.
             """
-            query = f"""
-                UPDATE
-                      search_logs
-                  SET
-                      deleted_at=(SELECT NOW())
-                WHERE
-                    search_term=%s
-                  AND
-                    user_id={user_id}
-                  AND
-                    deleted_at IS NULL"""
-            values = (word_to_delete)
             try:
+                query = f"""
+                    UPDATE
+                          search_logs
+                      SET
+                          deleted_at=(SELECT NOW())
+                    WHERE
+                        search_term=%s
+                      AND
+                        user_id=%s
+                      AND
+                        deleted_at IS NULL"""
+                values = (word_to_delete, user_id)
                 cursor.execute(query, values)
             except Exception as e:
                 connection.rollback()
@@ -360,17 +360,18 @@ def explore_log(user_id: int):
             만약 검색기록 조회 결과를 중복을 제거해서 보내준다면, id만으로 삭제하면 다음 번에 삭제한 단어를 또 보게 될 수 있다.
             따라서 아래와 같이 search_log_id가 아닌 user_id와 search_term을 함께 조회하여, 중복되는 단어를 전부 삭제 처리한다.
             """
-            query = f"""
-                  UPDATE
-                        search_logs
-                    SET
-                        deleted_at=(SELECT NOW())
-                  WHERE
-                      user_id={user_id}
-                  AND
-                      deleted_at IS NULL"""
             try:
-                cursor.execute(query)
+                query = f"""
+                      UPDATE
+                            search_logs
+                        SET
+                            deleted_at=(SELECT NOW())
+                      WHERE
+                          user_id=%s
+                      AND
+                          deleted_at IS NULL"""
+                values = (user_id)
+                cursor.execute(query, values)
             except Exception as e:
                 connection.rollback()
                 connection.close()
