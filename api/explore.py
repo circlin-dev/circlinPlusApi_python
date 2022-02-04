@@ -240,19 +240,19 @@ def explore_log(user_id: int):
     # session_id = request.headers['Authorization']
     # check_session(session_id)
 
-    if request.method == 'GET':  # 검색 기록 조회
-        try:
-            connection = login_to_db()
-        except Exception as e:
-            error = str(e)
-            result = {
-                'result': False,
-                'error': f'DB connection error: {error}'
-            }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-            return json.dumps(result, ensure_ascii=False), 500
-        cursor = connection.cursor()
+    try:
+        connection = login_to_db()
+    except Exception as e:
+        error = str(e)
+        result = {
+            'result': False,
+            'error': f'DB connection error: {error}'
+        }
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+        return json.dumps(result, ensure_ascii=False), 500
+    cursor = connection.cursor()
 
+    if request.method == 'GET':  # 검색 기록 조회
         query = f"""
             SELECT DISTINCT
                             sl.id, 
@@ -323,17 +323,16 @@ def explore_log(user_id: int):
             따라서 아래와 같이 search_log_id가 아닌 user_id와 search_term을 함께 조회하여, 중복되는 단어를 전부 삭제 처리한다.
             """
             query = f"""
-        UPDATE
-              search_logs
-          SET
-              deleted_at = (SELECT NOW())
-        WHERE
-            search_term = '{word_to_delete}'
-          AND
-            user_id = {user_id}
-          AND
-            deleted_at IS NULL"""
-            cursor = connection.cursor()
+                UPDATE
+                      search_logs
+                  SET
+                      deleted_at = (SELECT NOW())
+                WHERE
+                    search_term = '{word_to_delete}'
+                  AND
+                    user_id = {user_id}
+                  AND
+                    deleted_at IS NULL"""
 
             try:
                 cursor.execute(query)
@@ -362,17 +361,14 @@ def explore_log(user_id: int):
             따라서 아래와 같이 search_log_id가 아닌 user_id와 search_term을 함께 조회하여, 중복되는 단어를 전부 삭제 처리한다.
             """
             query = f"""
-          UPDATE
-                search_logs
-            SET
-                deleted_at = (SELECT NOW())
-          WHERE
-              user_id = {user_id}
-          AND
-              deleted_at IS NULL"""
-
-            cursor = connection.cursor()
-
+                  UPDATE
+                        search_logs
+                    SET
+                        deleted_at=(SELECT NOW())
+                  WHERE
+                      user_id={user_id}
+                  AND
+                      deleted_at IS NULL"""
             try:
                 cursor.execute(query)
             except Exception as e:
