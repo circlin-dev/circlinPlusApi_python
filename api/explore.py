@@ -299,17 +299,6 @@ def explore_log(user_id: int):
         }
         return json.dumps(result_dict, ensure_ascii=False), 200
     elif request.method == 'DELETE':  # 검색 기록 삭제
-        try:
-            connection = login_to_db()
-        except Exception as e:
-            error = str(e)
-            result = {
-                'result': False,
-                'error': f'Server Error while connecting to DB: {error}'
-            }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-            return json.dumps(result, ensure_ascii=False), 500
-
         query_parameter = request.args.to_dict()
         word_to_delete = ''
         for key in query_parameter.keys():
@@ -351,7 +340,7 @@ def explore_log(user_id: int):
             connection.close()
             result_dict = {
                 'result': True,
-                'message': "Successfully deleted the requested search term."
+                'message': f"Successfully deleted the requested search term({word_to_delete})."
             }
             return json.dumps(result_dict, ensure_ascii=False), 200
         else:
@@ -387,7 +376,7 @@ def explore_log(user_id: int):
             connection.close()
             result_dict = {
                 'result': True,
-                'message': "Successfully deleted the requested whole search record."
+                'message': f"Successfully deleted the requested whole search record({word_to_delete})."
             }
             return json.dumps(result_dict, ensure_ascii=False), 200
     else:
