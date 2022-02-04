@@ -326,14 +326,14 @@ def explore_log(user_id: int):
                 UPDATE
                       search_logs
                   SET
-                      deleted_at = (SELECT NOW())
+                      deleted_at=(SELECT NOW())
                 WHERE
-                    search_term = '{word_to_delete}'
+                    search_term=%s
                   AND
-                    user_id = {user_id}
+                    user_id={user_id}
                   AND
                     deleted_at IS NULL"""
-
+            values =(word_to_delete)
             try:
                 cursor.execute(query)
             except Exception as e:
