@@ -6,7 +6,7 @@ from . import api
 from flask import url_for, request
 import json
 import pandas as pd
-from pypika import MySQLQuery as Query, Criterion, Table, Field, Order
+from pypika import MySQLQuery as Query, Criterion, Table, Field, Order, functions as fn
 from soynlp.hangle import jamo_levenshtein
 
 
@@ -240,6 +240,8 @@ def explore_log(user_id: int):
     endpoint = API_ROOT + url_for('api.explore_log', user_id=user_id)
     # session_id = request.headers['Authorization']
     # check_session(session_id)
+    """Define tables required to execute SQL."""
+    search_logs = Table('search_logs')
 
     try:
         connection = login_to_db()
@@ -254,21 +256,7 @@ def explore_log(user_id: int):
     cursor = connection.cursor()
 
     if request.method == 'GET':  # 검색 기록 조회
-        # query = f"""
-        #     SELECT DISTINCT
-        #                     sl.id,
-        #                     sl.search_term
-        #                 FROM
-        #                     search_logs sl
-        #                WHERE
-        #                     sl.user_id={user_id}
-        #                 AND
-        #                     sl.deleted_at IS NULL
-        #             GROUP BY sl.search_term
-        #             ORDER BY sl.created_at DESC"""  # 검색어 중복 제거하여 목록 반환
-        search_logs = Table('search_logs')
-
-        query2 = Query.from_(
+        sql = Query.from_(
             search_logs
         ).select(
             search_logs.id,
@@ -283,7 +271,7 @@ def explore_log(user_id: int):
         ).orderby(search_logs.created_at, order=Order.desc)
 
         try:
-            cursor.execute(query2.get_sql())
+            cursor.execute(sql.get_sql())
             search_records = cursor.fetchall()
         except Exception as e:
             connection.rollback()
@@ -293,7 +281,7 @@ def explore_log(user_id: int):
                 'result': False,
                 'error': f'Cannot delete the requested search record: {error}'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
             return json.dumps(result, ensure_ascii=False), 400
 
         if query_result_is_none(search_records) is True:
@@ -329,19 +317,30 @@ def explore_log(user_id: int):
             따라서 아래와 같이 search_log_id가 아닌 user_id와 search_term을 함께 조회하여, 중복되는 단어를 전부 삭제 처리한다.
             """
             try:
-                query = f"""
-                    UPDATE
-                          search_logs
-                      SET
-                          deleted_at=(SELECT NOW())
-                    WHERE
-                        search_term=%s
-                      AND
-                        user_id=%s
-                      AND
-                        deleted_at IS NULL"""
-                values = (word_to_delete, user_id)
-                cursor.execute(query, values)
+                sql = Query.update(
+                    search_logs
+                ).set(
+                    search_logs, fn.Now()
+                ).where(
+                    Criterion.all([
+                        search_logs.search_term == word_to_delete,
+                        search_logs.user_id == user_id,
+                        search_logs.deleted_at.isnull()
+                    ])
+                )
+                # query = f"""
+                #     UPDATE
+                #           search_logs
+                #       SET
+                #           deleted_at=(SELECT NOW())
+                #     WHERE
+                #         search_term=%s
+                #       AND
+                #         user_id=%s
+                #       AND
+                #         deleted_at IS NULL"""
+                # values = (word_to_delete, user_id)
+                cursor.execute(sql.get_sql())
                 connection.commit()
             except Exception as e:
                 connection.rollback()
@@ -367,17 +366,26 @@ def explore_log(user_id: int):
             따라서 아래와 같이 search_log_id가 아닌 user_id와 search_term을 함께 조회하여, 중복되는 단어를 전부 삭제 처리한다.
             """
             try:
-                query = f"""
-                      UPDATE
-                            search_logs
-                        SET
-                            deleted_at=(SELECT NOW())
-                      WHERE
-                          user_id=%s
-                      AND
-                          deleted_at IS NULL"""
-                values = (user_id)
-                cursor.execute(query, values)
+                sql = Query.update(
+                    search_logs
+                ).set(
+                    search_logs, fn.Now()
+                ).where(
+                    Criterion.all([
+                        search_logs.user_id == user_id,
+                        search_logs.deleted_at.isnull()
+                    ])
+                )
+                # query = f"""
+                #       UPDATE
+                #             search_logs
+                #         SET
+                #             deleted_at=(SELECT NOW())
+                #       WHERE
+                #           user_id=%s
+                #       AND
+                #           deleted_at IS NULL"""
+                cursor.execute(sql.get_sql())
                 connection.commit()
             except Exception as e:
                 connection.rollback()
