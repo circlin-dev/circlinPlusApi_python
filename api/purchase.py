@@ -7,7 +7,7 @@ from . import api
 from flask import url_for, request
 import json
 import requests
-from pypika import MySQLQuery as Query, Criterion, Table, Field, Order, functions as fn
+from pypika import MySQLQuery as Query, Criterion, Interval, Table, Field, Order, functions as fn
 
 @api.route('/purchase/<user_id>', methods=['GET'])
 def read_purchase_record(user_id):
@@ -81,30 +81,6 @@ def read_purchase_record(user_id):
     ).where(
         purchases.user_id == user_id
     ).orderby(purchases.start_date)
-    # query = f"\
-    # SELECT DISTINCT \
-    #       p.id, \
-    #       sp.title, \
-    #       sp.total_price, \
-    #       p.start_date, \
-    #       p.expire_date, \
-    #       p.deleted_at, \
-    #       p.buyer_email, \
-    #       p.buyer_name, \
-    #       p.buyer_tel, \
-    #       p.state, \
-    #       sd.post_code, \
-    #       sd.address, \
-    #       sd.comment \
-    #   from \
-    #       purchases p, \
-    #       subscribe_plans sp, \
-    #       starterkit_delivery sd \
-    # WHERE \
-    #       sp.id = p.user_id \
-    #   AND p.id = sd.purchase_id \
-    #   AND p.user_id = {user_id} \
-    # ORDER BY p.start_date"
     cursor.execute(sql.get_sql())
     purchase_records = cursor.fetchall()
     if query_result_is_none(purchase_records) is True:
@@ -156,6 +132,15 @@ def add_purchase():
     endpoint = API_ROOT + url_for('api.add_purchase')
     # token = request.headers['Authorization']
     parameters = json.loads(request.get_data(), encoding='utf-8')
+    """Define tables required to execute SQL."""
+    purchases = Table('purchases')
+    subscribe_plans = Table('subscribe_plans')
+    starterkit_delivery = Table('starterkit_delivery')
+    user_questions = Table('user_questions')
+    customers = Table('chat_users')
+    managers = Table('chat_users')
+    chat_rooms = Table('chat_rooms')
+    chat_users = Table('chat_users')
 
     user_id = parameters['user_id']
     period = int(parameters['subscription_period'])
@@ -262,24 +247,47 @@ def add_purchase():
     (4) 결제 검증 실패 시 기결제된 내용 환불하기
     """
 
-    query = "SELECT sales_price FROM subscribe_plans WHERE title=%s"
-    cursor.execute(query, user_subscribed_plan)
+    # query = "SELECT sales_price FROM subscribe_plans WHERE title=%s"
+    sql = Query.from_(
+        subscribe_plans
+    ).select(
+        subscribe_plans.sales_price
+    ).where(
+        subscribe_plans.title == user_subscribed_plan
+    )
+    cursor.execute(sql.get_sql())
+
     sales_price = cursor.fetchall()
 
     if query_result_is_none(sales_price) is True:
         try:
-            query = f"""
-                    UPDATE 
-                          purchases
-                      SET 
-                          user_id=%s,
-                          state=%s, 
-                          deleted_at=(SELECT NOW())
-                    WHERE 
-                          imp_uid=%s 
-                      AND merchant_uid=%s"""
-            values = (user_id, "cancelled", imp_uid, merchant_uid)
-            cursor.execute(query, values)
+            sql = Query.update(
+                purchases
+            ).set(
+                purchases.user_id, user_id
+            ).set(
+                purchases.state, "cancelled"
+            ).set(
+                purchases.deleted_at, fn.Now()
+            ).where(
+                Criterion.all([
+                    purchases.imp_uid == imp_uid,
+                    purchases.merchant_uid == merchant_uid
+                ])
+            )
+            # query = f"""
+            #         UPDATE
+            #               purchases
+            #           SET
+            #               user_id=%s,
+            #               state=%s,
+            #               deleted_at=(SELECT NOW())
+            #         WHERE
+            #               imp_uid=%s
+            #           AND merchant_uid=%s"""
+            # values = (user_id, "cancelled", imp_uid, merchant_uid)
+            # cursor.execute(query, values)
+            cursor.execute(sql.get_sql())
             connection.commit()
         except Exception as e:
             connection.rollback()
@@ -289,7 +297,7 @@ def add_purchase():
                 'result': False,
                 'error': f'Server error while validating : {error}'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
             return json.dumps(result, ensure_ascii=False), 500
 
         connection.close()
@@ -320,18 +328,33 @@ def add_purchase():
         refund_result = request_import_refund(access_token, imp_uid, merchant_uid, user_paid_amount, user_subscribed_plan, refund_reason)
         if refund_result['code'] == 0:
             try:
-                query = f"""
-                    UPDATE 
-                          purchases
-                      SET 
-                          user_id=%s,
-                          state=%s, 
-                          deleted_at=(SELECT NOW())
-                    WHERE 
-                          imp_uid=%s 
-                      AND merchant_uid=%s"""
-                values = (user_id, "cancelled", imp_uid, merchant_uid)
-                cursor.execute(query, values)
+                sql = Query.update(
+                    purchases
+                ).set(
+                    purchases.user_id, user_id
+                ).set(
+                    purchases.state, "cancelled"
+                ).set(
+                    purchases.deleted_at, fn.Now()
+                ).where(
+                    Criterion.all([
+                        purchases.imp_uid == imp_uid,
+                        purchases.merchant_uid == merchant_uid
+                    ])
+                )
+                # query = f"""
+                #         UPDATE
+                #               purchases
+                #           SET
+                #               user_id=%s,
+                #               state=%s,
+                #               deleted_at=(SELECT NOW())
+                #         WHERE
+                #               imp_uid=%s
+                #           AND merchant_uid=%s"""
+                # values = (user_id, "cancelled", imp_uid, merchant_uid)
+                # cursor.execute(query, values)
+                cursor.execute(sql.get_sql())
                 connection.commit()
             except Exception as e:
                 connection.rollback()
@@ -341,7 +364,7 @@ def add_purchase():
                     'result': False,
                     'error': f'Server error while validating : {error}'
                 }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
                 return json.dumps(result, ensure_ascii=False), 500
             connection.close()
             result = {'result': False,
@@ -361,20 +384,43 @@ def add_purchase():
     """
     기구 신청을 했을 경우, 기구 신청 내역을 저장하는 쿼리를 만들어야 함!
     """
-    query = f"""
-        UPDATE 
-              purchases
-          SET 
-              user_id=%s,
-              plan_id=(SELECT id FROM subscribe_plans WHERE title=%s),
-              start_date=(SELECT NOW()),
-              expire_date=(SELECT NOW() + INTERVAL {subscription_days} DAY)
-        WHERE imp_uid=%s 
-          AND merchant_uid=%s"""
-    values = (int(user_id), user_subscribed_plan, imp_uid, merchant_uid)
+    # key_values = {
+    #     "user_id": user_id,
+    #     "plan_id": Query.from_(subscribe_plans).select(subscribe_plans.id).where(subscribe_plans.title == user_subscribed_plan),
+    #     "start_date": fn.Now(),
+    #     "expire_date": fn.Now() + Interval(days=subscription_days)}
+    sql = Query.update(
+        purchases
+    ).set(
+        purchases.user_id, user_id
+    ).set(
+        purchases.plan_id, (Query.from_(subscribe_plans).select(subscribe_plans.id).where(subscribe_plans.title == user_subscribed_plan))
+    ).set(
+        purchases.start_date, fn.Now()
+    ).set(
+        purchases.expire_date, fn.Now() + Interval(days=subscription_days)
+    ).where(
+        Criterion.all([
+            purchases.imp_uid == imp_uid,
+            purchases.merchant_uid == merchant_uid
+        ])
+    )
+    # for key in key_values:
+    #     sql.set(key, key_values[key])
+    # query = f"""
+    #     UPDATE
+    #           purchases
+    #       SET
+    #           user_id=%s,
+    #           plan_id=(SELECT id FROM subscribe_plans WHERE title=%s),
+    #           start_date=(SELECT NOW()),
+    #           expire_date=(SELECT NOW() + INTERVAL {subscription_days} DAY)
+    #     WHERE imp_uid=%s
+    #       AND merchant_uid=%s"""
+    # values = (int(user_id), user_subscribed_plan, imp_uid, merchant_uid)
     # user_id, payment_info, delivery_info
     try:
-        cursor.execute(query, values)
+        cursor.execute(sql.get_sql())
         connection.commit()
     except Exception as e:
         connection.rollback()
@@ -384,25 +430,48 @@ def add_purchase():
             'result': False,
             'error': f'Server error while executing INSERT query(purchases): {error}, {parameters}, {payment_validation_import}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
         return json.dumps(result, ensure_ascii=False), 500
 
-    query = f"SELECT p.id FROM purchases p WHERE p.imp_uid=%s AND p.merchant_uid=%s"
-    values = (imp_uid, merchant_uid)
-    cursor.execute(query, values)
+    # query = f"SELECT p.id FROM purchases p WHERE p.imp_uid=%s AND p.merchant_uid=%s"
+    sql = Query.from_(
+        purchases
+    ).select(
+        purchases.id
+    ).where(
+        Criterion.all([
+            purchases.imp_uid == imp_uid,
+            purchases.merchant_uid == merchant_uid
+        ])
+    )
+    cursor.execute(sql.get_sql())
     purchase_id = cursor.fetchall()[0][0]
-    query = f"""INSERT INTO 
-                            starterkit_delivery(purchase_id, post_code,
-                                              address, recipient_name,
-                                              recipient_phone, comment)
-                      VALUES(%s, %s,
-                            %s, %s,
-                            %s, %s)"""
-    values = (purchase_id, post_code,
-              address, recipient_name,
-              recipient_phone, comment)
+    # query = f"""INSERT INTO
+    #                         starterkit_delivery(purchase_id, post_code,
+    #                                           address, recipient_name,
+    #                                           recipient_phone, comment)
+    #                   VALUES(%s, %s,
+    #                         %s, %s,
+    #                         %s, %s)"""
+    sql = Query.into(
+        starterkit_delivery
+    ).columns(
+        starterkit_delivery.purchase_id,
+        starterkit_delivery.post_code,
+        starterkit_delivery.address,
+        starterkit_delivery.recipient_name,
+        starterkit_delivery.recipient_phone,
+        starterkit_delivery.comment
+    ).insert(
+        purchase_id,
+        post_code,
+        address,
+        recipient_name,
+        recipient_phone,
+        comment
+    )
     try:
-        cursor.execute(query, values)
+        cursor.execute(sql.get_sql())
         connection.commit()
     except Exception as e:
         connection.rollback()
@@ -412,7 +481,7 @@ def add_purchase():
             'result': False,
             'error': f'Server error while executing INSERT query(starterkit_delivery): {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
         return json.dumps(result, ensure_ascii=False), 500
 
     # 5. 채팅방 생성 or 조회하여 채팅방 id 리턴
@@ -423,15 +492,24 @@ def add_purchase():
     4. 채팅룸 id를 리턴한다.
     """
 
-    query = f"""
-        SELECT
-              uq.data
-          FROM
-              user_questions uq
-        WHERE
-              uq.user_id={user_id}
-        ORDER BY uq.id DESC LIMIT 1"""
-    cursor.execute(query)
+    # query = f"""
+    #     SELECT
+    #           uq.data
+    #       FROM
+    #           user_questions uq
+    #     WHERE
+    #           uq.user_id={user_id}
+    #     ORDER BY uq.id DESC LIMIT 1"""
+    sql = Query.from_(
+        user_questions
+    ).select(
+        user_questions.data
+    ).where(
+        user_questions.user_id == user_id
+    ).orderby(
+        user_questions.id, order=Order.desc
+    ).limit(1)
+    cursor.execute(sql.get_sql())
     answer_data = cursor.fetchall()
     if query_result_is_none(answer_data) is True:
         connection.close()
@@ -449,23 +527,46 @@ def add_purchase():
     else:
         manager_id = 18
 
-    query = f"""
-        SELECT 
-            manager.chat_room_id
-        FROM
-            chat_users customer, chat_users manager
-        WHERE
-            customer.chat_room_id = manager.chat_room_id 
-            AND customer.user_id = {user_id}
-            AND manager.user_id = {manager_id}"""
+    sql = Query.from_(
+        customers
+    ).select(
+        customers.chat_room_id
+    ).join(
+        managers
+    ).on(
+        customers.chat_room_id == managers.chat_room_id
+    ).where(
+        Criterion.all([
+            customers.user_id == user_id,
+            managers.user_id == manager_id
+        ])
+    )
+    # query = f"""
+    #     SELECT
+    #         manager.chat_room_id
+    #     FROM
+    #         chat_users customer, chat_users manager
+    #     WHERE
+    #         customer.chat_room_id = manager.chat_room_id
+    #         AND customer.user_id = {user_id}
+    #         AND manager.user_id = {manager_id}"""
 
-    cursor.execute(query)
+    cursor.execute(sql.get_sql())
     existing_chat_room = cursor.fetchall()
 
     if len(existing_chat_room) == 0 or existing_chat_room == ():
-        query = "INSERT INTO chat_rooms(created_at, updated_at) VALUES((SELECT NOW()), (SELECT NOW()))"
+        # query = "INSERT INTO chat_rooms(created_at, updated_at) VALUES((SELECT NOW()), (SELECT NOW()))"
+        sql = Query.into(
+            chat_rooms
+        ).columns(
+            chat_rooms.created_at,
+            chat_rooms.updated_at
+        ).insert(
+            fn.Now(),
+            fn.Now()
+        )
         try:
-            cursor.execute(query)
+            cursor.execute(sql.get_sql())
             connection.commit()
             chat_room_id = cursor.lastrowid
         except Exception as e:
@@ -476,18 +577,27 @@ def add_purchase():
                 'result': False,
                 'error': f'Server Error while executing INSERT query(chat_rooms): {error}'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
             return json.dumps(result, ensure_ascii=False), 500
 
         try:
-            query = f"""
-                INSERT INTO 
-                            chat_users(created_at, updated_at, chat_room_id, user_id)
-                    VALUES((SELECT NOW()), (SELECT NOW()), %s, %s),
-                            ((SELECT NOW()), (SELECT NOW()), %s, %s)"""
-
-            values = (chat_room_id, manager_id, chat_room_id, user_id)
-            cursor.execute(query, values)
+            # query = f"""
+            #     INSERT INTO
+            #                 chat_users(created_at, updated_at, chat_room_id, user_id)
+            #         VALUES((SELECT NOW()), (SELECT NOW()), %s, %s),
+            #                 ((SELECT NOW()), (SELECT NOW()), %s, %s)"""
+            sql = Query.into(
+                chat_users
+            ).columns(
+                chat_users.created_at,
+                chat_users.updated_at,
+                chat_users.chat_room_id,
+                chat_users.user_id
+            ).insert(
+                (fn.Now(), fn.Now(), chat_room_id, manager_id),
+                (fn.Now(), fn.Now(), chat_room_id, user_id)
+            )
+            cursor.execute(sql.get_sql())
             connection.commit()
         except Exception as e:
             connection.rollback()
@@ -530,6 +640,8 @@ def update_payment_state_by_webhook():
     # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.update_payment_state_by_webhook')
+    """Define tables required to execute SQL."""
+    purchases = Table("purchases")
 
     try:
         connection = login_to_db()
@@ -566,9 +678,18 @@ def update_payment_state_by_webhook():
     import_paid_amount = int(payment_validation_import['response']['amount'])
 
     # 3. DB에서 결제 내역 조회
-    query = "SELECT total_payment FROM purchases WHERE imp_uid=%s AND merchant_uid=%s"
-    values = (imp_uid, merchant_uid)
-    cursor.execute(query, values)
+    # query = "SELECT total_payment FROM purchases WHERE imp_uid=%s AND merchant_uid=%s"
+    sql = Query.from_(
+        purchases
+    ).select(
+        purchases.total_payment
+    ).where(
+        Criterion.all([
+            purchases.imp_uid == imp_uid,
+            purchases.merchant_uid == merchant_uid
+        ])
+    )
+    cursor.execute(sql.get_sql())
     db_paid_amount = cursor.fetchall()
 
     if query_result_is_none(db_paid_amount) is True:   # 2. 결제 정보 조회(import)
@@ -576,18 +697,37 @@ def update_payment_state_by_webhook():
         buyer_email = payment_validation_import['response']['buyer_email']
         buyer_name = payment_validation_import['response']['buyer_name']
         buyer_tel = payment_validation_import['response']['buyer_tel']
-        query = f"INSERT INTO purchases(total_payment, imp_uid, \
-                                        merchant_uid, state, \
-                                        buyer_email, buyer_name, buyer_tel) \
-                                      VALUES(%s, %s, \
-                                            %s, %s,\
-                                            %s, %s, %s)"
-        values = (import_paid_amount, imp_uid,
-                  merchant_uid, payment_state,
-                  buyer_email, buyer_name, buyer_tel)
+        # query = f"INSERT INTO purchases(total_payment, imp_uid, \
+        #                                 merchant_uid, state, \
+        #                                 buyer_email, buyer_name, buyer_tel) \
+        #                               VALUES(%s, %s, \
+        #                                     %s, %s,\
+        #                                     %s, %s, %s)"
+        # values = (import_paid_amount, imp_uid,
+        #           merchant_uid, payment_state,
+        #           buyer_email, buyer_name, buyer_tel)
+        sql = Query.into(
+            purchases
+        ).columns(
+            purchases.total_payment,
+            purchases.imp_uid,
+            purchases.merchant_uid,
+            purchases.state,
+            purchases.buyer_email,
+            purchases.buyer_name,
+            purchases.buyer_tel
+        ).insert(
+            import_paid_amount,
+            imp_uid,
+            merchant_uid,
+            payment_state,
+            buyer_email,
+            buyer_name,
+            buyer_tel
+        )
         # user_id, payment_info, delivery_info
         try:
-            cursor.execute(query, values)
+            cursor.execute(sql.get_sql())
             connection.commit()
             connection.close()
             result = {'result': True}
@@ -600,7 +740,7 @@ def update_payment_state_by_webhook():
                 'result': False,
                 'error': f'Server error while validating : {error}'
             }
-            slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'], query=query)
+            slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'], query=sql.get_sql())
             return json.dumps(result, ensure_ascii=False), 500
     else:  # 결제 취소 이벤트가 아임포트 어드민(https://admin.iamport.kr/)에서 "취소하기" 버튼을 클릭하여 발생한 경우에만 트리거됨.
         if int(db_paid_amount[0][0]) == int(import_paid_amount):
@@ -615,7 +755,19 @@ def update_payment_state_by_webhook():
                           imp_uid=%s 
                       AND merchant_uid=%s"""
                 values = (updated_state, imp_uid, merchant_uid)
-                cursor.execute(query, values)
+                sql = Query.update(
+                    purchases
+                ).set(
+                    purchases.state, updated_state
+                ).set(
+                    purchases.deleted_at, fn.Now()
+                ).where(
+                    Criterion.all([
+                        purchases.imp_uid == imp_uid,
+                        purchases.merchant_uid == merchant_uid
+                    ])
+                )
+                cursor.execute(sql.get_sql())
             else:
                 pass
             connection.commit()
@@ -630,4 +782,3 @@ def update_payment_state_by_webhook():
             }
             slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'])
             return json.dumps(result, ensure_ascii=False), 403
-

@@ -1,6 +1,7 @@
 from config.database import DB_CONFIG
 import hashlib
 import pymysql
+from pypika import MySQLQuery as Query, Criterion, Interval, Table, Field, Order, functions as fn
 
 
 # Connection to database.
@@ -18,10 +19,18 @@ def login_to_db():
 # User verification by exploring user table.
 def check_session(cursor, session_id):
     hashed_session_id = hashlib.sha256(session_id.encode()).hexdigest()
+    sessions = Table('sessions')
 
     query = f"SELECT id, user_id FROM sessions WHERE id=%s"
-    values = (hashed_session_id)
-    cursor.execute(query, values)
+    sql = Query.from_(
+        sessions
+    ).select(
+        sessions.id,
+        sessions.user_id
+    ).wher(
+        sessions.id == hashed_session_id
+    )
+    cursor.execute(sql.get_sql())
     user_session = cursor.fetchall()
 
     if len(user_session) == 0 or user_session == ():

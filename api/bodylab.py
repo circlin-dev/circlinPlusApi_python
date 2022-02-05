@@ -5,6 +5,7 @@ from global_things.functions.bodylab import analyze_image, get_date_range_from_w
 from . import api
 from flask import url_for, request
 import json
+from pypika import MySQLQuery as Query, Table, Order
 
 
 @api.route('/bodylab', methods=['POST'])
@@ -25,6 +26,9 @@ def add_weekly_data():
     muscle_mass = request.form.get('muscle_mass')
     fat_mass = request.form.get('fat_mass')
     body_image = request.form.get('body_image')
+    """Define tables required to execute SQL."""
+    bodylabs = Table('bodylabs')
+    bodylab_images = Table('bodylab_images')
 
     # Verify if mandatory information is not null.
     if request.method == 'POST':
@@ -75,47 +79,81 @@ def add_weekly_data():
         # elif is_valid_user['result'] is True:
         #   pass
 
-        query = f"INSERT INTO bodylab( \
-                          user_id, year, \
-                          week_number_of_year, firstdate_of_week, \
-                          lastdate_of_week, height,\
-                          weight, bmi, \
-                          muscle_mass, fat_mass) \
-                  VALUES(%s, %s, \
-                        %s, %s, \
-                        %s, %s, \
-                        %s, %s, \
-                        %s, %s)"
-        values = (user_id, int(year),
-                  int(week_number_of_year), firstdate_of_week,
-                  lastdate_of_week, height,
-                  weight, bmi,
-                  muscle_mass, fat_mass)
+        # query = f"INSERT INTO bodylab( \
+        #                   user_id, year, \
+        #                   week_number_of_year, firstdate_of_week, \
+        #                   lastdate_of_week, height,\
+        #                   weight, bmi, \
+        #                   muscle_mass, fat_mass) \
+        #           VALUES(%s, %s, \
+        #                 %s, %s, \
+        #                 %s, %s, \
+        #                 %s, %s, \
+        #                 %s, %s)"
+        # values = (user_id, int(year),
+        #           int(week_number_of_year), firstdate_of_week,
+        #           lastdate_of_week, height,
+        #           weight, bmi,
+        #           muscle_mass, fat_mass)
+        sql = Query.into(
+            bodylabs
+        ).columns(
+            bodylabs.user_id,
+            bodylabs.year,
+            bodylabs.week_number_of_year,
+            bodylabs.firstdate_of_week,
+            bodylabs.lastdate_of_week,
+            bodylabs.height,
+            bodylabs.weight,
+            bodylabs.bmi,
+            bodylabs.muscle_mass,
+            bodylabs.fat_mass
+        ).insert(
+            user_id,
+            int(year),
+            int(week_number_of_year),
+            firstdate_of_week,
+            lastdate_of_week,
+            height,
+            weight,
+            bmi,
+            muscle_mass,
+            fat_mass
+        )
         try:
-            cursor.execute(query, values)
+            cursor.execute(sql.get_sql())
         except Exception as e:
             connection.rollback()
             connection.close()
             error = str(e)
             result = {
                 'result': False,
-                'error': f'Server Error while executing INSERT query(bodylab): {error}'
+                'error': f'Server Error while executing INSERT query(bodylabs): {error}'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
             return json.dumps(result, ensure_ascii=False), 500
 
         # Get users latest bodylab data = User's data inserted just before.
-        query = f'''
-      SELECT 
-            id
-        FROM
-            bodylab
-        WHERE
-            user_id={user_id}
-        ORDER BY id DESC
-            LIMIT 1'''
+      #   query = f'''
+      # SELECT
+      #       id
+      #   FROM
+      #       bodylab
+      #   WHERE
+      #       user_id={user_id}
+      #   ORDER BY id DESC
+      #       LIMIT 1'''
+        sql = Query.from_(
+            bodylabs
+        ).select(
+            bodylabs.id
+        ).where(
+            bodylabs.user_id == user_id
+        ).orderby(
+            bodylabs.id, order=Order.desc
+        ).limit(1)
 
-        cursor.execute(query)
+        cursor.execute(sql.get_sql())
         latest_bodylab_id_tuple = cursor.fetchall()
         if query_result_is_none(latest_bodylab_id_tuple) is True:
             connection.rollback()
@@ -124,7 +162,7 @@ def add_weekly_data():
                 'result': False,
                 'error': f'Cannot find requested bodylab data of user(id: {user_id})(bodylab)'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql)
             return json.dumps(result, ensure_ascii=False), 400
         else:
             latest_bodylab_id = latest_bodylab_id_tuple[0][0]
@@ -135,28 +173,57 @@ def add_weekly_data():
         status_code = image_analysis_result_json['status_code']
         if status_code == 200:
             analyze_result = image_analysis_result_json['result']
-            query = f" \
-        INSERT INTO bodylab_image \
-                (bodylab_id, original_url, \
-                analyzed_url, shoulder_ratio, \
-                hip_ratio, shoulder_width, \
-                hip_width, nose_to_shoulder_center, \
-                shoulder_center_to_hip_center, hip_center_to_ankle_center, \
-                whole_body_length, upperbody_lowerbody) \
-        VALUES (%s, %s, \
-                %s, %s, \
-                %s, %s, \
-                %s, %s, \
-                %s, %s, \
-                %s, %s)"
-            values = (latest_bodylab_id, body_image,
-                      analyze_result['output_url'], analyze_result['shoulder_ratio'],
-                      analyze_result['hip_ratio'], analyze_result['shoulder_width'],
-                      analyze_result['hip_width'], analyze_result['nose_to_shoulder_center'],
-                      analyze_result['shoulder_center_to_hip_center'], analyze_result['hip_center_to_ankle_center'],
-                      analyze_result['whole_body_length'], analyze_result['upper_body_lower_body'])
+            sql = Query.into(
+                bodylab_images
+            ).columns(
+                bodylab_images.bodylab_id,
+                bodylab_images.original_url,
+                bodylab_images.analyzed_url,
+                bodylab_images.shoulder_ratio,
+                bodylab_images.hip_ratio,
+                bodylab_images.shoulder_width,
+                bodylab_images.hip_width,
+                bodylab_images.nose_to_shoulder_center,
+                bodylab_images.shoulder_center_to_hip_center,
+                bodylab_images.hip_center_to_ankle_center,
+                bodylab_images.whole_body_length,
+                bodylab_images.upperbody_lowerbody
+            ).insert(
+                latest_bodylab_id,
+                body_image,
+                analyze_result['output_url'],
+                analyze_result['shoulder_ratio'],
+                analyze_result['hip_ratio'],
+                analyze_result['shoulder_width'],
+                analyze_result['hip_width'],
+                analyze_result['nose_to_shoulder_center'],
+                analyze_result['shoulder_center_to_hip_center'],
+                analyze_result['hip_center_to_ankle_center'],
+                analyze_result['whole_body_length'],
+                analyze_result['upper_body_lower_body']
+            )
+        #     query = f" \
+        # INSERT INTO bodylab_image \
+        #         (bodylab_id, original_url, \
+        #         analyzed_url, shoulder_ratio, \
+        #         hip_ratio, shoulder_width, \
+        #         hip_width, nose_to_shoulder_center, \
+        #         shoulder_center_to_hip_center, hip_center_to_ankle_center, \
+        #         whole_body_length, upperbody_lowerbody) \
+        # VALUES (%s, %s, \
+        #         %s, %s, \
+        #         %s, %s, \
+        #         %s, %s, \
+        #         %s, %s, \
+        #         %s, %s)"
+        #     values = (latest_bodylab_id, body_image,
+        #               analyze_result['output_url'], analyze_result['shoulder_ratio'],
+        #               analyze_result['hip_ratio'], analyze_result['shoulder_width'],
+        #               analyze_result['hip_width'], analyze_result['nose_to_shoulder_center'],
+        #               analyze_result['shoulder_center_to_hip_center'], analyze_result['hip_center_to_ankle_center'],
+        #               analyze_result['whole_body_length'], analyze_result['upper_body_lower_body'])
             try:
-                cursor.execute(query, values)
+                cursor.execute(sql.get_sql())
             except Exception as e:
                 connection.rollback()
                 connection.close()
@@ -165,7 +232,7 @@ def add_weekly_data():
                     'result': False,
                     'error': f'Server error while executing INSERT query(bodylab_image): {error}'
                 }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
                 return json.dumps(result, ensure_ascii=False), 400
 
             connection.commit()
@@ -179,7 +246,7 @@ def add_weekly_data():
                 'result': False,
                 'error': f"Failed to analysis requested image({body_image}): {image_analysis_result_json['error']}"
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
             return json.dumps(result, ensure_ascii=False), 400
         elif status_code == 500:
             connection.rollback()
@@ -188,7 +255,7 @@ def add_weekly_data():
                 'result': False,
                 'error': f"Failed to analysis requested image({body_image}): {image_analysis_result_json['error']}"
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
             return json.dumps(result, ensure_ascii=False), 500
 
     else:

@@ -1,6 +1,6 @@
 import json
 import pandas as pd
-
+from pypika import MySQLQuery as Query, Criterion, Table, Order, functions as fn
 
 def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"):
     """
@@ -74,39 +74,6 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
               p.id, ex.id, eq.id, pur.id
         ORDER BY
               {sort_standard} DESC"""
-# SELECT
-#       p.id AS program_id,
-#       p.created_at,
-#       p.title,
-#       ex.title AS exercise,
-#       eq.name AS equipments,
-#       pur.title AS purposes,
-#       (SELECT pathname FROM files WHERE id = p.thumbnail_id) AS thumbnail,
-#       JSON_ARRAYAGG(JSON_OBJECT('pathname', f.pathname)) AS thumbnails,
-#       (SELECT COUNT(*) FROM program_lectures WHERE program_id = p.id) AS num_lectures
-#   FROM
-#       programs p,
-#       files f,
-#       exercises ex,
-#       program_exercises pex,
-#       equipments eq,
-#       program_equipments peq,
-#       purposes pur,
-#       program_purposes ppu
-#   WHERE
-#       p.title LIKE "%{word}%"
-#     AND
-#       f.original_file_id = p.thumbnail_id
-#     AND
-#       (ex.id = pex.exercise_id AND p.id = pex.program_id)
-#     AND
-#       (eq.id = peq.equipment_id AND p.id = peq.program_id)
-#     AND
-#       (pur.id = ppu.purpose_id AND ppu.program_id = p.id)
-# GROUP BY
-#       p.id, ex.id, eq.id, pur.id
-# ORDER BY
-#       {sort_standard} DESC
 
     query_coach = f"""
         SELECT
@@ -163,42 +130,6 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
           p.id, ex.id, eq.id, pur.id
     ORDER BY
           {sort_standard} DESC"""
-# SELECT
-#       p.id AS program_id,
-#       p.created_at,
-#       p.title,
-#       ex.title AS exercise,
-#       eq.name AS equipments,
-#       pur.title AS purposes,
-#       (SELECT pathname FROM files WHERE id = p.thumbnail_id) AS thumbnail,
-#       JSON_ARRAYAGG(JSON_OBJECT('pathname', f.pathname)) AS thumbnails,
-#       (SELECT COUNT(*) FROM program_lectures WHERE program_id = p.id) AS num_lectures
-#   FROM
-#       programs p,
-#       files f,
-#       coaches AS c,
-#       exercises ex,
-#       program_exercises pex,
-#       equipments eq,
-#       program_equipments peq,
-#       purposes pur,
-#       program_purposes ppu
-#   WHERE
-#       c.name LIKE "%{word}%"
-#     AND
-#       p.coach_id = (SELECT id FROM coaches WHERE name=c.name)
-#     AND
-#       f.original_file_id = p.thumbnail_id
-#     AND
-#       (ex.id = pex.exercise_id AND p.id = pex.program_id)
-#     AND
-#       (eq.id = peq.equipment_id AND p.id = peq.program_id)
-#     AND
-#       (pur.id = ppu.purpose_id AND ppu.program_id = p.id)
-# GROUP BY
-#       p.id, ex.id, eq.id, pur.id
-# ORDER BY
-#       {sort_standard} DESC
 
     query_exercise = f"""
         SELECT
@@ -254,41 +185,6 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
               p.id, ex.id, eq.id, pur.id
         ORDER BY
               {sort_standard} DESC"""
-# SELECT
-#       p.id AS program_id,
-#       p.created_at,
-#       p.title,
-#       ex.title AS exercise,
-#       eq.name AS equipments,
-#       pur.title AS purposes,
-#       (SELECT pathname FROM files WHERE id = p.thumbnail_id) AS thumbnail,
-#       JSON_ARRAYAGG(JSON_OBJECT('pathname', f.pathname)) AS thumbnails,
-#       (SELECT COUNT(*) FROM program_lectures WHERE program_id = p.id) AS num_lectures
-#   FROM
-#       programs p,
-#       files f,
-#       exercises ex,
-#       program_exercises pex,
-#       equipments eq,
-#       program_equipments peq,
-#       purposes pur,
-#       program_purposes ppu
-#   WHERE
-#       ex.title LIKE "%{word}%"
-#     AND
-#       pex.exercise_id = (SELECT id FROM exercises WHERE title = ex.title)
-#     AND
-#       f.original_file_id = p.thumbnail_id
-#     AND
-#       (ex.id = pex.exercise_id AND p.id = pex.program_id)
-#     AND
-#       (eq.id = peq.equipment_id AND p.id = peq.program_id)
-#     AND
-#       (pur.id = ppu.purpose_id AND ppu.program_id = p.id)
-# GROUP BY
-#       p.id, ex.id, eq.id, pur.id
-# ORDER BY
-#       {sort_standard} DESC
 
     query_equipment = f"""
         SELECT
@@ -344,41 +240,7 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
               p.id, ex.id, eq.id, pur.id
         ORDER BY
               {sort_standard} DESC"""
-# SELECT
-#       p.id AS program_id,
-#       p.created_at,
-#       p.title,
-#       ex.title AS exercise,
-#       eq.name AS equipments,
-#       pur.title AS purposes,
-#       (SELECT pathname FROM files WHERE id = p.thumbnail_id) AS thumbnail,
-#       JSON_ARRAYAGG(JSON_OBJECT('pathname', f.pathname)) AS thumbnails,
-#       (SELECT COUNT(*) FROM program_lectures WHERE program_id = p.id) AS num_lectures
-#   FROM
-#       programs p,
-#       files f,
-#       exercises ex,
-#       program_exercises pex,
-#       equipments eq,
-#       program_equipments peq,
-#       purposes pur,
-#       program_purposes ppu
-#   WHERE
-#       eq.name LIKE "%{word}%"
-#     AND
-#       peq.equipment_id = (SELECT id FROM equipments WHERE name = eq.name)
-#     AND
-#       f.original_file_id = p.thumbnail_id
-#     AND
-#       (ex.id = pex.exercise_id AND p.id = pex.program_id)
-#     AND
-#       (eq.id = peq.equipment_id AND p.id = peq.program_id)
-#     AND
-#       (pur.id = ppu.purpose_id AND ppu.program_id = p.id)
-# GROUP BY
-#       p.id, ex.id, eq.id, pur.id
-# ORDER BY
-#       {sort_standard} DESC
+
     return query_program, query_coach, query_exercise, query_equipment
 
 
@@ -437,81 +299,145 @@ def filter_dataframe(filter_exercise: list, filter_purpose: list, filter_equipme
 
 
 def make_query_to_find_related_terms(word: str):
-    query_program = f"""
-    SELECT
-          prog.id,
-          prog.title
-      FROM
-          programs prog
-      WHERE 
-          prog.title LIKE "%{word}%"
-  ORDER BY CHAR_LENGTH(prog.title)"""
+    programs = Table('programs')
+    coaches = Table('coaches')
+    exercises = Table('exercises')
+    equipments = Table('equipments')
+  #   query_program = f"""
+  #   SELECT
+  #         prog.id,
+  #         prog.title
+  #     FROM
+  #         programs prog
+  #     WHERE
+  #         prog.title LIKE "%{word}%"
+  # ORDER BY CHAR_LENGTH(prog.title)"""
+    query_program = Query.from_(
+        programs
+    ).select(
+        programs.id,
+        programs.title
+    ).where(
+        programs.title.like(f'%{word}%')
+    ).orderby(fn.Length(programs.title))
 
-    query_coach = f"""
-    SELECT
-          c.id,
-          c.name
-      FROM
-          coaches c
-      WHERE 
-          c.name LIKE "%{word}%"
-  ORDER BY CHAR_LENGTH(c.name)"""
+  #   query_coach = f"""
+  #   SELECT
+  #         c.id,
+  #         c.name
+  #     FROM
+  #         coaches c
+  #     WHERE
+  #         c.name LIKE "%{word}%"
+  # ORDER BY CHAR_LENGTH(c.name)"""
+    query_coach = Query.from_(
+        coaches
+    ).select(
+        coaches.id,
+        coaches.name
+    ).where(
+        coaches.name.like(f'%{word}%')
+    ).orderby(fn.Length(coaches.name))
 
-    query_exercise = f"""
-    SELECT
-        ex.id,
-        ex.title
-    FROM
-        exercises ex
-    WHERE 
-        ex.title LIKE "%{word}%"
-  ORDER BY CHAR_LENGTH(ex.title)"""
+  #   query_exercise = f"""
+  #   SELECT
+  #       ex.id,
+  #       ex.title
+  #   FROM
+  #       exercises ex
+  #   WHERE
+  #       ex.title LIKE "%{word}%"
+  # ORDER BY CHAR_LENGTH(ex.title)"""
+    query_exercise = Query.from_(
+        exercises
+    ).select(
+        exercises.id,
+        exercises.title
+    ).where(
+        exercises.title.like(f'%{word}%')
+    ).orderby(fn.Length(exercises.title))
 
-    query_equipment = f"""
-    SELECT
-          eq.id,
-          eq.name
-      FROM
-          equipments eq
-      WHERE 
-          eq.name LIKE "%{word}%"
-    ORDER BY CHAR_LENGTH(eq.name)"""
+    # query_equipment = f"""
+    # SELECT
+    #       eq.id,
+    #       eq.name
+    #   FROM
+    #       equipments eq
+    #   WHERE
+    #       eq.name LIKE "%{word}%"
+    # ORDER BY CHAR_LENGTH(eq.name)"""
+    query_equipment = Query.from_(
+        equipments
+    ).select(
+        equipments.id,
+        equipments.name
+    ).where(
+        equipments.name.like(f'%{word}%')
+    ).orderby(fn.Length(equipments.name))
 
     return query_program, query_coach, query_exercise, query_equipment
 
 
 def make_query_get_every_titles():
-    query_programs = f"""
-      SELECT
-            prog.id,
-            prog.title
-        FROM
-            programs prog
-    ORDER BY CHAR_LENGTH(prog.title)"""
+    programs = Table('programs')
+    coaches = Table('coaches')
+    exercises = Table('exercises')
+    equipments = Table('equipments')
+    # query_programs = f"""
+    #   SELECT
+    #         prog.id,
+    #         prog.title
+    #     FROM
+    #         programs prog
+    # ORDER BY CHAR_LENGTH(prog.title)"""
+    query_programs = Query.from_(
+        programs
+    ).select(
+        programs.id,
+        programs.title
+    ).orderby(fn.Length(programs.title))
 
-    query_coaches = f"""
-      SELECT
-            c.id,
-            c.name
-        FROM
-            coaches c
-    ORDER BY CHAR_LENGTH(c.name)"""
+    # query_coaches = f"""
+    #   SELECT
+    #         c.id,
+    #         c.name
+    #     FROM
+    #         coaches c
+    # ORDER BY CHAR_LENGTH(c.name)"""
+    query_coaches = Query.from_(
+        coaches
+    ).select(
+        coaches.id,
+        coaches.name
+    ).orderby(fn.Length(coaches.name))
 
-    query_exercises = f"""
-      SELECT
-          ex.id,
-          ex.title
-      FROM
-          exercises ex
-    ORDER BY CHAR_LENGTH(ex.title)"""
+    # query_exercises = f"""
+    #   SELECT
+    #       ex.id,
+    #       ex.title
+    #   FROM
+    #       exercises ex
+    # ORDER BY CHAR_LENGTH(ex.title)"""
+    query_exercises = Query.from_(
+        exercises
+    ).select(
+        exercises.id,
+        exercises.title
+    ).orderby(fn.Length(exercises.title))
 
-    query_equipments = f"""
-      SELECT
-            eq.id,
-            eq.name
-        FROM
-            equipments eq
-      ORDER BY CHAR_LENGTH(eq.name)"""
+    # query_equipments = f"""
+    #   SELECT
+    #         eq.id,
+    #         eq.name
+    #     FROM
+    #         equipments eq
+    #   ORDER BY CHAR_LENGTH(eq.name)"""
+    query_equipments = Query.from_(
+        equipments
+    ).select(
+        equipments.id,
+        equipments.name
+    ).orderby(fn.Length(equipments.name))
 
     return query_programs, query_coaches, query_exercises, query_equipments
 
