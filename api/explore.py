@@ -274,7 +274,7 @@ def explore_log(user_id: int):
             search_logs.id,
             search_logs.search_term
         ).where(
-            (search_logs.user_id == user_id) &
+            (search_logs.user_id == int(user_id)) &
             (search_logs.deleted_at.isnull())
         ).groupby(
             search_logs.search_term
