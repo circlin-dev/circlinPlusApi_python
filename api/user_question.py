@@ -5,6 +5,9 @@ from global_things.functions.general import login_to_db, check_session, query_re
 from flask import request, url_for
 import json
 
+# @api.route('/user-question', methods=['GET', 'POST'])
+# GET => /user-question?user_id=N
+# POST => /user-question
 
 @api.route('/user-question', methods=['POST'])
 def add_user_question():

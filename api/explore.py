@@ -6,6 +6,7 @@ from . import api
 from flask import url_for, request
 import json
 import pandas as pd
+from pypika import MySQLQuery as Criterion, Query, Table, Field, Order
 from soynlp.hangle import jamo_levenshtein
 
 
@@ -253,20 +254,34 @@ def explore_log(user_id: int):
     cursor = connection.cursor()
 
     if request.method == 'GET':  # 검색 기록 조회
-        query = f"""
-            SELECT DISTINCT
-                            sl.id, 
-                            sl.search_term 
-                        FROM 
-                            search_logs sl
-                       WHERE 
-                            sl.user_id={user_id}
-                        AND
-                            sl.deleted_at IS NULL
-                    GROUP BY search_term
-                    ORDER BY sl.created_at DESC"""  # 검색어 중복 제거하여 목록 반환
+        # query = f"""
+        #     SELECT DISTINCT
+        #                     sl.id,
+        #                     sl.search_term
+        #                 FROM
+        #                     search_logs sl
+        #                WHERE
+        #                     sl.user_id={user_id}
+        #                 AND
+        #                     sl.deleted_at IS NULL
+        #             GROUP BY sl.search_term
+        #             ORDER BY sl.created_at DESC"""  # 검색어 중복 제거하여 목록 반환
+        search_logs = Table('search_logs')
+
+        query2 = Query.from_(
+            search_logs
+        ).select(
+            search_logs.id,
+            search_logs.search_term
+        ).where(
+            (search_logs.user_id == user_id) &
+            (search_logs.deleted_at is None)
+        ).groupby(
+            search_logs.search_term
+        ).orderby(search_logs.created_at, order=Order.desc)
+
         try:
-            cursor.execute(query)
+            cursor.execute(query2.get_sql())
             search_records = cursor.fetchall()
         except Exception as e:
             connection.rollback()
