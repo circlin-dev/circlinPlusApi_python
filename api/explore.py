@@ -6,7 +6,7 @@ from . import api
 from flask import url_for, request
 import json
 import pandas as pd
-from pypika import MySQLQuery as Criterion, Query, Table, Field, Order
+from pypika import MySQLQuery as Query, Criterion, Table, Field, Order
 from soynlp.hangle import jamo_levenshtein
 
 
@@ -274,8 +274,10 @@ def explore_log(user_id: int):
             search_logs.id,
             search_logs.search_term
         ).where(
-            (search_logs.user_id == int(user_id)) &
-            (search_logs.deleted_at.isnull())
+            Criterion.all([
+                search_logs.user_id == user_id,
+                search_logs.deleted_at.isnull()
+            ])
         ).groupby(
             search_logs.search_term
         ).orderby(search_logs.created_at, order=Order.desc)
