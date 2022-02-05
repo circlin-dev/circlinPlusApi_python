@@ -303,15 +303,7 @@ def make_query_to_find_related_terms(word: str):
     coaches = Table('coaches')
     exercises = Table('exercises')
     equipments = Table('equipments')
-  #   query_program = f"""
-  #   SELECT
-  #         prog.id,
-  #         prog.title
-  #     FROM
-  #         programs prog
-  #     WHERE
-  #         prog.title LIKE "%{word}%"
-  # ORDER BY CHAR_LENGTH(prog.title)"""
+
     query_program = Query.from_(
         programs
     ).select(
@@ -321,15 +313,6 @@ def make_query_to_find_related_terms(word: str):
         programs.title.like(f'%{word}%')
     ).orderby(fn.Length(programs.title))
 
-  #   query_coach = f"""
-  #   SELECT
-  #         c.id,
-  #         c.name
-  #     FROM
-  #         coaches c
-  #     WHERE
-  #         c.name LIKE "%{word}%"
-  # ORDER BY CHAR_LENGTH(c.name)"""
     query_coach = Query.from_(
         coaches
     ).select(
@@ -339,15 +322,6 @@ def make_query_to_find_related_terms(word: str):
         coaches.name.like(f'%{word}%')
     ).orderby(fn.Length(coaches.name))
 
-  #   query_exercise = f"""
-  #   SELECT
-  #       ex.id,
-  #       ex.title
-  #   FROM
-  #       exercises ex
-  #   WHERE
-  #       ex.title LIKE "%{word}%"
-  # ORDER BY CHAR_LENGTH(ex.title)"""
     query_exercise = Query.from_(
         exercises
     ).select(
@@ -357,15 +331,6 @@ def make_query_to_find_related_terms(word: str):
         exercises.title.like(f'%{word}%')
     ).orderby(fn.Length(exercises.title))
 
-    # query_equipment = f"""
-    # SELECT
-    #       eq.id,
-    #       eq.name
-    #   FROM
-    #       equipments eq
-    #   WHERE
-    #       eq.name LIKE "%{word}%"
-    # ORDER BY CHAR_LENGTH(eq.name)"""
     query_equipment = Query.from_(
         equipments
     ).select(
@@ -383,13 +348,7 @@ def make_query_get_every_titles():
     coaches = Table('coaches')
     exercises = Table('exercises')
     equipments = Table('equipments')
-    # query_programs = f"""
-    #   SELECT
-    #         prog.id,
-    #         prog.title
-    #     FROM
-    #         programs prog
-    # ORDER BY CHAR_LENGTH(prog.title)"""
+
     query_programs = Query.from_(
         programs
     ).select(
@@ -397,13 +356,6 @@ def make_query_get_every_titles():
         programs.title
     ).orderby(fn.Length(programs.title))
 
-    # query_coaches = f"""
-    #   SELECT
-    #         c.id,
-    #         c.name
-    #     FROM
-    #         coaches c
-    # ORDER BY CHAR_LENGTH(c.name)"""
     query_coaches = Query.from_(
         coaches
     ).select(
@@ -411,13 +363,6 @@ def make_query_get_every_titles():
         coaches.name
     ).orderby(fn.Length(coaches.name))
 
-    # query_exercises = f"""
-    #   SELECT
-    #       ex.id,
-    #       ex.title
-    #   FROM
-    #       exercises ex
-    # ORDER BY CHAR_LENGTH(ex.title)"""
     query_exercises = Query.from_(
         exercises
     ).select(
@@ -425,13 +370,6 @@ def make_query_get_every_titles():
         exercises.title
     ).orderby(fn.Length(exercises.title))
 
-    # query_equipments = f"""
-    #   SELECT
-    #         eq.id,
-    #         eq.name
-    #     FROM
-    #         equipments eq
-    #   ORDER BY CHAR_LENGTH(eq.name)"""
     query_equipments = Query.from_(
         equipments
     ).select(

@@ -394,7 +394,7 @@ def add_purchase():
     ).set(
         purchases.user_id, user_id
     ).set(
-        purchases.plan_id, (Query.from_(subscribe_plans).select(subscribe_plans.id).where(subscribe_plans.title == user_subscribed_plan))
+        purchases.plan_id, Query.from_(subscribe_plans).select(subscribe_plans.id).where(subscribe_plans.title == user_subscribed_plan)
     ).set(
         purchases.start_date, fn.Now()
     ).set(
