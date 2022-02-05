@@ -35,7 +35,7 @@ def slack_purchase_notification(cursor, user_id: int = 0, manager_id: int = 0, p
   subscribe_plans = Table('subscribe_plans')
   users = Table('users')
 
-  subquery = Query.from_(
+  subquery_manager_name = Query.from_(
     users
   ).select(
     users.nickname
@@ -48,7 +48,8 @@ def slack_purchase_notification(cursor, user_id: int = 0, manager_id: int = 0, p
     purchases.start_date,
     purchases.expire_date,
     subscribe_plans.title,
-    subquery
+    users.nickname,
+    subquery_manager_name
   ).join(
     subscribe_plans
   ).on(
