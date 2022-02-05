@@ -247,19 +247,19 @@ def add_purchase():
     (4) 결제 검증 실패 시 기결제된 내용 환불하기
     """
 
-    # query = "SELECT sales_price FROM subscribe_plans WHERE title=%s"
     sql = Query.from_(
         subscribe_plans
     ).select(
+        subscribe_plans.id,
         subscribe_plans.sales_price
     ).where(
         subscribe_plans.title == user_subscribed_plan
     )
     cursor.execute(sql.get_sql())
 
-    sales_price = cursor.fetchall()
+    plan_information = cursor.fetchall()
 
-    if query_result_is_none(sales_price) is True:
+    if query_result_is_none(plan_information) is True:
         try:
             sql = Query.update(
                 purchases
@@ -384,17 +384,15 @@ def add_purchase():
     """
     기구 신청을 했을 경우, 기구 신청 내역을 저장하는 쿼리를 만들어야 함!
     """
-    # key_values = {
-    #     "user_id": user_id,
-    #     "plan_id": Query.from_(subscribe_plans).select(subscribe_plans.id).where(subscribe_plans.title == user_subscribed_plan),
-    #     "start_date": fn.Now(),
-    #     "expire_date": fn.Now() + Interval(days=subscription_days)}
+
+    plan_id = plan_information[0][0]
+    sales_price = plan_information[0][1]
     sql = Query.update(
         purchases
     ).set(
         purchases.user_id, user_id
     ).set(
-        purchases.plan_id, Query.from_(subscribe_plans).select(subscribe_plans.id).where(subscribe_plans.title == user_subscribed_plan)
+        purchases.plan_id, plan_id
     ).set(
         purchases.start_date, fn.Now()
     ).set(
@@ -607,7 +605,7 @@ def add_purchase():
                 'result': False,
                 'error': f'Server Error while executing INSERT query(chat_users): {error}'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
             return json.dumps(result, ensure_ascii=False), 500
     else:
         chat_room_id = existing_chat_room[0][0]
