@@ -4,6 +4,7 @@ from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
 from flask import request, url_for
 import json
+from pypika import MySQLQuery as Query, Table, Order
 
 # @api.route('/user-question', methods=['GET', 'POST'])
 # GET => /user-question?user_id=N
@@ -15,6 +16,9 @@ def add_user_question():
     endpoint = API_ROOT + url_for('api.add_user_question')
     # session_id = request.headers['Authorization']
     parameters = json.loads(request.get_data(), encoding='utf-8')
+    """Define tables required to execute SQL."""
+    user_questions = Table('user_questions')
+
 
     user_id = parameters['user_id']
     purpose = parameters['purpose']  # array
@@ -99,10 +103,17 @@ def add_user_question():
         "intensity": intensity,
         "trial_days": trial_days
     }, ensure_ascii=False)
-    query = f"INSERT INTO user_questions (user_id, data) VALUES({user_id}, '{json_data}')"
+    # query = f"INSERT INTO user_questions (user_id, data) VALUES({user_id}, '{json_data}')"
+    sql = Query.into(
+        user_questions
+    ).columns(
+        'user_id', 'data'
+    ).insert(
+        user_id, json_data
+    )
 
     try:
-        cursor.execute(query)
+        cursor.execute(sql.get_sql())
         connection.commit()
     except Exception as e:
         connection.rollback()
@@ -112,7 +123,7 @@ def add_user_question():
             'result': False,
             'error': f'Server Error while executing INSERT query(user_questions): {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
         return json.dumps(result, ensure_ascii=False), 500
 
     connection.close()
@@ -126,6 +137,8 @@ def read_user_question(user_id):
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.read_user_question', user_id=user_id)
     # token = request.headers['token']
+    """Define tables required to execute SQL."""
+    user_questions = Table('user_questions')
 
     try:
         connection = login_to_db()
@@ -154,16 +167,24 @@ def read_user_question(user_id):
     #   pass
 
     # Get users latest bodylab data = User's data inserted just before.
-    query = f'''
-     SELECT 
-           data
-       FROM
-           user_questions
-       WHERE
-           user_id={user_id}
-       ORDER BY id DESC LIMIT 1'''
-
-    cursor.execute(query)
+    # query = f'''
+    #  SELECT
+    #        data
+    #    FROM
+    #        user_questions
+    #    WHERE
+    #        user_id={user_id}
+    #    ORDER BY id DESC LIMIT 1'''
+    sql = Query.from_(
+        user_questions
+    ).select(
+        user_questions.data
+    ).where(
+        user_id == user_id
+    ).orderby(
+        user_questions.id, order=Order.desc
+    ).limit(1)
+    cursor.execute(sql.get_sql())
     latest_answers = cursor.fetchall()
     if query_result_is_none(latest_answers) is True:
         connection.close()
@@ -171,7 +192,7 @@ def read_user_question(user_id):
             'result': False,
             'error': f'Cannot find requested answer data of user(id: {user_id})(users)'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
         return json.dumps(result, ensure_ascii=False), 401
     else:
         connection.close()

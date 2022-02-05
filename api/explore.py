@@ -6,7 +6,7 @@ from . import api
 from flask import url_for, request
 import json
 import pandas as pd
-from pypika import MySQLQuery as Query, Criterion, Table, Field, Order, functions as fn
+from pypika import MySQLQuery as Query, Criterion, Table, Order, functions as fn
 from soynlp.hangle import jamo_levenshtein
 
 

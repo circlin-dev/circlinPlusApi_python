@@ -7,7 +7,7 @@ from . import api
 from flask import url_for, request
 import json
 import requests
-
+from pypika import MySQLQuery as Query, Criterion, Table, Field, Order, functions as fn
 
 @api.route('/purchase/<user_id>', methods=['GET'])
 def read_purchase_record(user_id):
@@ -20,6 +20,10 @@ def read_purchase_record(user_id):
     ip = request.headers["X-Forwarded-For"] # Both public & private.
     endpoint = API_ROOT + url_for('api.read_purchase_record', user_id=user_id)
     # token = request.headers['Authorization']
+    """Define tables required to execute SQL."""
+    purchases = Table('purchases')
+    subscribe_plans = Table('subscribe_plans')
+    starterkit_delivery = Table('starterkit_delivery')
 
     try:
         connection = login_to_db()
@@ -48,32 +52,61 @@ def read_purchase_record(user_id):
     #   pass
 
     # 2. 해당 유저에게 구독중인(기간이 만료되지 않은) 플랜이 있는지 확인
-    query = f"\
-    SELECT DISTINCT \
-          p.id, \
-          sp.title, \
-          sp.total_price, \
-          p.start_date, \
-          p.expire_date, \
-          p.deleted_at, \
-          p.buyer_email, \
-          p.buyer_name, \
-          p.buyer_tel, \
-          p.state, \
-          sd.post_code, \
-          sd.address, \
-          sd.comment \
-      from \
-          purchases p, \
-          subscribe_plans sp, \
-          starterkit_delivery sd \
-    WHERE \
-          sp.id = p.user_id \
-      AND p.id = sd.purchase_id \
-      AND p.user_id = {user_id} \
-    ORDER BY start_date"
+    sql = Query.from_(
+        purchases
+    ).select(
+        purchases.id.as_('purchase_id'),
+        subscribe_plans.title,
+        subscribe_plans.total_price,
+        purchases.total_payment,
+        purchases.user_id.as_('user_id'),
+        purchases.start_date,
+        purchases.expire_date,
+        purchases.deleted_at,
+        purchases.buyer_email,
+        purchases.buyer_name,
+        purchases.buyer_tel,
+        purchases.state,
+        starterkit_delivery.post_code,
+        starterkit_delivery.address,
+        starterkit_delivery.comment
+    ).join(
+        subscribe_plans
+    ).on(
+        subscribe_plans.id == purchases.plan_id
+    ).join(
+        starterkit_delivery
+    ).on(
+        purchases.id == starterkit_delivery.pusrchase_id
+    ).where(
+        purchases.user_id == 11
+    ).orderby(purchases.start_date)
+    # query = f"\
+    # SELECT DISTINCT \
+    #       p.id, \
+    #       sp.title, \
+    #       sp.total_price, \
+    #       p.start_date, \
+    #       p.expire_date, \
+    #       p.deleted_at, \
+    #       p.buyer_email, \
+    #       p.buyer_name, \
+    #       p.buyer_tel, \
+    #       p.state, \
+    #       sd.post_code, \
+    #       sd.address, \
+    #       sd.comment \
+    #   from \
+    #       purchases p, \
+    #       subscribe_plans sp, \
+    #       starterkit_delivery sd \
+    # WHERE \
+    #       sp.id = p.user_id \
+    #   AND p.id = sd.purchase_id \
+    #   AND p.user_id = {user_id} \
+    # ORDER BY p.start_date"
 
-    cursor.execute(query)
+    cursor.execute(sql.get_sql())
     purchase_records = cursor.fetchall()
     if query_result_is_none(purchase_records) is True:
         connection.close()
@@ -85,31 +118,31 @@ def read_purchase_record(user_id):
     else:
         result_list = []
         for data in purchase_records:
-            if data[5] is not None:
-                deleted_at = data[5].strftime("%Y-%m-%d %H:%M:%S")
+            if data[7] is not None:
+                deleted_at = data[7].strftime("%Y-%m-%d %H:%M:%S")
             else:
-                deleted_at = data[5]
+                deleted_at = data[7]
             each_dict = {"index": data[0],
                          "payment_information": {
-                             "plan_title": data[1],
-                             "total_price": data[2],  # 정상가
-                             "start_date": data[3].strftime("%Y-%m-%d %H:%M:%S"),
-                             "expire_date": data[4].strftime("%Y-%m-%d %H:%M:%S"),
+                             "plan_title": data[2],
+                             "total_price": data[3],  # 정상가
+                             "total_payment": data[4],
+                             "start_date": data[5].strftime("%Y-%m-%d %H:%M:%S"),
+                             "expire_date": data[6].strftime("%Y-%m-%d %H:%M:%S"),
                              "deleted_at": deleted_at,
-                             "buyer_email": data[6],  # 결제자 이메일
-                             "buyer_name": data[7],  # 결제자 이름
-                             "buyer_phone": data[8],  # 결제자 전화번호
-                             "state": data[9],
+                             "buyer_email": data[8],  # 결제자 이메일
+                             "buyer_name": data[9],  # 결제자 이름
+                             "buyer_phone": data[10],  # 결제자 전화번호
+                             "state": data[11],
                              "installment": "일시불",  # 이용권
                              "interest_free_installment": "해당없음",  # 무이자 할부 여부(일시불은 무조건 해당 없음
                              "option": "비렌탈"  # 선택옵션
                          },
                          "delivery_information": {
-                             "recipient_postcode": data[10],  # 배송지 우편번호
-                             "recipient_address": data[11],  # 배송지 주소
-                             "recipient_comment": data[12],
-                         }
-                         }
+                             "recipient_postcode": data[12],  # 배송지 우편번호
+                             "recipient_address": data[13],  # 배송지 주소
+                             "recipient_comment": data[14],
+                         }}
             result_list.append(each_dict)
         result_dict = {
             "result": True,
