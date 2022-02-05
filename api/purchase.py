@@ -77,9 +77,9 @@ def read_purchase_record(user_id):
     ).join(
         starterkit_delivery
     ).on(
-        purchases.id == starterkit_delivery.pusrchase_id
+        purchases.id == starterkit_delivery.purchase_id
     ).where(
-        purchases.user_id == 11
+        purchases.user_id == user_id
     ).orderby(purchases.start_date)
     # query = f"\
     # SELECT DISTINCT \
@@ -105,7 +105,6 @@ def read_purchase_record(user_id):
     #   AND p.id = sd.purchase_id \
     #   AND p.user_id = {user_id} \
     # ORDER BY p.start_date"
-
     cursor.execute(sql.get_sql())
     purchase_records = cursor.fetchall()
     if query_result_is_none(purchase_records) is True:
