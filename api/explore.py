@@ -320,7 +320,7 @@ def explore_log(user_id: int):
                 sql = Query.update(
                     search_logs
                 ).set(
-                    search_logs, fn.Now()
+                    search_logs.deleted_at, fn.Now()
                 ).where(
                     Criterion.all([
                         search_logs.search_term == word_to_delete,
@@ -328,18 +328,6 @@ def explore_log(user_id: int):
                         search_logs.deleted_at.isnull()
                     ])
                 )
-                # query = f"""
-                #     UPDATE
-                #           search_logs
-                #       SET
-                #           deleted_at=(SELECT NOW())
-                #     WHERE
-                #         search_term=%s
-                #       AND
-                #         user_id=%s
-                #       AND
-                #         deleted_at IS NULL"""
-                # values = (word_to_delete, user_id)
                 cursor.execute(sql.get_sql())
                 connection.commit()
             except Exception as e:
@@ -369,22 +357,13 @@ def explore_log(user_id: int):
                 sql = Query.update(
                     search_logs
                 ).set(
-                    search_logs, fn.Now()
+                    search_logs.deleted_at, fn.Now()
                 ).where(
                     Criterion.all([
                         search_logs.user_id == user_id,
                         search_logs.deleted_at.isnull()
                     ])
                 )
-                # query = f"""
-                #       UPDATE
-                #             search_logs
-                #         SET
-                #             deleted_at=(SELECT NOW())
-                #       WHERE
-                #           user_id=%s
-                #       AND
-                #           deleted_at IS NULL"""
                 cursor.execute(sql.get_sql())
                 connection.commit()
             except Exception as e:
