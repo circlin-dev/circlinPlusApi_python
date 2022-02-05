@@ -375,7 +375,7 @@ def make_query_to_find_related_terms(word: str):
         equipments.name.like(f'%{word}%')
     ).orderby(fn.Length(equipments.name))
 
-    return query_program, query_coach, query_exercise, query_equipment
+    return query_program.get_sql(), query_coach.get_sql(), query_exercise.get_sql(), query_equipment.get_sql()
 
 
 def make_query_get_every_titles():
@@ -439,7 +439,7 @@ def make_query_get_every_titles():
         equipments.name
     ).orderby(fn.Length(equipments.name))
 
-    return query_programs, query_coaches, query_exercises, query_equipments
+    return query_programs.get_sql(), query_coaches.get_sql(), query_exercises.get_sql(), query_equipments.get_sql()
 
 
 def program_progress(user_id):
