@@ -20,6 +20,8 @@ def explore():
     endpoint = API_ROOT + url_for('api.explore')
     # token = request.headers['Authorization']
     parameters = json.loads(request.get_data(), encoding='utf-8')
+    """Define tables required to execute SQL."""
+    search_logs = Table('search_logs')
 
     user_id = parameters['user_id']
     filter_list_exercises = parameters['filter']['exercise']  # default: Everything
@@ -96,10 +98,17 @@ def explore():
     else:
         pass
     json_data = json.dumps({"program_id": ids}, ensure_ascii=False)
-    query = f"""INSERT INTO search_logs(user_id, search_term, search_result) VALUES({user_id}, '{word_for_search}', '{json_data}')"""
+    # query = f"""INSERT INTO search_logs(user_id, search_term, search_result) VALUES({user_id}, '{word_for_search}', '{json_data}')"""
+    sql = Query.into(
+        search_logs
+    ).columns(
+        'user_id', 'search_term', 'search_result'
+    ).insert(
+        user_id, word_for_search, json_data
+    )
 
     try:
-        cursor.execute(query)
+        cursor.execute(sql.get_sql())
         connection.commit()
     except Exception as e:
         connection.rollback()
@@ -109,7 +118,7 @@ def explore():
             'result': False,
             'error': f'Server Error while executing INSERT query(explore): {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
         return json.dumps(result, ensure_ascii=False), 500
 
     connection.close()
@@ -269,7 +278,6 @@ def explore_log(user_id: int):
         ).groupby(
             search_logs.search_term
         ).orderby(search_logs.created_at, order=Order.desc)
-
         try:
             cursor.execute(sql.get_sql())
             search_records = cursor.fetchall()
@@ -281,7 +289,7 @@ def explore_log(user_id: int):
                 'result': False,
                 'error': f'Cannot delete the requested search record: {error}'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
             return json.dumps(result, ensure_ascii=False), 400
 
         if query_result_is_none(search_records) is True:
@@ -316,18 +324,17 @@ def explore_log(user_id: int):
             만약 검색기록 조회 결과를 중복을 제거해서 보내준다면, id만으로 삭제하면 다음 번에 삭제한 단어를 또 보게 될 수 있다.
             따라서 아래와 같이 search_log_id가 아닌 user_id와 search_term을 함께 조회하여, 중복되는 단어를 전부 삭제 처리한다.
             """
+            sql = Query.update(
+                search_logs
+            ).set(
+                search_logs.deleted_at, fn.Now()
+            ).where(
+                Criterion.all([
+                    search_logs.search_term == word_to_delete,
+                    search_logs.user_id == user_id,
+                    search_logs.deleted_at.isnull()
+                ]))
             try:
-                sql = Query.update(
-                    search_logs
-                ).set(
-                    search_logs.deleted_at, fn.Now()
-                ).where(
-                    Criterion.all([
-                        search_logs.search_term == word_to_delete,
-                        search_logs.user_id == user_id,
-                        search_logs.deleted_at.isnull()
-                    ])
-                )
                 cursor.execute(sql.get_sql())
                 connection.commit()
             except Exception as e:
@@ -338,7 +345,7 @@ def explore_log(user_id: int):
                     'result': False,
                     'error': f'Cannot delete the requested search term: {error}'
                 }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
                 return json.dumps(result, ensure_ascii=False), 400
 
             connection.close()
@@ -353,17 +360,16 @@ def explore_log(user_id: int):
             만약 검색기록 조회 결과를 중복을 제거해서 보내준다면, id만으로 삭제하면 다음 번에 삭제한 단어를 또 보게 될 수 있다.
             따라서 아래와 같이 search_log_id가 아닌 user_id와 search_term을 함께 조회하여, 중복되는 단어를 전부 삭제 처리한다.
             """
+            sql = Query.update(
+                search_logs
+            ).set(
+                search_logs.deleted_at, fn.Now()
+            ).where(
+                Criterion.all([
+                    search_logs.user_id == user_id,
+                    search_logs.deleted_at.isnull()
+                ]))
             try:
-                sql = Query.update(
-                    search_logs
-                ).set(
-                    search_logs.deleted_at, fn.Now()
-                ).where(
-                    Criterion.all([
-                        search_logs.user_id == user_id,
-                        search_logs.deleted_at.isnull()
-                    ])
-                )
                 cursor.execute(sql.get_sql())
                 connection.commit()
             except Exception as e:
@@ -374,7 +380,7 @@ def explore_log(user_id: int):
                     'result': False,
                     'error': f'Cannot delete the requested whole search record: {error}'
                 }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query)
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
                 return json.dumps(result, ensure_ascii=False), 400
 
             connection.close()
