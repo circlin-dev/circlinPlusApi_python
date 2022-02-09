@@ -19,11 +19,10 @@ def add_user_question():
     """Define tables required to execute SQL."""
     user_questions = Table('user_questions')
 
-
     user_id = parameters['user_id']
     purpose = parameters['purpose']  # array
     sports = parameters['sports']  # array
-    sex = parameters['sex']  # string
+    gender = parameters['sex']  # string
     age_group = parameters['age_group']  # string
     experience_group = parameters['experience_group']  # string
     schedule = parameters['schedule']  # array with index(int)
@@ -34,7 +33,7 @@ def add_user_question():
 
     # Verify if mandatory information is not null.
     if request.method == 'POST':
-        if not(user_id and purpose and sports and sex and age_group and experience_group):
+        if not(user_id and purpose and sports and gender and age_group and experience_group):
             result = {
                 'result': False,
                 'error': f'Missing data in request.',
@@ -42,7 +41,7 @@ def add_user_question():
                     'user_id': user_id,
                     'purpose': purpose,
                     'sports': sports,
-                    'sex': sex,
+                    'gender': gender,
                     'age_group': age_group,
                     'experience_group': experience_group
                 }
@@ -94,7 +93,7 @@ def add_user_question():
     json_data = json.dumps({
         "purpose": purpose,
         "sports": sports,
-        "sex": sex,
+        "gender": gender,
         "age_group": age_group,
         "experience_group": experience_group,
         "disease": disease,
@@ -110,10 +109,10 @@ def add_user_question():
         'user_id', 'data'
     ).insert(
         user_id, json_data
-    )
+    ).get_sql()
 
     try:
-        cursor.execute(sql.get_sql())
+        cursor.execute(sql)
         connection.commit()
     except Exception as e:
         connection.rollback()
@@ -123,7 +122,7 @@ def add_user_question():
             'result': False,
             'error': f'Server Error while executing INSERT query(user_questions): {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
         return json.dumps(result, ensure_ascii=False), 500
 
     connection.close()
@@ -183,8 +182,8 @@ def read_user_question(user_id):
         user_id == user_id
     ).orderby(
         user_questions.id, order=Order.desc
-    ).limit(1)
-    cursor.execute(sql.get_sql())
+    ).limit(1).get_sql()
+    cursor.execute(sql)
     latest_answers = cursor.fetchall()
     if query_result_is_none(latest_answers) is True:
         connection.close()
@@ -192,7 +191,7 @@ def read_user_question(user_id):
             'result': False,
             'error': f'Cannot find requested answer data of user(id: {user_id})(users)'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
         return json.dumps(result, ensure_ascii=False), 401
     else:
         connection.close()

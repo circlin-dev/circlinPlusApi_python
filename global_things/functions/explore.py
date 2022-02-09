@@ -2,6 +2,7 @@ import json
 import pandas as pd
 from pypika import MySQLQuery as Query, Criterion, Table, Order, functions as fn
 
+
 def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"):
     """
     WHERE == FILTER!
@@ -61,7 +62,7 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
               purposes pur,
               program_purposes ppu
           WHERE
-              p.title LIKE '%{word}%'
+               p.title LIKE '%{word}%'
             AND
               f.original_file_id = p.thumbnail_id
             AND

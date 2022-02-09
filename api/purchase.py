@@ -73,7 +73,7 @@ def read_purchase_record(user_id):
     ).join(
         subscribe_plans
     ).on(
-        subscribe_plans.id == purchases.plan_id
+        subscribe_plans.id == purchases.subscription_id
     ).join(
         starterkit_delivery
     ).on(
@@ -145,20 +145,18 @@ def add_purchase():
     user_id = parameters['user_id']
     period = int(parameters['subscription_period'])
     payment_info = parameters['payment_info']  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
-    delivery_info = parameters['delivery_info']  # int  # for plan_id 'purchases'
-    # equipment_info = parameters('equipment_info')  # boolean  # for plan_id at table 'purchases'
 
     # 결제 정보 변수
     imp_uid = payment_info['imp_uid']
     merchant_uid = payment_info['merchant_uid']
 
-    # 배송 정보 변수
-    recipient_name = delivery_info['recipient_name'].strip()  # 결제자 이름
-    post_code = delivery_info['post_code'].strip()  # 스타터 키트 배송지 주소(우편번호)
-    address = delivery_info['address'].strip()  # 스타터 키트 배송지 주소(주소)
-    recipient_phone = delivery_info['recipient_phone'].strip()  # 결제자 휴대폰 번호
-
-    comment = delivery_info['comment'].strip()  # 배송 요청사항
+    # # 배송 정보 변수
+    # recipient_name = delivery_info['recipient_name'].strip()  # 결제자 이름
+    # post_code = delivery_info['post_code'].strip()  # 스타터 키트 배송지 주소(우편번호)
+    # address = delivery_info['address'].strip()  # 스타터 키트 배송지 주소(주소)
+    # recipient_phone = delivery_info['recipient_phone'].strip()  # 결제자 휴대폰 번호
+    #
+    # comment = delivery_info['comment'].strip()  # 배송 요청사항
 
     # 기구 정보 변수
 
@@ -173,19 +171,19 @@ def add_purchase():
     elif period == 12:
         subscription_days = 365
 
-    if not(user_id and period and recipient_phone and imp_uid and merchant_uid):
-        result = {
-            'result': False,
-            'error': f'Missing data in request.',
-            'values': {
-                'period': period,
-                'user_id': user_id,
-                'recipient_phone': recipient_phone,
-                'imp_uid': imp_uid,
-                'merchant_uid': merchant_uid,
-            }
-        }
-        return json.dumps(result, ensure_ascii=False), 400
+    # if not(user_id and period and recipient_phone and imp_uid and merchant_uid):
+    #     result = {
+    #         'result': False,
+    #         'error': f'Missing data in request.',
+    #         'values': {
+    #             'period': period,
+    #             'user_id': user_id,
+    #             'recipient_phone': recipient_phone,
+    #             'imp_uid': imp_uid,
+    #             'merchant_uid': merchant_uid,
+    #         }
+    #     }
+    #     return json.dumps(result, ensure_ascii=False), 400
 
     # 1. 유저 정보 확인
     try:
@@ -257,9 +255,9 @@ def add_purchase():
     )
     cursor.execute(sql.get_sql())
 
-    plan_information = cursor.fetchall()
+    subscription_informations = cursor.fetchall()
 
-    if query_result_is_none(plan_information) is True:
+    if query_result_is_none(subscription_informations) is True:
         try:
             sql = Query.update(
                 purchases
@@ -385,14 +383,14 @@ def add_purchase():
     기구 신청을 했을 경우, 기구 신청 내역을 저장하는 쿼리를 만들어야 함!
     """
 
-    plan_id = plan_information[0][0]
-    sales_price = plan_information[0][1]
+    subscription_id = subscription_informations[0][0]
+    sales_price = subscription_informations[0][1]
     sql = Query.update(
         purchases
     ).set(
         purchases.user_id, user_id
     ).set(
-        purchases.plan_id, plan_id
+        purchases.subscription_id, subscription_id
     ).set(
         purchases.start_date, fn.Now()
     ).set(
@@ -402,7 +400,7 @@ def add_purchase():
             purchases.imp_uid == imp_uid,
             purchases.merchant_uid == merchant_uid
         ])
-    )
+    ).get_sql()
     # for key in key_values:
     #     sql.set(key, key_values[key])
     # query = f"""
@@ -418,7 +416,7 @@ def add_purchase():
     # values = (int(user_id), user_subscribed_plan, imp_uid, merchant_uid)
     # user_id, payment_info, delivery_info
     try:
-        cursor.execute(sql.get_sql())
+        cursor.execute(sql)
         connection.commit()
     except Exception as e:
         connection.rollback()
@@ -428,7 +426,7 @@ def add_purchase():
             'result': False,
             'error': f'Server error while executing INSERT query(purchases): {error}, {parameters}, {payment_validation_import}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
         return json.dumps(result, ensure_ascii=False), 500
 
     # query = f"SELECT p.id FROM purchases p WHERE p.imp_uid=%s AND p.merchant_uid=%s"
@@ -441,46 +439,39 @@ def add_purchase():
             purchases.imp_uid == imp_uid,
             purchases.merchant_uid == merchant_uid
         ])
-    )
-    cursor.execute(sql.get_sql())
+    ).get_sql()
+    cursor.execute(sql)
     purchase_id = cursor.fetchall()[0][0]
-    # query = f"""INSERT INTO
-    #                         starterkit_delivery(purchase_id, post_code,
-    #                                           address, recipient_name,
-    #                                           recipient_phone, comment)
-    #                   VALUES(%s, %s,
-    #                         %s, %s,
-    #                         %s, %s)"""
-    sql = Query.into(
-        starterkit_delivery
-    ).columns(
-        starterkit_delivery.purchase_id,
-        starterkit_delivery.post_code,
-        starterkit_delivery.address,
-        starterkit_delivery.recipient_name,
-        starterkit_delivery.recipient_phone,
-        starterkit_delivery.comment
-    ).insert(
-        purchase_id,
-        post_code,
-        address,
-        recipient_name,
-        recipient_phone,
-        comment
-    )
-    try:
-        cursor.execute(sql.get_sql())
-        connection.commit()
-    except Exception as e:
-        connection.rollback()
-        connection.close()
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server error while executing INSERT query(starterkit_delivery): {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
-        return json.dumps(result, ensure_ascii=False), 500
+    # sql = Query.into(
+    #     starterkit_delivery
+    # ).columns(
+    #     starterkit_delivery.purchase_id,
+    #     starterkit_delivery.post_code,
+    #     starterkit_delivery.address,
+    #     starterkit_delivery.recipient_name,
+    #     starterkit_delivery.recipient_phone,
+    #     starterkit_delivery.comment
+    # ).insert(
+    #     purchase_id,
+    #     post_code,
+    #     address,
+    #     recipient_name,
+    #     recipient_phone,
+    #     comment
+    # ).get_sql()
+    # try:
+    #     cursor.execute(sql)
+    #     connection.commit()
+    # except Exception as e:
+    #     connection.rollback()
+    #     connection.close()
+    #     error = str(e)
+    #     result = {
+    #         'result': False,
+    #         'error': f'Server error while executing INSERT query(starterkit_delivery): {error}'
+    #     }
+    #     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+    #     return json.dumps(result, ensure_ascii=False), 500
 
     # 5. 채팅방 생성 or 조회하여 채팅방 id 리턴
     """
@@ -506,8 +497,8 @@ def add_purchase():
         user_questions.user_id == user_id
     ).orderby(
         user_questions.id, order=Order.desc
-    ).limit(1)
-    cursor.execute(sql.get_sql())
+    ).limit(1).get_sql()
+    cursor.execute(sql)
     answer_data = cursor.fetchall()
     if query_result_is_none(answer_data) is True:
         connection.close()
@@ -538,7 +529,7 @@ def add_purchase():
             customers.user_id == user_id,
             managers.user_id == manager_id
         ])
-    )
+    ).get_sql()
     # query = f"""
     #     SELECT
     #         manager.chat_room_id
@@ -549,7 +540,7 @@ def add_purchase():
     #         AND customer.user_id = {user_id}
     #         AND manager.user_id = {manager_id}"""
 
-    cursor.execute(sql.get_sql())
+    cursor.execute(sql)
     existing_chat_room = cursor.fetchall()
 
     if len(existing_chat_room) == 0 or existing_chat_room == ():
@@ -562,9 +553,9 @@ def add_purchase():
         ).insert(
             fn.Now(),
             fn.Now()
-        )
+        ).get_sql()
         try:
-            cursor.execute(sql.get_sql())
+            cursor.execute(sql)
             connection.commit()
             chat_room_id = cursor.lastrowid
         except Exception as e:
@@ -575,7 +566,7 @@ def add_purchase():
                 'result': False,
                 'error': f'Server Error while executing INSERT query(chat_rooms): {error}'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
             return json.dumps(result, ensure_ascii=False), 500
 
         try:
@@ -594,8 +585,8 @@ def add_purchase():
             ).insert(
                 (fn.Now(), fn.Now(), chat_room_id, manager_id),
                 (fn.Now(), fn.Now(), chat_room_id, user_id)
-            )
-            cursor.execute(sql.get_sql())
+            ).get_sql()
+            cursor.execute(sql)
             connection.commit()
         except Exception as e:
             connection.rollback()
@@ -605,7 +596,7 @@ def add_purchase():
                 'result': False,
                 'error': f'Server Error while executing INSERT query(chat_users): {error}'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
             return json.dumps(result, ensure_ascii=False), 500
     else:
         chat_room_id = existing_chat_room[0][0]

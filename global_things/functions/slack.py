@@ -53,7 +53,7 @@ def slack_purchase_notification(cursor, user_id: int = 0, manager_id: int = 0, p
   ).join(
     subscribe_plans
   ).on(
-    subscribe_plans.id == purchases.plan_id
+    subscribe_plans.id == purchases.subscription_id
   ).join(
     users
   ).on(

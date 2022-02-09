@@ -1,11 +1,17 @@
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
-from global_things.functions.bodylab import analyze_image, get_date_range_from_week
+from global_things.functions.bodylab import analyze_body_images, anaylze_atflee_images, get_date_range_from_week
 from . import api
 from flask import url_for, request
 import json
 from pypika import MySQLQuery as Query, Table, Order
+
+"""2개의 이미지 전송
+    -> 앳플리는 서버 저장 -> S3 저장 -> OCR
+    -> 바디랩은 서버 저장 -> S3 저장 -> 바디랩 서버에 분석 -> 바디랩 서버에 키포인트 이미지 저장 -> S3 저장
+    => OCR 데이터, 키포인트 수치 데이터 프론트에 반환 => 이상없는지 확인 후 수정된 내용을 DB 저장  
+    """
 
 
 @api.route('/bodylab', methods=['POST'])
@@ -14,6 +20,10 @@ def add_weekly_data():
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.add_weekly_data')
     # token = request.headers['Authorization']
+    """
+    이미지 서버 임시 저장 & 업로드 코드 추가 필요
+      - 눈바디 이미지, 앳플리 이미지 S3 업로드 후 URL 가져오는 코드 추가해야 함!
+    """
     """
     요청이 html form으로부터가 아닌, axios나 fetch로 온다면 파라미터를 아래와 같이 다뤄야 할 수도 있다.
     -> parameters = json.loads(request.get_data(), encoding='utf-8')
@@ -26,9 +36,11 @@ def add_weekly_data():
     muscle_mass = request.form.get('muscle_mass')
     fat_mass = request.form.get('fat_mass')
     body_image = request.form.get('body_image')
+    # atflee_image = request.form.get('atflee_image')
     """Define tables required to execute SQL."""
     bodylabs = Table('bodylabs')
-    bodylab_images = Table('bodylab_images')
+    bodylab_images = Table('bodylab_images')  # bodylab_body_images = Table('bodylab_body_images')
+    # bodylab_atflee_images = Table('bodylab_atflee_images')
 
     # Verify if mandatory information is not null.
     if request.method == 'POST':
@@ -79,22 +91,6 @@ def add_weekly_data():
         # elif is_valid_user['result'] is True:
         #   pass
 
-        # query = f"INSERT INTO bodylab( \
-        #                   user_id, year, \
-        #                   week_number_of_year, firstdate_of_week, \
-        #                   lastdate_of_week, height,\
-        #                   weight, bmi, \
-        #                   muscle_mass, fat_mass) \
-        #           VALUES(%s, %s, \
-        #                 %s, %s, \
-        #                 %s, %s, \
-        #                 %s, %s, \
-        #                 %s, %s)"
-        # values = (user_id, int(year),
-        #           int(week_number_of_year), firstdate_of_week,
-        #           lastdate_of_week, height,
-        #           weight, bmi,
-        #           muscle_mass, fat_mass)
         sql = Query.into(
             bodylabs
         ).columns(
@@ -168,11 +164,11 @@ def add_weekly_data():
             latest_bodylab_id = latest_bodylab_id_tuple[0][0]
 
         # Analyze user's image and store the result.
-        image_analysis_result = analyze_image(user_id, body_image)
-        image_analysis_result_json = json.loads(image_analysis_result)
-        status_code = image_analysis_result_json['status_code']
+        body_analysis_result = analyze_body_images(user_id, body_image)
+        body_analysis_result_json = json.loads(body_analysis_result)
+        status_code = body_analysis_result_json['status_code']
         if status_code == 200:
-            analyze_result = image_analysis_result_json['result']
+            analyze_result = body_analysis_result_json['result']
             sql = Query.into(
                 bodylab_images
             ).columns(
@@ -244,7 +240,7 @@ def add_weekly_data():
             connection.close()
             result = {
                 'result': False,
-                'error': f"Failed to analysis requested image({body_image}): {image_analysis_result_json['error']}"
+                'error': f"Failed to analysis requested image({body_image}): {body_analysis_result_json['error']}"
             }
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
             return json.dumps(result, ensure_ascii=False), 400
@@ -253,7 +249,7 @@ def add_weekly_data():
             connection.close()
             result = {
                 'result': False,
-                'error': f"Failed to analysis requested image({body_image}): {image_analysis_result_json['error']}"
+                'error': f"Failed to analysis requested image({body_image}): {body_analysis_result_json['error']}"
             }
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
             return json.dumps(result, ensure_ascii=False), 500

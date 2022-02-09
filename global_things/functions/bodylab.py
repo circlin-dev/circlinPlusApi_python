@@ -5,7 +5,6 @@ import json
 import requests
 
 
-
 # region bodylab.py
 def standard_healthiness_score(score_type: str, age: int, sex: str, weight: float, height=0):
     if score_type is None or age is None or sex is None or weight is None:
@@ -80,7 +79,7 @@ def standard_healthiness_score(score_type: str, age: int, sex: str, weight: floa
         return 'Out of category: score type'
 
 
-def analyze_image(user_id, url):
+def analyze_body_images(user_id, url):
     response = requests.post(
         f"http://{IMAGE_ANALYSYS_SERVER}/analysis",
         json={
@@ -91,11 +90,15 @@ def analyze_image(user_id, url):
     if response.status_code == 200:
         return json.dumps({'result': response.json(), 'status_code': 200}, ensure_ascii=False)
     elif response.status_code == 400:
-        slack_error_notification(api='/api/bodylab/add', error_log=response.json()['message'])
+        slack_error_notification(api='/api/bodylab', error_log=response.json()['message'])
         return json.dumps({'error': response.json()['message'], 'status_code': 400}, ensure_ascii=False)
     elif response.status_code == 500:
-        slack_error_notification(api='/api/bodylab/add', error_log=response.json()['message'])
+        slack_error_notification(api='/api/bodylab', error_log=response.json()['message'])
         return json.dumps({'error': response.json()['message'], 'status_code': 500}, ensure_ascii=False)
+
+
+def anaylze_atflee_images(user_id, url):
+    return ''
 
 
 def get_date_range_from_week(year: str, week_number: str):
