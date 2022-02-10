@@ -9,6 +9,7 @@ import json
 import requests
 from pypika import MySQLQuery as Query, Criterion, Interval, Table, Field, Order, functions as fn
 
+
 @api.route('/purchase/<user_id>', methods=['GET'])
 def read_purchase_record(user_id):
     """
