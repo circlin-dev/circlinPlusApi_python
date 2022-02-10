@@ -98,7 +98,7 @@ def read_products():
     products_df['details'].apply(lambda x: list(set(x.strip('][').split(', '))))
     products_df['details'].apply(lambda x: sorted(x, key=lambda y: y.split('/')[-1].split('_')[-1].split('.')[0]))
 
-    result_dict = products_df.to_json(orient='records')
+    result_dict = json.loads(products_df.to_json(orient='records'))
     # product_ids = products_df['id'].unique()
     # result_list = []
     # for each_id in product_ids:
