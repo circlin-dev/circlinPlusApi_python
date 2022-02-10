@@ -95,7 +95,7 @@ def read_products():
                                                            'name', 'description', 'brand_name',
                                                            'price_origin', 'price_sales', 'quantity',
                                                            'thumbnail', 'details'])
-    products_df['details'].apply(lambda x: list(set(x.tolist()[0].strip('][').split(', '))))
+    products_df['details'].apply(lambda x: list(set(x.strip('][').split(', '))))
     products_df['details'].apply(lambda x: sorted(x, key=lambda y: int(y.split('/')[-1].split('_')[-1].split('.'[0]))))
 
     result_dict = products_df.to_json(orient='records')
