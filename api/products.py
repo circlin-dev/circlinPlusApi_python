@@ -4,6 +4,7 @@ from global_things.functions.general import login_to_db, check_session, query_re
 from global_things.functions.purchase import amount_to_be_paid, get_import_access_token, request_import_refund
 from global_things.constants import IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET
 from . import api
+import ast
 from flask import url_for, request
 import json
 import requests
@@ -96,7 +97,7 @@ def read_products():
                                                            'price_origin', 'price_sales', 'quantity',
                                                            'thumbnail', 'details'])
     products_df['details'].apply(lambda x: list(set(x.strip('][').split(', '))))
-    products_df['details'].apply(lambda x: sorted(list(x), key=lambda y: y.split('/')[-1].split('_')[-1].split('.')[0]))
+    products_df['details'].apply(lambda x: sorted(ast.literal_eval(x), key=lambda y: y.split('/')[-1].split('_')[-1].split('.')[0]))
 
     result_dict = json.loads(products_df.to_json(orient='records'))
     # product_ids = products_df['id'].unique()
