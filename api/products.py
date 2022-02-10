@@ -20,6 +20,7 @@ def read_products():
     programs = Table('programs')
     products = Table('products')
     program_products = Table('program_products')
+    """페이징 필요!!!"""
 
     try:
         connection = login_to_db()
@@ -94,36 +95,40 @@ def read_products():
                                                            'name', 'description', 'brand_name',
                                                            'price_origin', 'price_sales', 'quantity',
                                                            'thumbnail', 'details'])
-    product_ids = products_df['id'].unique()
-    result_list = []
-    for each_id in product_ids:
-        each_id = int(each_id)
-        df_by_id = products_df[products['id'] == each_id]
-        product_type = df_by_id['type']
-        code = df_by_id['code']
-        name = df_by_id['name']
-        description = df_by_id['description']
-        brand = df_by_id['brand_name']
-        price_origin = df_by_id['price_origin']
-        price_sales = df_by_id['price_sales']
-        quantity = df_by_id['stocks']
-        thumbnail = df_by_id['thumbnail']
-        details = list(set(df_by_id['details'].values.tolist()[0].strip('][').split(', ')))
-        details = sorted(details, key=lambda x: int(x.split('/')[-1].split('_')[-1].split('.'[0])))
-        result = {
-            "id": each_id,
-            "df_by_id" : df_by_id,
-            "product_type": product_type,
-            "code": code,
-            "name": name,
-            "description": description,
-            "brand": brand,
-            "price_origin": price_origin,
-            "price_sales": price_sales,
-            "quantity": quantity,
-            "thumbnail": thumbnail,
-            "details": details
-        }
-        result_list.append(result)
+    products_df['details'].apply(lambda x: list(set(x.values.tolist()[0].strip('][').split(', '))))
+    products_df['details'].apply(lambda x: sorted(x, key=lambda y: int(y.split('/')[-1].split('_')[-1].split('.'[0]))))
 
-    return json.dumps(result_list, ensure_ascii=False), 200
+    result_dict = products_df.to_json(orient='records')
+    # product_ids = products_df['id'].unique()
+    # result_list = []
+    # for each_id in product_ids:
+    #     each_id = int(each_id)
+    #     df_by_id = products_df[products['id'] == each_id]
+    #     product_type = df_by_id['type']
+    #     code = df_by_id['code']
+    #     name = df_by_id['name']
+    #     description = df_by_id['description']
+    #     brand = df_by_id['brand_name']
+    #     price_origin = df_by_id['price_origin']
+    #     price_sales = df_by_id['price_sales']
+    #     quantity = df_by_id['stocks']
+    #     thumbnail = df_by_id['thumbnail']
+    #     details = list(set(df_by_id['details'].values.tolist()[0].strip('][').split(', ')))
+    #     details = sorted(details, key=lambda x: int(x.split('/')[-1].split('_')[-1].split('.'[0])))
+    #     result = {
+    #         "id": each_id,
+    #         "df_by_id": df_by_id,
+    #         "product_type": product_type,
+    #         "code": code,
+    #         "name": name,
+    #         "description": description,
+    #         "brand": brand,
+    #         "price_origin": price_origin,
+    #         "price_sales": price_sales,
+    #         "quantity": quantity,
+    #         "thumbnail": thumbnail,
+    #         "details": details
+    #     }
+    #     result_list.append(result)
+
+    return json.dumps(result_dict, ensure_ascii=False), 200
