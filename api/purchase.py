@@ -23,7 +23,7 @@ def read_purchase_record(user_id):
     # token = request.headers['Authorization']
     """Define tables required to execute SQL."""
     purchases = Table('purchases')
-    subscribe_plans = Table('subscribe_plans')
+    subscribe_plans = Table('subscriptions')
     starterkit_delivery = Table('starterkit_delivery')
 
     try:
@@ -135,7 +135,7 @@ def add_purchase():
     parameters = json.loads(request.get_data(), encoding='utf-8')
     """Define tables required to execute SQL."""
     purchases = Table('purchases')
-    subscribe_plans = Table('subscribe_plans')
+    subscribe_plans = Table('subscriptions')
     starterkit_delivery = Table('starterkit_delivery')
     user_questions = Table('user_questions')
     customers = Table('chat_users')

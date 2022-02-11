@@ -32,7 +32,7 @@ API URL: `{api}` \n \
 # Slack notification: purchase
 def slack_purchase_notification(cursor, user_id: int = 0, manager_id: int = 0, purchase_id: int = 0):
   purchases = Table('purchases')
-  subscribe_plans = Table('subscribe_plans')
+  subscribe_plans = Table('subscriptions')
   users = Table('users')
 
   subquery_manager_name = Query.from_(
