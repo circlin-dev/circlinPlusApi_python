@@ -27,7 +27,7 @@ def add_user_question():
     experience_group = parameters['experience_group']  # string
     schedule = parameters['schedule']  # array with index(int)
     disease = parameters['disease']  # array with index(int) & short sentence for index 7(string)
-    disease_detail = parameters['disease_detail']
+    disease_detail = parameters['diseasedisease_detail_detail']
     level = parameters['level']
     trial_days = parameters['trial_days']
 

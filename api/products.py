@@ -4,7 +4,7 @@ from global_things.functions.general import login_to_db, check_session, query_re
 from global_things.functions.purchase import get_import_access_token
 from . import api
 import ast
-from flask import url_for, request
+from flask import jsonify, url_for, request
 import json
 import requests
 import pandas as pd
@@ -159,6 +159,7 @@ def read_a_product(product_id: int):
     products_df['details'] = products_df['details'].apply(lambda x: [ast.literal_eval(el) for el in list(set(x.strip('][').split(', ')))])
     products_df['details'] = products_df['details'].apply(lambda x: sorted(x, key=lambda y: y.split('/')[-1].split('_')[-1].split('.')[0]))
 
-    result_dict = json.loads(products_df.to_json(orient='records'))
+    result_dict = json.loads(products_df.to_json(orient='records')) # Array type으로 가고있음
 
-    return json.dumps(result_dict, ensure_ascii=False), 200
+    #return json.dumps(result_dict, ensure_ascii=False), 200
+    return jsonify(result_dict), 200
