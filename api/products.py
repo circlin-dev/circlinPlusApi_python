@@ -104,7 +104,7 @@ def read_products():
 
 
 @api.route('/products/<product_id>', methods=['GET'])
-def read_a_product(product_id):
+def read_a_product(product_id: int):
     ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
     endpoint = API_ROOT + url_for('api.read_a_product')
     # session_id = request.headers['Authorization']
