@@ -28,7 +28,7 @@ def add_user_question():
     schedule = parameters['schedule']  # array with index(int)
     disease = parameters['disease']  # array with index(int) & short sentence for index 7(string)
     disease_detail = parameters['disease_detail']
-    intensity = parameters['intensity']
+    level = parameters['level']
     trial_days = parameters['trial_days']
 
     # Verify if mandatory information is not null.
@@ -56,7 +56,7 @@ def add_user_question():
                 'disease_detail': disease_detail
             }
             return json.dumps(result, ensure_ascii=False), 400
-        if intensity not in ["고", "중", "저"]:
+        if level not in ["고", "중", "저"]:
             result = {
                 'result': False,
                 'error': f'Invalid value: Variable intensity should be "고", "중", "저".',
@@ -99,7 +99,7 @@ def add_user_question():
         "disease": disease,
         "disease_detail": disease_detail,
         "schedule": schedule,
-        "intensity": intensity,
+        "level": level,
         "trial_days": trial_days
     }, ensure_ascii=False)
     # query = f"INSERT INTO user_questions (user_id, data) VALUES({user_id}, '{json_data}')"
