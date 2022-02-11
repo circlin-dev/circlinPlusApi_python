@@ -2,7 +2,7 @@ from config.database import DB_CONFIG
 import hashlib
 import pymysql
 from pypika import MySQLQuery as Query, Criterion, Interval, Table, Field, Order, functions as fn
-
+import re
 
 # Connection to database.
 def login_to_db():
@@ -50,3 +50,17 @@ def query_result_is_none(execution: tuple):
         return True
     else:
         return False
+
+
+# Parsing strings...
+def parse_for_mysql(strings: str):
+    parsed_strings = re.sub(strings, '\n', '\\n')
+    parsed_strings = re.sub(parsed_strings, '\t', '\\t')
+    parsed_strings = re.sub(parsed_strings, '\b', '\\b')
+    parsed_strings = re.sub(parsed_strings, "'", "''")
+    parsed_strings = re.sub(parsed_strings, '"', '""')
+    parsed_strings = parsed_strings.lstrip()
+    parsed_strings = parsed_strings.rstrip()
+
+    return parsed_strings
+

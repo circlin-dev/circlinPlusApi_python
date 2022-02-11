@@ -1,7 +1,7 @@
 from . import api
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
-from global_things.functions.general import login_to_db, check_session, query_result_is_none
+from global_things.functions.general import login_to_db, check_session, parse_for_mysql, query_result_is_none
 from flask import request, url_for
 import json
 from pypika import MySQLQuery as Query, Table, Order
@@ -97,7 +97,7 @@ def add_user_question():
         "age_group": age_group,
         "experience_group": experience_group,
         "disease": disease,
-        "disease_detail": disease_detail,
+        "disease_detail": parse_for_mysql(disease_detail),
         "schedule": schedule,
         "level": level,
         "trial_days": trial_days
