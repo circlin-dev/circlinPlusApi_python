@@ -125,38 +125,7 @@ def read_a_product(product_id: int):
         slack_error_notification(user_ip=ip, user_id=0, api=endpoint, error_log=result['error'])
         return json.dumps(result, ensure_ascii=False), 500
 
-    query_parameter = request.args.to_dict()  # type: equipment(기구), starterkit(스타터키트), item(상품)
-    parameters = []
-    for key in query_parameter.keys():
-        parameters.append(request.args[key].strip())
-
     cursor = connection.cursor()
-    if parameters == [] or len(parameters) == 0:
-        """GET everything in 'products' table. => Don't use 'where' clause in sql."""
-        # sql = f"""
-        #     SELECT
-        #        products.id,
-        #        products.type,
-        #        products.code,
-        #        products.title as name,
-        #        products.description,
-        #        brands.title as brand_name,
-        #        products.price as price_origin,
-        #        products.sales_price as price_sales,
-        #        products.stocks,
-        #        products.thumbnail,
-        #        JSON_ARRAYAGG(product_images.url) AS details
-        #     FROM
-        #         products
-        #     INNER JOIN
-        #         product_images
-        #     ON product_images.product_id = products.id
-        #     INNER JOIN
-        #         brands
-        #     ON products.brand_id = brands.id
-        #     WHERE products.`type`='{parameters[0]}'
-        #     GROUP BY products.id"""
-        pass
 
     sql = f"""
         SELECT
@@ -179,8 +148,7 @@ def read_a_product(product_id: int):
         INNER JOIN
             brands b
         ON p.brand_id = b.id
-        WHERE p.`type`='{parameters[0]}'
-        AND p.id = {product_id}
+        WHERE p.id = {product_id}
         GROUP BY p.id"""
     cursor.execute(sql)
 
