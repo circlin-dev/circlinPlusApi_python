@@ -162,11 +162,10 @@ def read_a_product(product_id: int):
         result_dict = {}
         return json.dumps(result_dict, ensure_ascii=False), 200
 
-    products_df = pd.DataFrame(cursor.fetchall(), columns=['id', 'type', 'code',
-                                                           'name', 'description', 'brand_name',
-                                                           'price_origin', 'price_sales', 'quantity',
-                                                           'thumbnail', 'details'])
-
+    products_df = pd.DataFrame(result, columns=['id', 'type', 'code',
+                                                'name', 'description', 'brand_name',
+                                                'price_origin', 'price_sales', 'quantity',
+                                                'thumbnail', 'details'])
     products_df['details'] = products_df['details'].apply(lambda x: [ast.literal_eval(el) for el in list(set(x.strip('][').split(', ')))])
     products_df['details'] = products_df['details'].apply(lambda x: sorted(x, key=lambda y: y.split('/')[-1].split('_')[-1].split('.')[0]))
 
