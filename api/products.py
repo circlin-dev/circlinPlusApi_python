@@ -158,7 +158,7 @@ def read_a_product(product_id: int):
            p.sales_price as price_sales,
            IFNULL(p.stocks, 0),
            p.thumbnail,
-           JSON_ARRAYAGG(IFNULL(f.pathname, NULL)) AS details
+           JSON_ARRAYAGG(f.pathname) AS details
         FROM
             products p
         INNER JOIN
