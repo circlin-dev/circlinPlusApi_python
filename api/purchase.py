@@ -58,7 +58,7 @@ def read_purchase_record(user_id):
     ).select(
         purchases.id.as_('purchase_id'),
         subscribe_plans.title,
-        subscribe_plans.total_price,
+        subscribe_plans.price,
         purchases.total_payment,
         purchases.user_id.as_('user_id'),
         purchases.start_date,
