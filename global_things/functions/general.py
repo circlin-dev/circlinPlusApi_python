@@ -63,9 +63,9 @@ def parse_for_mysql(strings: str):
         parsed_strings = re.sub("'", "\'", parsed_strings)
         parsed_strings = re.sub("‘", "\'", parsed_strings)
         parsed_strings = re.sub("’", "\'", parsed_strings)
-        parsed_strings = re.sub('"', '\"', parsed_strings)
-        parsed_strings = re.sub('“', '\"', parsed_strings)
-        parsed_strings = re.sub('”', '\"', parsed_strings)
+        parsed_strings = re.sub('"', "'", parsed_strings)
+        parsed_strings = re.sub('“', "'", parsed_strings)
+        parsed_strings = re.sub('”', "'", parsed_strings)
         parsed_strings = parsed_strings.lstrip()
         parsed_strings = parsed_strings.rstrip()
 
