@@ -10,7 +10,7 @@ import requests
 from pypika import MySQLQuery as Query, Criterion, Interval, Table, Field, Order, functions as fn
 
 
-@api.route('/assign', method=['POST'])
+@api.route('/assign', methods=['POST'])
 def create_chat_with_manager():
     # user_id, purchase_id
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
