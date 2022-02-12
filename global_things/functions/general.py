@@ -54,13 +54,16 @@ def query_result_is_none(execution: tuple):
 
 # Parsing strings...
 def parse_for_mysql(strings: str):
-    parsed_strings = re.sub(strings, '\n', '\\n')
-    parsed_strings = re.sub(parsed_strings, '\t', '\\t')
-    parsed_strings = re.sub(parsed_strings, '\b', '\\b')
-    parsed_strings = re.sub(parsed_strings, "'", "''")
-    parsed_strings = re.sub(parsed_strings, '"', '""')
-    parsed_strings = parsed_strings.lstrip()
-    parsed_strings = parsed_strings.rstrip()
+    if strings is None:
+        return parse_for_mysql
+    else:
+        parsed_strings = re.sub(strings, '\n', '\\n')
+        parsed_strings = re.sub(parsed_strings, '\t', '\\t')
+        parsed_strings = re.sub(parsed_strings, '\b', '\\b')
+        parsed_strings = re.sub(parsed_strings, "'", "''")
+        parsed_strings = re.sub(parsed_strings, '"', '""')
+        parsed_strings = parsed_strings.lstrip()
+        parsed_strings = parsed_strings.rstrip()
 
-    return parsed_strings
+        return parsed_strings
 
