@@ -232,7 +232,7 @@ def read_a_product(product_id: int):
         return json.dumps(result_dict, ensure_ascii=False), 200
     try:
         products_df['related_program'] = products_df['related_program'].apply(lambda x: json.loads(x))
-        products_df['related_program'] = products_df['related_program'].apply(lambda x: list({data['id']: data for data in x}))
+        products_df['related_program'] = products_df['related_program'].apply(lambda x: list({data['id']: data for data in x}.values()))
         products_df['related_program'] = products_df['related_program'].apply(lambda x: [] if x[0]['id'] is None else x)
     except:
         connection.close()
