@@ -47,13 +47,13 @@ def read_products():
         #        products.type,
         #        products.code,
         #        products.title as name,
-        #        IFNULL(p.description, ""),
+        #        p.description, '',
         #        brands.title as brand_name,
         #        products.price as price_origin,
         #        products.sales_price as price_sales,
         #        IFNULL(p.stocks, 0),
         #        products.thumbnail,
-        #        JSON_ARRAYAGG(files.pathname) AS details
+        #        JSON_ARRAYAGG(IFNULL(files.pathname, '')) AS details
         #     FROM
         #         products
         #     INNER JOIN
@@ -157,7 +157,7 @@ def read_a_product(product_id: int):
            p.sales_price as price_sales,
            IFNULL(p.stocks, 0),
            p.thumbnail,
-           JSON_ARRAYAGG(IFNULL(f.pathname)) AS details
+           JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details
         FROM
             products p
         INNER JOIN
