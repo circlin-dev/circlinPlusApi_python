@@ -47,11 +47,11 @@ def read_products():
         #        products.type,
         #        products.code,
         #        products.title as name,
-        #        products.description,
+        #        IFNULL(p.description, ""),
         #        brands.title as brand_name,
         #        products.price as price_origin,
         #        products.sales_price as price_sales,
-        #        products.stocks,
+        #        IFNULL(p.stocks, 0),
         #        products.thumbnail,
         #        JSON_ARRAYAGG(files.pathname) AS details
         #     FROM
@@ -75,11 +75,11 @@ def read_products():
            p.type,
            p.code,
            p.title as name,
-           p.description,
+           IFNULL(p.description, ""),
            b.title as brand_name,
            p.price as price_origin,
            p.sales_price as price_sales,
-           p.stocks,
+           IFNULL(p.stocks, 0),
            p.thumbnail,
            JSON_ARRAYAGG(f.pathname) AS details
         FROM
@@ -101,11 +101,17 @@ def read_products():
                                                            'name', 'description', 'brand_name',
                                                            'price_origin', 'price_sales', 'quantity',
                                                            'thumbnail', 'details'])
-    products_df['details'] = products_df['details'].apply(lambda x: [ast.literal_eval(el) for el in list(set(x.strip('][').split(', ')))])
-    products_df['details'] = products_df['details'].apply(lambda x: sorted(x, key=lambda y: y.split('/')[-1].split('_')[-1].split('.')[0]))
+    try:
+        products_df['details'] = products_df['details'].apply(lambda x: [ast.literal_eval(el) for el in list(set(x.strip('][').split(', ')))])
+        products_df['details'] = products_df['details'].apply(lambda x: sorted(x, key=lambda y: y.split('/')[-1].split('_')[-1].split('.')[0]))
+    except:
+        """products_df의 컬럼값이 None일 때 => 검색 결과가 없는 경우일 수도 있고,,,"""
+        connection.close()
+        result_dict = json.loads(products_df.to_json(orient='records'))[0]  # Array type으로 가고있음
+        return json.dumps(result_dict, ensure_ascii=False), 200
 
-    result_dict = json.loads(products_df.to_json(orient='records'))
-
+    connection.close()
+    result_dict = json.loads(products_df.to_json(orient='records'))[0]  # Array type으로 가고있음
     return json.dumps(result_dict, ensure_ascii=False), 200
 
 
@@ -139,13 +145,13 @@ def read_a_product(product_id: int):
            p.type,
            p.code,
            p.title as name,
-           p.description,
+           IFNULL(p.description, ""),
            b.title as brand_name,
            p.price as price_origin,
            p.sales_price as price_sales,
-           p.stocks,
+           IFNULL(p.stocks, 0),
            p.thumbnail,
-           JSON_ARRAYAGG(f.pathname) AS details
+           JSON_ARRAYAGG(f.pathname)AS details
         FROM
             products p
         INNER JOIN
@@ -169,8 +175,9 @@ def read_a_product(product_id: int):
         products_df['details'] = products_df['details'].apply(lambda x: [ast.literal_eval(el) for el in list(set(x.strip('][').split(', ')))])
         products_df['details'] = products_df['details'].apply(lambda x: sorted(x, key=lambda y: y.split('/')[-1].split('_')[-1].split('.')[0]))
     except:
+        """products_df의 컬럼값이 None일 때 => 검색 결과가 없는 경우일 수도 있고,,,"""
         connection.close()
-        result_dict = {}
+        result_dict = json.loads(products_df.to_json(orient='records'))[0]  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
 
     connection.close()
