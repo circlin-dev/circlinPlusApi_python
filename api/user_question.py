@@ -97,8 +97,8 @@ def add_user_question():
         "age_group": age_group,
         "experience_group": experience_group,
         "disease": disease,
-        # "disease_detail": parse_for_mysql(disease_detail),
-        "disease_detail": disease_detail,
+        "disease_detail": parse_for_mysql(disease_detail),
+        # "disease_detail": disease_detail,
         "schedule": schedule,
         "level": level,
         "trial_days": trial_days
