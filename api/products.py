@@ -81,7 +81,8 @@ def read_products():
            p.sales_price as price_sales,
            IFNULL(p.stocks, 0),
            p.thumbnail,
-           JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details
+           JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details,
+           prog.title AS related_programs
         FROM
             products p
         INNER JOIN
@@ -93,7 +94,13 @@ def read_products():
         LEFT OUTER JOIN
                 files f
             ON f.id = pi.file_id
-        WHERE p.`type` = '{parameters[0]}'
+        LEFT OUTER JOIN
+                program_products pp
+            ON p.id = pp.product_id
+        LEFT OUTER JOIN
+                programs prog
+            ON prog.id = pp.program_id
+        WHERE p.`type` = 'item'
         GROUP BY p.id"""
     cursor.execute(sql)
     result = cursor.fetchall()
@@ -106,7 +113,7 @@ def read_products():
     products_df = pd.DataFrame(result, columns=['id', 'type', 'code',
                                                 'name', 'description', 'brand_name',
                                                 'price_origin', 'price_sales', 'quantity',
-                                                'thumbnail', 'details'])
+                                                'thumbnail', 'details', 'related_program'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: [ast.literal_eval(el) for el in (list(set(x.strip('][').split(', '))))])
         products_df['details'] = products_df['details'].apply(lambda x: sorted(x, key=lambda y: y.split('/')[-1].split('_')[-1].split('.')[0]))
@@ -145,6 +152,7 @@ def read_a_product(product_id: int):
 
     cursor = connection.cursor()
 
+    # related_program이 복수이면 JSON_ARRAYAGG()로 합치고, GROUP BY에 prog.id 또는 pp.program_id 추가해야 할듯.
     sql = f"""
         SELECT
            p.id,
@@ -157,7 +165,8 @@ def read_a_product(product_id: int):
            p.sales_price as price_sales,
            IFNULL(p.stocks, 0),
            p.thumbnail,
-           JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details
+           JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details,
+           prog.title AS related_program
         FROM
             products p
         INNER JOIN
@@ -169,6 +178,9 @@ def read_a_product(product_id: int):
         LEFT OUTER JOIN
                 files f
             ON f.id = pi.file_id
+        INNER JOIN
+                programs prog
+            ON prog.id = pp.program_id
         WHERE p.id = {product_id}
         GROUP BY p.id"""
     cursor.execute(sql)
@@ -181,7 +193,7 @@ def read_a_product(product_id: int):
     products_df = pd.DataFrame(result, columns=['id', 'type', 'code',
                                                 'name', 'description', 'brand_name',
                                                 'price_origin', 'price_sales', 'quantity',
-                                                'thumbnail', 'details'])
+                                                'thumbnail', 'details', 'related_program'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: [ast.literal_eval(el) for el in list(set(x.strip('][').split(', ')))])
         products_df['details'] = products_df['details'].apply(lambda x: sorted(x, key=lambda y: y.split('/')[-1].split('_')[-1].split('.')[0]))
