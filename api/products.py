@@ -75,7 +75,7 @@ def read_products():
            p.type,
            p.code,
            p.title as name,
-           IFNULL(p.description, ""),
+           p.description,
            b.title as brand_name,
            p.price as price_origin,
            p.sales_price as price_sales,
@@ -84,16 +84,16 @@ def read_products():
            JSON_ARRAYAGG(f.pathname) AS details
         FROM
             products p
-        INNER JOIN 
-                product_images pi
-            ON pi.product_id = p.id
-        INNER JOIN 
-                files f
-            ON f.id = pi.file_id
         INNER JOIN
                 brands b
-            ON p.brand_id = b.id
-        WHERE p.`type`='{parameters[0]}'
+            ON b.id = p.brand_id
+        LEFT OUTER JOIN
+                product_images pi
+            ON pi.product_id = p.id
+        LEFT OUTER JOIN
+                files f
+            ON f.id = pi.file_id
+        WHERE p.`type` = '{parameters[0]}'
         GROUP BY p.id"""
     cursor.execute(sql)
 
@@ -151,13 +151,13 @@ def read_a_product(product_id: int):
            p.type,
            p.code,
            p.title as name,
-           IFNULL(p.description, ""),
+           p.description,
            b.title as brand_name,
            p.price as price_origin,
            p.sales_price as price_sales,
            IFNULL(p.stocks, 0),
            p.thumbnail,
-           IFNULL(JSON_ARRAYAGG(f.pathname) AS details
+           JSON_ARRAYAGG(IFNULL(f.pathname, NULL)) AS details
         FROM
             products p
         INNER JOIN
@@ -169,7 +169,8 @@ def read_a_product(product_id: int):
         LEFT OUTER JOIN
                 files f
             ON f.id = pi.file_id
-        WHERE p.id = {product_id}"""
+        WHERE p.id = {product_id}
+        GROUP BY p.id"""
     cursor.execute(sql)
 
     result = cursor.fetchall()
