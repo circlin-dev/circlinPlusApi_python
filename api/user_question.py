@@ -179,7 +179,7 @@ def read_user_question(user_id):
     ).select(
         user_questions.data
     ).where(
-        user_id == user_id
+        user_questions.user_id == user_id
     ).orderby(
         user_questions.id, order=Order.desc
     ).limit(1).get_sql()
