@@ -124,7 +124,7 @@ def read_products():
         result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
     try:
-        products_df['related_program'] = products_df['related_program'].apply(lambda x: [ast.literal_eval(el) for el in list(set(list(set(x.strip('][').split(', ')))))])
+        products_df['related_program'] = products_df['related_program'].apply(lambda x: [ast.literal_eval(el) for el in list(set(list(set(x.strip('][').split('", ')))))])
         products_df['related_program'] = products_df['related_program'].apply(lambda x: [] if x[0] == "" else x)
     except:
         connection.close()
@@ -216,11 +216,11 @@ def read_a_product(product_id: int):
         result_dict = json.loads(products_df.to_json(orient='records'))[0]  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
     try:
-        products_df['related_program'] = products_df['related_program'].apply(lambda x: [ast.literal_eval(el) for el in list(set(list(set(x.strip('][').split(', ')))))])
+        products_df['related_program'] = products_df['related_program'].apply(lambda x: [ast.literal_eval(el) for el in list(set(list(set(x.strip('][').split('", ')))))])
         products_df['related_program'] = products_df['related_program'].apply(lambda x: [] if x[0] == "" else x)
     except:
         connection.close()
-        result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
+        result_dict = json.loads(products_df.to_json(orient='records'))[0]  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
     connection.close()
     result_dict = json.loads(products_df.to_json(orient='records'))[0]  # Array type으로 가고있음
