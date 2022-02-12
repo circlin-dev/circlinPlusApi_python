@@ -178,7 +178,7 @@ def read_a_product(product_id: int):
         LEFT OUTER JOIN
                 files f
             ON f.id = pi.file_id
-        INNER JOIN
+        LEFT OUTER JOIN
                 programs prog
             ON prog.id = pp.program_id
         WHERE p.id = {product_id}
