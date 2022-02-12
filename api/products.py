@@ -78,15 +78,18 @@ def read_products():
            p.sales_price as price_sales,
            p.stocks,
            p.thumbnail,
-           JSON_ARRAYAGG(pi.url) AS details
+           JSON_ARRAYAGG(f.pathname) AS details
         FROM
             products p
+        INNER JOIN 
+                product_images pi
+            ON pi.product_id = p.id
+        INNER JOIN 
+                files f
+            ON f.id = pi.file_id
         INNER JOIN
-            product_images pi
-        ON pi.product_id = p.id
-        INNER JOIN
-            brands b
-        ON p.brand_id = b.id
+                brands b
+            ON p.brand_id = b.id
         WHERE p.`type`='{parameters[0]}'
         GROUP BY p.id"""
     cursor.execute(sql)
@@ -143,13 +146,15 @@ def read_a_product(product_id: int):
         FROM
             products p
         INNER JOIN
-            product_images pi
-        ON pi.product_id = p.id
+                product_images pi
+            ON pi.product_id = p.id
+        INNER JOIN 
+                files f
+            ON f.id = pi.file_id        
         INNER JOIN
-            brands b
-        ON p.brand_id = b.id
-        WHERE p.id = {product_id}
-        GROUP BY p.id"""
+                brands b
+            ON p.brand_id = b.id
+        WHERE p.id = {product_id}"""
     cursor.execute(sql)
 
     products_df = pd.DataFrame(cursor.fetchall(), columns=['id', 'type', 'code',
