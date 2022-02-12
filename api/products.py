@@ -53,12 +53,15 @@ def read_products():
         #        products.sales_price as price_sales,
         #        products.stocks,
         #        products.thumbnail,
-        #        JSON_ARRAYAGG(product_images.url) AS details
+        #        JSON_ARRAYAGG(files.pathname) AS details
         #     FROM
         #         products
         #     INNER JOIN
         #         product_images
         #     ON product_images.product_id = products.id
+        #     INNER JOIN
+        #         files f
+        #     ON f.id = pi.file_id
         #     INNER JOIN
         #         brands
         #     ON products.brand_id = brands.id
@@ -142,7 +145,7 @@ def read_a_product(product_id: int):
            p.sales_price as price_sales,
            p.stocks,
            p.thumbnail,
-           JSON_ARRAYAGG(pi.url) AS details
+           JSON_ARRAYAGG(f.pathname) AS details
         FROM
             products p
         INNER JOIN
