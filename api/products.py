@@ -83,7 +83,7 @@ def read_products():
            IFNULL(p.stocks, 0),
            p.thumbnail,
            JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details,
-           JSON_ARRAYAGG(IFNULL(prog.title, '') AS related_program
+           JSON_ARRAYAGG(IFNULL(prog.title, '')) AS related_program
         FROM
             products p
         INNER JOIN
@@ -170,7 +170,7 @@ def read_a_product(product_id: int):
            IFNULL(prod.stocks, 0),
            prod.thumbnail,
            JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details,
-           JSON_ARRAYAGG(IFNULL(prog.title, '') AS related_program
+           JSON_ARRAYAGG(IFNULL(prog.title, '')) AS related_program
         FROM
             products prod
         INNER JOIN
