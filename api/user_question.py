@@ -27,7 +27,6 @@ def add_user_question():
     disease = parameters['disease']  # array with index(int) & short sentence for index 7(string)
     disease_detail = parameters['disease_detail']
     level = parameters['level']
-    trial_days = parameters['trial_days']
 
     # Verify if mandatory information is not null.
     if request.method == 'POST':
@@ -98,8 +97,7 @@ def add_user_question():
         "disease_detail": parse_for_mysql(disease_detail),
         # "disease_detail": disease_detail,
         "schedule": schedule,
-        "level": level,
-        "trial_days": trial_days
+        "level": level
     }, ensure_ascii=False)
     sql = Query.into(
         user_questions
