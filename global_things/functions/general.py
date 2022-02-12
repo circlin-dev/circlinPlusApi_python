@@ -57,11 +57,11 @@ def parse_for_mysql(strings: str):
     if strings is None:
         return parse_for_mysql
     else:
-        parsed_strings = re.sub(strings, '\n', '\\n')
-        parsed_strings = re.sub(parsed_strings, '\t', '\\t')
-        parsed_strings = re.sub(parsed_strings, '\b', '\\b')
-        parsed_strings = re.sub(parsed_strings, "'", "''")
-        parsed_strings = re.sub(parsed_strings, '"', '""')
+        parsed_strings = re.sub('\n', '\\n', strings)
+        parsed_strings = re.sub('\t', '\\t', parsed_strings)
+        parsed_strings = re.sub('\b', '\\b', parsed_strings)
+        parsed_strings = re.sub("'", "''", parsed_strings)
+        parsed_strings = re.sub('"', '""', parsed_strings)
         parsed_strings = parsed_strings.lstrip()
         parsed_strings = parsed_strings.rstrip()
 
