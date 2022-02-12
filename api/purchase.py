@@ -159,8 +159,8 @@ def create_chat_with_manager():
         'result': True,
         'chat_room_id': chat_room_id
     }
-
     return json.dumps(result, ensure_ascii=False), 200
+
 
 @api.route('/purchase/<user_id>', methods=['GET'])
 def read_purchase_record(user_id):
