@@ -55,7 +55,7 @@ def query_result_is_none(execution: tuple):
 # Parsing strings...
 def parse_for_mysql(strings: str):
     if strings is None:
-        return parse_for_mysql
+        return strings
     else:
         parsed_strings = re.sub('\n', ' ', strings)
         parsed_strings = re.sub('\t', ' ', parsed_strings)

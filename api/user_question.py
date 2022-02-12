@@ -7,9 +7,6 @@ from flask import request, url_for
 import json
 from pypika import MySQLQuery as Query, Table, Order
 
-# @api.route('/user-question', methods=['GET', 'POST'])
-# GET => /user-question?user_id=N
-# POST => /user-question
 
 @api.route('/user-question', methods=['POST'])
 def add_user_question():
@@ -23,7 +20,7 @@ def add_user_question():
     user_id = parameters['user_id']
     purpose = parameters['purpose']  # array
     sports = parameters['sports']  # array
-    gender = parameters['sex']  # string
+    gender = parameters['gender']  # string
     age_group = parameters['age_group']  # string
     experience_group = parameters['experience_group']  # string
     schedule = parameters['schedule']  # array with index(int)

@@ -1,6 +1,6 @@
-from global_things.constants import API_ROOT
+from global_things.constants import API_ROOT, API_NODEJS_SERVER
 from global_things.functions.slack import slack_error_notification, slack_purchase_notification
-from global_things.functions.general import login_to_db, check_session, query_result_is_none
+from global_things.functions.general import login_to_db, check_session, parse_for_mysql, query_result_is_none
 from global_things.functions.purchase import amount_to_be_paid, get_import_access_token, request_import_refund
 from global_things.constants import IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET
 from . import api
@@ -298,20 +298,18 @@ def add_purchase():
     user_id = parameters['user_id']
     period = int(parameters['subscription_period'])
     payment_info = parameters['payment_info']  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
+    delivery_info = parameters['delivery_info']
 
     # 결제 정보 변수
     imp_uid = payment_info['imp_uid']
     merchant_uid = payment_info['merchant_uid']
 
     # # 배송 정보 변수
-    # recipient_name = delivery_info['recipient_name'].strip()  # 결제자 이름
-    # post_code = delivery_info['post_code'].strip()  # 스타터 키트 배송지 주소(우편번호)
-    # address = delivery_info['address'].strip()  # 스타터 키트 배송지 주소(주소)
-    # recipient_phone = delivery_info['recipient_phone'].strip()  # 결제자 휴대폰 번호
-    #
-    # comment = delivery_info['comment'].strip()  # 배송 요청사항
-
-    # 기구 정보 변수
+    recipient_name = delivery_info['recipient_name'].strip()  # 결제자 이름
+    post_code = delivery_info['post_code'].strip()  # 스타터 키트 배송지 주소(우편번호)
+    address = delivery_info['address'].strip()  # 스타터 키트 배송지 주소(주소)
+    recipient_phone = delivery_info['recipient_phone'].strip()  # 결제자 휴대폰 번호
+    comment = parse_for_mysql(delivery_info['comment']).strip()  # 배송 요청사항
 
     # 구독 기간 정보 변수
     subscription_days = 0
@@ -408,9 +406,9 @@ def add_purchase():
     )
     cursor.execute(sql.get_sql())
 
-    subscription_informations = cursor.fetchall()
+    subscription_information = cursor.fetchall()
 
-    if query_result_is_none(subscription_informations) is True:
+    if query_result_is_none(subscription_information) is True:
         try:
             sql = Query.update(
                 purchases
@@ -426,18 +424,6 @@ def add_purchase():
                     purchases.merchant_uid == merchant_uid
                 ])
             )
-            # query = f"""
-            #         UPDATE
-            #               purchases
-            #           SET
-            #               user_id=%s,
-            #               state=%s,
-            #               deleted_at=(SELECT NOW())
-            #         WHERE
-            #               imp_uid=%s
-            #           AND merchant_uid=%s"""
-            # values = (user_id, "cancelled", imp_uid, merchant_uid)
-            # cursor.execute(query, values)
             cursor.execute(sql.get_sql())
             connection.commit()
         except Exception as e:
@@ -493,18 +479,6 @@ def add_purchase():
                         purchases.merchant_uid == merchant_uid
                     ])
                 )
-                # query = f"""
-                #         UPDATE
-                #               purchases
-                #           SET
-                #               user_id=%s,
-                #               state=%s,
-                #               deleted_at=(SELECT NOW())
-                #         WHERE
-                #               imp_uid=%s
-                #           AND merchant_uid=%s"""
-                # values = (user_id, "cancelled", imp_uid, merchant_uid)
-                # cursor.execute(query, values)
                 cursor.execute(sql.get_sql())
                 connection.commit()
             except Exception as e:
@@ -536,8 +510,8 @@ def add_purchase():
     기구 신청을 했을 경우, 기구 신청 내역을 저장하는 쿼리를 만들어야 함!
     """
 
-    subscription_id = subscription_informations[0][0]
-    sales_price = subscription_informations[0][1]
+    subscription_id = subscription_information[0][0]
+    sales_price = subscription_information[0][1]
     sql = Query.update(
         purchases
     ).set(
@@ -598,12 +572,30 @@ def add_purchase():
 
     # slack_purchase_notification(cursor, user_id, purchase_id)  # 사전설문 저장 완료 시 발송
     connection.close()
-    result = {
-        'result': True,
-        # 'chat_room_id': purchase_id
-    }
 
-    return json.dumps(result, ensure_ascii=False), 200
+    # 스타터키트 배송지 정보 node.js 서버로 전송
+    response = requests.post(
+        f"{API_NODEJS_SERVER}",
+        json.dumps({
+            'recipient_name': recipient_name,
+            'post_code': post_code,
+            'address': address,
+            'recipient_phone': recipient_phone,
+            'comment': comment
+        }, ensure_ascii=False).encode('utf-8'))
+
+    if response['result'] is not True:
+        result = {
+            "result": False,
+            "message": "Successed purchasing subscription, but faild to send delivery information to node.js server."
+        }
+        return json.dumps(result, ensure_ascii=False), 200
+    else:
+        result = {
+            "result": True,
+            "message": "Successed purchasing & sending delivery information."
+        }
+        return json.dumps(result, ensure_ascii=False), 200
 
 
     # sql = Query.into(
