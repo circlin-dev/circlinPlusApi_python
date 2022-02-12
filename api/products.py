@@ -111,11 +111,11 @@ def read_products():
             result_dict = {}
             return json.dumps(result_dict, ensure_ascii=False), 200
         else:  # 썸네일만 없는 경우.
-            result_dict = json.loads(products_df.to_json(orient='records'))[0]  # Array type으로 가고있음
+            result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
             return json.dumps(result_dict, ensure_ascii=False), 200
 
     connection.close()
-    result_dict = json.loads(products_df.to_json(orient='records'))[0]  # Array type으로 가고있음
+    result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
     return json.dumps(result_dict, ensure_ascii=False), 200
 
 
