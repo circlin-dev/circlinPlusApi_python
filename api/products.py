@@ -102,7 +102,7 @@ def read_products():
         result_dict = {}
         return json.dumps(result_dict, ensure_ascii=False), 200
 
-    products_df = pd.DataFrame(cursor.fetchall(), columns=['id', 'type', 'code',
+    products_df = pd.DataFrame(result, columns=['id', 'type', 'code',
                                                            'name', 'description', 'brand_name',
                                                            'price_origin', 'price_sales', 'quantity',
                                                            'thumbnail', 'details'])
