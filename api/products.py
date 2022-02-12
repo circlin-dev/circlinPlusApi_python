@@ -181,7 +181,7 @@ def read_a_product(product_id: int):
     except:
         """products_df의 컬럼값이 None일 때 => 검색 결과가 없는 경우일 수도 있고, 썸네일만 없는 경우일 수도 있다."""
         connection.close()
-        if products_df['id'] is None:  # 검색 결과가 없는 경우
+        if products_df['id'].isna() is True:  # 검색 결과가 없는 경우
             result_dict = {}
             return json.dumps(result_dict, ensure_ascii=False), 200
         else:  # 썸네일만 없는 경우.
