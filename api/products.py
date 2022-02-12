@@ -116,9 +116,7 @@ def read_products():
                                                 'price_origin', 'price_sales', 'quantity',
                                                 'thumbnail', 'details', 'related_program'])
     try:
-        # products_df['details'] = products_df['details'].apply(lambda x: [ast.literal_eval(el) for el in (list(set(x.strip('][').split(', '))))])
-        products_df['details'] = products_df['details'].apply(lambda x: [lambda x: json.loads(x)])
-        #products_df['details'] = products_df['details'].apply(lambda x: sorted(x, key=lambda y: y.split('/')[-1].split('_')[-1].split('.')[0]))
+        products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
         products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
     except:
         connection.close()
@@ -209,9 +207,7 @@ def read_a_product(product_id: int):
                                                 'price_origin', 'price_sales', 'quantity',
                                                 'thumbnail', 'details', 'related_program'])
     try:
-        #products_df['details'] = products_df['details'].apply(lambda x: [ast.literal_eval(el) for el in list(set(x.strip('][').split(', ')))])
         products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
-        #products_df['details'] = products_df['details'].apply(lambda x: sorted(x, key=lambda y: y.split('/')[-1].split('_')[-1].split('.')[0]))
         products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
     except:
         connection.close()
@@ -219,7 +215,6 @@ def read_a_product(product_id: int):
         result_dict = json.loads(products_df.to_json(orient='records'))[0]  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
     try:
-        #products_df['related_program'] = products_df['related_program'].apply(lambda x: [ast.literal_eval(el) for el in list(set(list(set(x.strip('][').split('", ')))))])
         products_df['related_program'] = products_df['related_program'].apply(lambda x: json.loads(x))
         products_df['related_program'] = products_df['related_program'].apply(lambda x: list(set(x)))
         products_df['related_program'] = products_df['related_program'].apply(lambda x: [] if x[0] == "" else x)
