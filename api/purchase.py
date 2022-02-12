@@ -10,6 +10,158 @@ import requests
 from pypika import MySQLQuery as Query, Criterion, Interval, Table, Field, Order, functions as fn
 
 
+@api.route('/assign', method=['POST'])
+def create_chat_with_manager():
+    # user_id, purchase_id
+    ip = request.headers["X-Forwarded-For"]  # Both public & private.
+    endpoint = API_ROOT + url_for('api.add_purchase')
+    # token = request.headers['Authorization']
+    parameters = json.loads(request.get_data(), encoding='utf-8')
+    """Define tables required to execute SQL."""
+    user_questions = Table('user_questions')
+    customers = Table('chat_users')
+    managers = Table('chat_users')
+    chat_rooms = Table('chat_rooms')
+    chat_users = Table('chat_users')
+    user_id = int(parameters['user_id'])
+    # purchase_id = parameters['purchase_id']
+
+    try:
+        connection = login_to_db()
+    except Exception as e:
+        error = str(e)
+        result = {
+            'result': False,
+            'error': f'Server Error while connecting to DB: {error}'
+        }
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+        return json.dumps(result, ensure_ascii=False), 500
+
+    cursor = connection.cursor()
+
+    sql = Query.from_(
+        user_questions
+    ).select(
+        user_questions.data
+    ).where(
+        user_questions.user_id == user_id
+    ).orderby(
+        user_questions.id, order=Order.desc
+    ).limit(1).get_sql()
+
+    cursor.execute(sql)
+    answer_data = cursor.fetchall()
+    if query_result_is_none(answer_data) is True:
+        connection.close()
+        result = {
+            'result': False,
+            'error': f': No pre-survey answer data of user({user_id})'
+        }
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+        return json.dumps(result, ensure_ascii=False), 403
+
+    gender = json.loads(answer_data[0][0].replace("\\", "\\\\"), strict=False)['gender']
+
+    if gender == 'M':
+        manager_id = 28  # 28 = 대표님, 18 = 희정님
+    else:
+        manager_id = 18
+
+    sql = Query.from_(
+        customers
+    ).select(
+        customers.chat_room_id
+    ).join(
+        managers
+    ).on(
+        customers.chat_room_id == managers.chat_room_id
+    ).where(
+        Criterion.all([
+            customers.user_id == user_id,
+            managers.user_id == manager_id
+        ])
+    ).get_sql()
+    # query = f"""
+    #     SELECT
+    #         manager.chat_room_id
+    #     FROM
+    #         chat_users customer, chat_users manager
+    #     WHERE
+    #         customer.chat_room_id = manager.chat_room_id
+    #         AND customer.user_id = {user_id}
+    #         AND manager.user_id = {manager_id}"""
+
+    cursor.execute(sql)
+    existing_chat_room = cursor.fetchall()
+
+    if len(existing_chat_room) == 0 or existing_chat_room == ():
+        # query = "INSERT INTO chat_rooms(created_at, updated_at) VALUES((SELECT NOW()), (SELECT NOW()))"
+        sql = Query.into(
+            chat_rooms
+        ).columns(
+            chat_rooms.created_at,
+            chat_rooms.updated_at
+        ).insert(
+            fn.Now(),
+            fn.Now()
+        ).get_sql()
+        try:
+            cursor.execute(sql)
+            connection.commit()
+            chat_room_id = cursor.lastrowid
+        except Exception as e:
+            connection.rollback()
+            connection.close()
+            error = str(e)
+            result = {
+                'result': False,
+                'error': f'Server Error while executing INSERT query(chat_rooms): {error}'
+            }
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+            return json.dumps(result, ensure_ascii=False), 500
+
+        try:
+            # query = f"""
+            #     INSERT INTO
+            #                 chat_users(created_at, updated_at, chat_room_id, user_id)
+            #         VALUES((SELECT NOW()), (SELECT NOW()), %s, %s),
+            #                 ((SELECT NOW()), (SELECT NOW()), %s, %s)"""
+            sql = Query.into(
+                chat_users
+            ).columns(
+                chat_users.created_at,
+                chat_users.updated_at,
+                chat_users.chat_room_id,
+                chat_users.user_id
+            ).insert(
+                (fn.Now(), fn.Now(), chat_room_id, manager_id),
+                (fn.Now(), fn.Now(), chat_room_id, user_id)
+            ).get_sql()
+            cursor.execute(sql)
+            connection.commit()
+        except Exception as e:
+            connection.rollback()
+            connection.close()
+            error = str(e)
+            result = {
+                'result': False,
+                'error': f'Server Error while executing INSERT query(chat_users): {error}'
+            }
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+            return json.dumps(result, ensure_ascii=False), 500
+    else:
+        chat_room_id = existing_chat_room[0][0]
+
+    # connection.commit()
+    # slack_purchase_notification(cursor, user_id, manager_id, purchase_id) # 사전설문 저장 완료 시 발송
+    connection.close()
+    result = {
+        'result': True,
+        'chat_room_id': chat_room_id
+    }
+
+    return json.dumps(result, ensure_ascii=False), 200
+
 @api.route('/purchase/<user_id>', methods=['GET'])
 def read_purchase_record(user_id):
     """
@@ -443,6 +595,17 @@ def add_purchase():
     ).get_sql()
     cursor.execute(sql)
     purchase_id = cursor.fetchall()[0][0]
+
+    # slack_purchase_notification(cursor, user_id, purchase_id)  # 사전설문 저장 완료 시 발송
+    connection.close()
+    result = {
+        'result': True,
+        # 'chat_room_id': purchase_id
+    }
+
+    return json.dumps(result, ensure_ascii=False), 200
+
+
     # sql = Query.into(
     #     starterkit_delivery
     # ).columns(
@@ -490,128 +653,128 @@ def add_purchase():
     #     WHERE
     #           uq.user_id={user_id}
     #     ORDER BY uq.id DESC LIMIT 1"""
-    sql = Query.from_(
-        user_questions
-    ).select(
-        user_questions.data
-    ).where(
-        user_questions.user_id == user_id
-    ).orderby(
-        user_questions.id, order=Order.desc
-    ).limit(1).get_sql()
-    cursor.execute(sql)
-    answer_data = cursor.fetchall()
-    if query_result_is_none(answer_data) is True:
-        connection.close()
-        result = {
-            'result': False,
-            'error': f': No pre-survey data of user({user_id})'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-        return json.dumps(result, ensure_ascii=False), 403
-
-    user_sex = json.loads(answer_data[0][0].replace("\\", "\\\\"), strict=False)['sex']
-
-    if user_sex == 'M':
-        manager_id = 28  # 28 = 대표님, 18 = 희정님
-    else:
-        manager_id = 18
-
-    sql = Query.from_(
-        customers
-    ).select(
-        customers.chat_room_id
-    ).join(
-        managers
-    ).on(
-        customers.chat_room_id == managers.chat_room_id
-    ).where(
-        Criterion.all([
-            customers.user_id == user_id,
-            managers.user_id == manager_id
-        ])
-    ).get_sql()
-    # query = f"""
-    #     SELECT
-    #         manager.chat_room_id
-    #     FROM
-    #         chat_users customer, chat_users manager
-    #     WHERE
-    #         customer.chat_room_id = manager.chat_room_id
-    #         AND customer.user_id = {user_id}
-    #         AND manager.user_id = {manager_id}"""
-
-    cursor.execute(sql)
-    existing_chat_room = cursor.fetchall()
-
-    if len(existing_chat_room) == 0 or existing_chat_room == ():
-        # query = "INSERT INTO chat_rooms(created_at, updated_at) VALUES((SELECT NOW()), (SELECT NOW()))"
-        sql = Query.into(
-            chat_rooms
-        ).columns(
-            chat_rooms.created_at,
-            chat_rooms.updated_at
-        ).insert(
-            fn.Now(),
-            fn.Now()
-        ).get_sql()
-        try:
-            cursor.execute(sql)
-            connection.commit()
-            chat_room_id = cursor.lastrowid
-        except Exception as e:
-            connection.rollback()
-            connection.close()
-            error = str(e)
-            result = {
-                'result': False,
-                'error': f'Server Error while executing INSERT query(chat_rooms): {error}'
-            }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
-            return json.dumps(result, ensure_ascii=False), 500
-
-        try:
-            # query = f"""
-            #     INSERT INTO
-            #                 chat_users(created_at, updated_at, chat_room_id, user_id)
-            #         VALUES((SELECT NOW()), (SELECT NOW()), %s, %s),
-            #                 ((SELECT NOW()), (SELECT NOW()), %s, %s)"""
-            sql = Query.into(
-                chat_users
-            ).columns(
-                chat_users.created_at,
-                chat_users.updated_at,
-                chat_users.chat_room_id,
-                chat_users.user_id
-            ).insert(
-                (fn.Now(), fn.Now(), chat_room_id, manager_id),
-                (fn.Now(), fn.Now(), chat_room_id, user_id)
-            ).get_sql()
-            cursor.execute(sql)
-            connection.commit()
-        except Exception as e:
-            connection.rollback()
-            connection.close()
-            error = str(e)
-            result = {
-                'result': False,
-                'error': f'Server Error while executing INSERT query(chat_users): {error}'
-            }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
-            return json.dumps(result, ensure_ascii=False), 500
-    else:
-        chat_room_id = existing_chat_room[0][0]
-
-    # connection.commit()
-    slack_purchase_notification(cursor, user_id, manager_id, purchase_id)
-    connection.close()
-    result = {
-        'result': True,
-        'chat_room_id': chat_room_id
-    }
-
-    return json.dumps(result, ensure_ascii=False), 201
-
+# region
+#     sql = Query.from_(
+#         user_questions
+#     ).select(
+#         user_questions.data
+#     ).where(
+#         user_questions.user_id == user_id
+#     ).orderby(
+#         user_questions.id, order=Order.desc
+#     ).limit(1).get_sql()
+#     cursor.execute(sql)
+#     answer_data = cursor.fetchall()
+#     if query_result_is_none(answer_data) is True:
+#         connection.close()
+#         result = {
+#             'result': False,
+#             'error': f': No pre-survey data of user({user_id})'
+#         }
+#         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+#         return json.dumps(result, ensure_ascii=False), 403
+#
+#     gender = json.loads(answer_data[0][0].replace("\\", "\\\\"), strict=False)['gender']
+#
+#     if gender == 'M':
+#         manager_id = 28  # 28 = 대표님, 18 = 희정님
+#     else:
+#         manager_id = 18
+#
+#     sql = Query.from_(
+#         customers
+#     ).select(
+#         customers.chat_room_id
+#     ).join(
+#         managers
+#     ).on(
+#         customers.chat_room_id == managers.chat_room_id
+#     ).where(
+#         Criterion.all([
+#             customers.user_id == user_id,
+#             managers.user_id == manager_id
+#         ])
+#     ).get_sql()
+#     # query = f"""
+#     #     SELECT
+#     #         manager.chat_room_id
+#     #     FROM
+#     #         chat_users customer, chat_users manager
+#     #     WHERE
+#     #         customer.chat_room_id = manager.chat_room_id
+#     #         AND customer.user_id = {user_id}
+#     #         AND manager.user_id = {manager_id}"""
+#
+#     cursor.execute(sql)
+#     existing_chat_room = cursor.fetchall()
+#
+#     if len(existing_chat_room) == 0 or existing_chat_room == ():
+#         # query = "INSERT INTO chat_rooms(created_at, updated_at) VALUES((SELECT NOW()), (SELECT NOW()))"
+#         sql = Query.into(
+#             chat_rooms
+#         ).columns(
+#             chat_rooms.created_at,
+#             chat_rooms.updated_at
+#         ).insert(
+#             fn.Now(),
+#             fn.Now()
+#         ).get_sql()
+#         try:
+#             cursor.execute(sql)
+#             connection.commit()
+#             chat_room_id = cursor.lastrowid
+#         except Exception as e:
+#             connection.rollback()
+#             connection.close()
+#             error = str(e)
+#             result = {
+#                 'result': False,
+#                 'error': f'Server Error while executing INSERT query(chat_rooms): {error}'
+#             }
+#             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+#             return json.dumps(result, ensure_ascii=False), 500
+#
+#         try:
+#             # query = f"""
+#             #     INSERT INTO
+#             #                 chat_users(created_at, updated_at, chat_room_id, user_id)
+#             #         VALUES((SELECT NOW()), (SELECT NOW()), %s, %s),
+#             #                 ((SELECT NOW()), (SELECT NOW()), %s, %s)"""
+#             sql = Query.into(
+#                 chat_users
+#             ).columns(
+#                 chat_users.created_at,
+#                 chat_users.updated_at,
+#                 chat_users.chat_room_id,
+#                 chat_users.user_id
+#             ).insert(
+#                 (fn.Now(), fn.Now(), chat_room_id, manager_id),
+#                 (fn.Now(), fn.Now(), chat_room_id, user_id)
+#             ).get_sql()
+#             cursor.execute(sql)
+#             connection.commit()
+#         except Exception as e:
+#             connection.rollback()
+#             connection.close()
+#             error = str(e)
+#             result = {
+#                 'result': False,
+#                 'error': f'Server Error while executing INSERT query(chat_users): {error}'
+#             }
+#             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+#             return json.dumps(result, ensure_ascii=False), 500
+#     else:
+#         chat_room_id = existing_chat_room[0][0]
+#
+#     # connection.commit()
+#     slack_purchase_notification(cursor, user_id, manager_id, purchase_id)
+#     connection.close()
+#     result = {
+#         'result': True,
+#         'chat_room_id': chat_room_id
+#     }
+#     return json.dumps(result, ensure_ascii=False), 201
+# endregion
 
 @api.route('/purchase/update_notification', methods=['POST'])
 def update_payment_state_by_webhook():
