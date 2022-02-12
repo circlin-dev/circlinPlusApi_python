@@ -179,8 +179,11 @@ def read_a_product(product_id: int):
                 files f
             ON f.id = pi.file_id
         LEFT OUTER JOIN
+                program_products pp
+            ON prod.id = pp.product_id            
+        LEFT OUTER JOIN
                 programs prog
-            ON prog.id = pp.program_id
+            ON  pp.program_id = prog.id
         WHERE p.id = {product_id}
         GROUP BY p.id"""
     cursor.execute(sql)
