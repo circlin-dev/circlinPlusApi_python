@@ -60,8 +60,6 @@ def parse_for_mysql(strings: str):
         parsed_strings = re.sub('\n', '\\n', strings)
         parsed_strings = re.sub('\t', '\\t', parsed_strings)
         parsed_strings = re.sub('\b', '\\b', parsed_strings)
-        parsed_strings = re.sub("'", "''", parsed_strings)
-        parsed_strings = re.sub('"', '""', parsed_strings)
         parsed_strings = parsed_strings.lstrip()
         parsed_strings = parsed_strings.rstrip()
 
