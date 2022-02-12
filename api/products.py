@@ -107,12 +107,14 @@ def read_products():
     except:
         """products_df의 컬럼값이 None일 때 => 검색 결과가 없는 경우일 수도 있고, 썸네일만 없는 경우일 수도 있다."""
         connection.close()
-        if products_df['id'] is None: # 검색 결과가 없는 경우
-            result_dict = {}
-            return json.dumps(result_dict, ensure_ascii=False), 200
-        else:  # 썸네일만 없는 경우.
-            result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
-            return json.dumps(result_dict, ensure_ascii=False), 200
+        result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
+        return json.dumps(result_dict, ensure_ascii=False), 200
+        # if products_df['id'] is None:  # 검색 결과가 없는 경우
+        #     result_dict = {}
+        #     return json.dumps(result_dict, ensure_ascii=False), 200
+        # else:  # 썸네일만 없는 경우.
+        #     result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
+        #     return json.dumps(result_dict, ensure_ascii=False), 200
 
     connection.close()
     result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
