@@ -110,14 +110,6 @@ def read_products():
         lambda x: [ast.literal_eval(el) for el in list(set(x.strip('][').split(', ')))])
     products_df['details'] = products_df['details'].apply(
         lambda x: sorted(x, key=lambda y: y.split('/')[-1].split('_')[-1].split('.')[0]))
-    # try:
-    #     products_df['details'] = products_df['details'].apply(lambda x: [ast.literal_eval(el) for el in list(set(x.strip('][').split(', ')))])
-    #     products_df['details'] = products_df['details'].apply(lambda x: sorted(x, key=lambda y: y.split('/')[-1].split('_')[-1].split('.')[0]))
-    # except:
-    #     """products_df의 컬럼값이 None일 때 => 검색 결과가 없는 경우일 수도 있고, 썸네일만 없는 경우일 수도 있다."""
-    #     connection.close()
-    #     result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
-    #     return json.dumps(result_dict, ensure_ascii=False), 200
 
     connection.close()
     result_dict = json.loads(products_df.to_json(orient='records'))[0]  # Array type으로 가고있음
