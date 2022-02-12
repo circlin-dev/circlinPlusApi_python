@@ -157,18 +157,18 @@ def read_a_product(product_id: int):
            p.sales_price as price_sales,
            IFNULL(p.stocks, 0),
            p.thumbnail,
-           JSON_ARRAYAGG(f.pathname)AS details
+           JSON_ARRAYAGG(f.pathname) AS details
         FROM
             products p
         INNER JOIN
+                brands b
+            ON b.id = p.brand_id
+        LEFT OUTER JOIN
                 product_images pi
             ON pi.product_id = p.id
-        INNER JOIN 
+        LEFT OUTER JOIN
                 files f
-            ON f.id = pi.file_id        
-        INNER JOIN
-                brands b
-            ON p.brand_id = b.id
+            ON f.id = pi.file_id
         WHERE p.id = {product_id}"""
     cursor.execute(sql)
 
