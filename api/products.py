@@ -83,7 +83,7 @@ def read_products():
            IFNULL(p.stocks, 0),
            p.thumbnail,
            JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details,
-           prog.title AS related_programs
+           JSON_ARRAYAGG(IFNULL(prog.title, '') AS related_program
         FROM
             products p
         INNER JOIN
@@ -119,6 +119,9 @@ def read_products():
         products_df['details'] = products_df['details'].apply(lambda x: [ast.literal_eval(el) for el in (list(set(x.strip('][').split(', '))))])
         products_df['details'] = products_df['details'].apply(lambda x: sorted(x, key=lambda y: y.split('/')[-1].split('_')[-1].split('.')[0]))
         products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
+        products_df['related_programs'] = products_df['related_programs'].apply(lambda x: [ast.literal_eval(el) for el in (list(set(x.strip('][').split(', '))))])
+        products_df['related_programs'] = products_df['related_programs'].apply(lambda x: sorted(x, key=lambda y: y.split('/')[-1].split('_')[-1].split('.')[0]))
+        products_df['related_programs'] = products_df['related_programs'].apply(lambda x: [] if x[0] == "" else x)
     except:
         connection.close()
         result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
@@ -167,7 +170,7 @@ def read_a_product(product_id: int):
            IFNULL(prod.stocks, 0),
            prod.thumbnail,
            JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details,
-           prog.title AS related_programs
+           JSON_ARRAYAGG(IFNULL(prog.title, '') AS related_program
         FROM
             products prod
         INNER JOIN
@@ -202,6 +205,9 @@ def read_a_product(product_id: int):
         products_df['details'] = products_df['details'].apply(lambda x: [ast.literal_eval(el) for el in list(set(x.strip('][').split(', ')))])
         products_df['details'] = products_df['details'].apply(lambda x: sorted(x, key=lambda y: y.split('/')[-1].split('_')[-1].split('.')[0]))
         products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
+        products_df['related_programs'] = products_df['related_programs'].apply(lambda x: [ast.literal_eval(el) for el in (list(set(x.strip('][').split(', '))))])
+        products_df['related_programs'] = products_df['related_programs'].apply(lambda x: sorted(x, key=lambda y: y.split('/')[-1].split('_')[-1].split('.')[0]))
+        products_df['related_programs'] = products_df['related_programs'].apply(lambda x: [] if x[0] == "" else x)
     except:
         connection.close()
         # 썸네일만 없는 경우.
