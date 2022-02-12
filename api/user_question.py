@@ -2,6 +2,7 @@ from . import api
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, parse_for_mysql, query_result_is_none
+from global_things.functions.user_question import replace_number_to_schedule
 from flask import request, url_for
 import json
 from pypika import MySQLQuery as Query, Table, Order
@@ -197,4 +198,6 @@ def read_user_question(user_id):
         connection.close()
         latest_answers = json.loads(latest_answers[0][0].replace("\\", "\\\\"), strict=False)  # To prevent decoding error.
         latest_answers['result'] = True
+
+        latest_answers['schedule'] = replace_number_to_schedule(latest_answers['schedule'])
         return json.dumps(latest_answers, ensure_ascii=False), 200
