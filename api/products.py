@@ -83,7 +83,15 @@ def read_products():
            IFNULL(p.stocks, 0),
            p.thumbnail,
            JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details,
-           JSON_ARRAYAGG(IFNULL(prog.title, '')) AS related_program
+            JSON_ARRAYAGG(
+                JSON_OBJECT(
+                    'id', prog.id,
+                    'title', prog.title,
+                    'thumbnail', (SELECT pathname FROM files WHERE id = prog.thumbnail_id),
+                    'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
+                    'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id)
+                )
+            ) AS related_program
         FROM
             products p
         INNER JOIN
@@ -175,7 +183,15 @@ def read_a_product(product_id: int):
            IFNULL(prod.stocks, 0),
            prod.thumbnail,
            JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details,
-           JSON_ARRAYAGG(IFNULL(prog.title, '')) AS related_program
+           JSON_ARRAYAGG(
+                JSON_OBJECT(
+                    'id', prog.id,
+                    'title', prog.title,
+                    'thumbnail', (SELECT pathname FROM files WHERE id = prog.thumbnail_id),
+                    'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
+                    'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id)
+                )
+            ) AS related_program
         FROM
             products prod
         INNER JOIN
