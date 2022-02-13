@@ -13,7 +13,7 @@ from pypika import MySQLQuery as Query, Criterion, Interval, Table, Field, Order
 @api.route('/assign-manager', methods=['POST'])
 def create_chat_with_manager():
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
-    endpoint = API_ROOT + url_for('api.assign-manager')
+    endpoint = API_ROOT + url_for('api.create_chat_with_manager')
     # token = request.headers['Authorization']
     parameters = json.loads(request.get_data(), encoding='utf-8')
     """Define tables required to execute SQL."""
