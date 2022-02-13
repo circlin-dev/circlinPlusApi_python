@@ -79,16 +79,6 @@ def create_chat_with_manager():
             managers.user_id == manager_id
         ])
     ).get_sql()
-    # query = f"""
-    #     SELECT
-    #         manager.chat_room_id
-    #     FROM
-    #         chat_users customer, chat_users manager
-    #     WHERE
-    #         customer.chat_room_id = manager.chat_room_id
-    #         AND customer.user_id = {user_id}
-    #         AND manager.user_id = {manager_id}"""
-
     cursor.execute(sql)
     existing_chat_room = cursor.fetchall()
 
@@ -148,16 +138,23 @@ def create_chat_with_manager():
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
             return json.dumps(result, ensure_ascii=False), 500
     else:
+        connection.close()
         chat_room_id = existing_chat_room[0][0]
+        result = {
+            'result': True,
+            'manager_id': manager_id,  # 28 = 대표님, 18 = 희정님
+            'message': 'Chatroom already exists.'
+        }
+        return json.dumps(result, ensure_ascii=False), 200
 
-    # connection.commit()
     # slack_purchase_notification(cursor, user_id, manager_id, purchase_id) # 사전설문 저장 완료 시 발송
     connection.close()
     result = {
         'result': True,
-        'manager_id':  manager_id  # 28 = 대표님, 18 = 희정님
+        'manager_id':  manager_id,  # 28 = 대표님, 18 = 희정님
+        'message': 'Created a new chatroom.'
     }
-    return json.dumps(result, ensure_ascii=False), 200
+    return json.dumps(result, ensure_ascii=False), 201
 
 
 @api.route('/purchase/<user_id>', methods=['GET'])
