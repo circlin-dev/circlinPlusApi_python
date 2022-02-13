@@ -164,7 +164,6 @@ def read_purchase_record(user_id):
     """Define tables required to execute SQL."""
     purchases = Table('purchases')
     subscribe_plans = Table('subscriptions')
-    starterkit_delivery = Table('starterkit_delivery')
 
     try:
         connection = login_to_db()
@@ -207,18 +206,11 @@ def read_purchase_record(user_id):
         purchases.buyer_email,
         purchases.buyer_name,
         purchases.buyer_tel,
-        purchases.state,
-        starterkit_delivery.post_code,
-        starterkit_delivery.address,
-        starterkit_delivery.comment
+        purchases.state
     ).join(
         subscribe_plans
     ).on(
         subscribe_plans.id == purchases.subscription_id
-    ).join(
-        starterkit_delivery
-    ).on(
-        purchases.id == starterkit_delivery.purchase_id
     ).where(
         purchases.user_id == user_id
     ).orderby(purchases.start_date).get_sql()
