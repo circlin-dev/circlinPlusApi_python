@@ -10,11 +10,10 @@ import requests
 from pypika import MySQLQuery as Query, Criterion, Interval, Table, Field, Order, functions as fn
 
 
-@api.route('/assign', methods=['POST'])
+@api.route('/assign-manager', methods=['POST'])
 def create_chat_with_manager():
-    # user_id, purchase_id
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
-    endpoint = API_ROOT + url_for('api.add_purchase')
+    endpoint = API_ROOT + url_for('api.assign-manager')
     # token = request.headers['Authorization']
     parameters = json.loads(request.get_data(), encoding='utf-8')
     """Define tables required to execute SQL."""
@@ -24,7 +23,6 @@ def create_chat_with_manager():
     chat_rooms = Table('chat_rooms')
     chat_users = Table('chat_users')
     user_id = int(parameters['user_id'])
-    # purchase_id = parameters['purchase_id']
 
     try:
         connection = login_to_db()
@@ -157,7 +155,7 @@ def create_chat_with_manager():
     connection.close()
     result = {
         'result': True,
-        'chat_room_id': chat_room_id
+        'manager_id':  manager_id  # 28 = 대표님, 18 = 희정님
     }
     return json.dumps(result, ensure_ascii=False), 200
 

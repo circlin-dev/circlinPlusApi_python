@@ -30,6 +30,14 @@ def add_user_question():
 
     # Verify if mandatory information is not null.
     if request.method == 'POST':
+        """
+        <사전 질문 검증하기>
+        (1) 배정받은 프로그램
+        (2) 기간이 끝나지 않은 이용권 Or 프로그램(무료)
+        있다면 더 이상 질문에 대한 응답을 받으면 안 된다.
+        """
+
+
         if not(user_id and purpose and sports and gender and age_group and experience_group):
             result = {
                 'result': False,
@@ -95,7 +103,6 @@ def add_user_question():
         "experience_group": experience_group,
         "disease": disease,
         "disease_detail": parse_for_mysql(disease_detail),
-        # "disease_detail": disease_detail,
         "schedule": schedule,
         "level": level
     }, ensure_ascii=False)
