@@ -7,7 +7,7 @@ from . import api
 from flask import url_for, request
 import json
 import requests
-from pypika import MySQLQuery as Query, Criterion, Interval, Table, Field, Order, functions as fn
+from pypika import MySQLQuery as Query, Criterion, Interval, Table, JoinType, Order, functions as fn
 
 
 @api.route('/assign-manager', methods=['POST'])
@@ -83,7 +83,6 @@ def create_chat_with_manager():
     existing_chat_room = cursor.fetchall()
 
     if len(existing_chat_room) == 0 or existing_chat_room == ():
-        # query = "INSERT INTO chat_rooms(created_at, updated_at) VALUES((SELECT NOW()), (SELECT NOW()))"
         sql = Query.into(
             chat_rooms
         ).columns(
@@ -109,11 +108,6 @@ def create_chat_with_manager():
             return json.dumps(result, ensure_ascii=False), 500
 
         try:
-            # query = f"""
-            #     INSERT INTO
-            #                 chat_users(created_at, updated_at, chat_room_id, user_id)
-            #         VALUES((SELECT NOW()), (SELECT NOW()), %s, %s),
-            #                 ((SELECT NOW()), (SELECT NOW()), %s, %s)"""
             sql = Query.into(
                 chat_users
             ).columns(
@@ -139,7 +133,6 @@ def create_chat_with_manager():
             return json.dumps(result, ensure_ascii=False), 500
     else:
         connection.close()
-        chat_room_id = existing_chat_room[0][0]
         result = {
             'result': True,
             'manager_id': manager_id,  # 28 = 대표님, 18 = 희정님
@@ -279,32 +272,30 @@ def add_purchase():
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.add_purchase')
     # token = request.headers['Authorization']
-    parameters = json.loads(request.get_data(), encoding='utf-8')
     """Define tables required to execute SQL."""
     purchases = Table('purchases')
-    subscribe_plans = Table('subscriptions')
-    starterkit_delivery = Table('starterkit_delivery')
+    subscriptions = Table('subscriptions')
+    discounts = Table('discounts')
     user_questions = Table('user_questions')
-    customers = Table('chat_users')
-    managers = Table('chat_users')
-    chat_rooms = Table('chat_rooms')
-    chat_users = Table('chat_users')
 
+    parameters = json.loads(request.get_data(), encoding='utf-8')
     user_id = parameters['user_id']
-    period = int(parameters['subscription_period'])
+    subscription_code = parameters['subscription_code']
+    discount_code = parameters['discount_code']
+    period = int(parameters['subscription_period'])  # Month!!!!!
     payment_info = parameters['payment_info']  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
-    delivery_info = parameters['delivery_info']
+    # delivery_info = parameters['delivery_info']
 
     # 결제 정보 변수
     imp_uid = payment_info['imp_uid']
     merchant_uid = payment_info['merchant_uid']
 
-    # # 배송 정보 변수
-    recipient_name = delivery_info['recipient_name'].strip()  # 결제자 이름
-    post_code = delivery_info['post_code'].strip()  # 스타터 키트 배송지 주소(우편번호)
-    address = delivery_info['address'].strip()  # 스타터 키트 배송지 주소(주소)
-    recipient_phone = delivery_info['recipient_phone'].strip()  # 결제자 휴대폰 번호
-    comment = parse_for_mysql(delivery_info['comment']).strip()  # 배송 요청사항
+    # # 배송 정보 변수 => node.js에서 수행
+    # recipient_name = delivery_info['recipient_name'].strip()  # 결제자 이름
+    # post_code = delivery_info['post_code'].strip()  # 스타터 키트 배송지 주소(우편번호)
+    # address = delivery_info['address'].strip()  # 스타터 키트 배송지 주소(주소)
+    # recipient_phone = delivery_info['recipient_phone'].strip()  # 결제자 휴대폰 번호
+    # comment = parse_for_mysql(delivery_info['comment']).strip()  # 배송 요청사항
 
     # 구독 기간 정보 변수
     subscription_days = 0
@@ -317,19 +308,12 @@ def add_purchase():
     elif period == 12:
         subscription_days = 365
 
-    # if not(user_id and period and recipient_phone and imp_uid and merchant_uid):
-    #     result = {
-    #         'result': False,
-    #         'error': f'Missing data in request.',
-    #         'values': {
-    #             'period': period,
-    #             'user_id': user_id,
-    #             'recipient_phone': recipient_phone,
-    #             'imp_uid': imp_uid,
-    #             'merchant_uid': merchant_uid,
-    #         }
-    #     }
-    #     return json.dumps(result, ensure_ascii=False), 400
+    if not(user_id and period and imp_uid and merchant_uid):
+        result = {
+            'result': False,
+            'error': f'Missing data in request: user_id: ({user_id}), subscription_period: ({period}), imp_uid:({imp_uid}, merchant_uid: {merchant_uid})'
+        }
+        return json.dumps(result, ensure_ascii=False), 400
 
     # 1. 유저 정보 확인
     try:
@@ -382,23 +366,28 @@ def add_purchase():
     # 3. 결제 정보 검증(DB ~ import 결제액)
     """
     보완사항
-    (1) 결제 검증 수단: payment_info의 name값으로만 비교 중.
-      ==> 기구 렌탈 여부, 할인권 적용, 구독 기간 등의 정보 고려하여 올바르게 계산하도록 보완해야 함!
-    (2) 결제 검증 수단: sales_price와 user_paid_amount의 비교는 테스트 결제액인 1004원으로 비교중.
-      ==> 결제 가격 체계를 보완하여 1004원을 실제 판매가인 sales_price로 변경해야 함!
-    (3) 기존 결제한 플랜의 기간이 만료되지 않은 상태에서의 결제 막기
-      ==> IMPORT 모듈을 이용하는 현재 구조상 클라이언트에서 처리해야 할듯
-    (4) 결제 검증 실패 시 기결제된 내용 환불하기
+    (1) 결제 검증 수단 추가: subscription price, sales price, discount_id VS import 결제 정보
+    (2) (1) 바탕으로 결제 검증 로직
     """
-
     sql = Query.from_(
-        subscribe_plans
+        subscriptions
     ).select(
-        subscribe_plans.id,
-        subscribe_plans.sales_price
+        subscriptions.id,
+        subscriptions.title,
+        subscriptions.price,
+        subscriptions.sales_price,
+        subscriptions.period_days,
+        subscriptions.discount_id,
+        discounts.title,
+        discounts.method,
+        discounts.value,
+    ).join(
+        discounts, JoinType.left_outer
+    ).on(
+        discounts.id == subscriptions.discount_id
     ).where(
-        subscribe_plans.title == user_subscribed_plan
-    )
+        subscriptions.code == subscription_code
+    ).get_sql()
     cursor.execute(sql.get_sql())
 
     subscription_information = cursor.fetchall()
@@ -434,7 +423,7 @@ def add_purchase():
 
         connection.close()
         refund_reason = "[결제검증 실패]: 결제 요청된 플랜명과 일치하는 플랜명이 없습니다."
-        refund_result = request_import_refund(access_token, imp_uid, merchant_uid, user_paid_amount, user_subscribed_plan, refund_reason)
+        refund_result = request_import_refund(access_token, imp_uid, merchant_uid, user_paid_amount, user_paid_amount, refund_reason)
         if refund_result['code'] == 0:
             result = {'result': False,
                       'error': f"결제 검증 실패(주문 플랜명 불일치), 환불처리 성공(imp_uid: {imp_uid}, merchant_uid: {merchant_uid})."}
@@ -442,13 +431,13 @@ def add_purchase():
             return json.dumps(result, ensure_ascii=False), 400
         else:
             result = {'result': False,
-                      'error': f"결제 검증 실패(주문 플랜명 불일치), 다음 사유로 인해 환불처리 실패하였으니 아임포트 어드민에서 직접 취소 요망(imp_uid: {imp_uid}, merchant_uid: {merchant_uid}) : {refund_result['message']}"}
+                      'error': f"결제 검증 실패(주문 플랜명 불일치), 다음 사유로 인해 환불처리 실패하여 아임포트 어드민에서 직접 취소 요망(imp_uid: {imp_uid}, merchant_uid: {merchant_uid}) : {refund_result['message']}"}
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
             return json.dumps(result, ensure_ascii=False), 400
     else:
         pass
 
-    actual_amount = amount_to_be_paid(user_subscribed_plan)
+    actual_amount, discount_id = amount_to_be_paid(subscription_information)
     if actual_amount != user_paid_amount:  # Test value(actual_amount): 1004
         """
         1. '부분환불' 도입 시
@@ -500,13 +489,9 @@ def add_purchase():
     else:
         pass
 
-    # 4. 결제 정보(-> purchases), 배송 정보(starterkit_delivery) 저장
-    """
-    기구 신청을 했을 경우, 기구 신청 내역을 저장하는 쿼리를 만들어야 함!
-    """
-
+    # 4. 결제 정보(-> purchases) 저장
     subscription_id = subscription_information[0][0]
-    sales_price = subscription_information[0][1]
+    sales_price = subscription_information[0][3]
     sql = Query.update(
         purchases
     ).set(
@@ -517,26 +502,15 @@ def add_purchase():
         purchases.start_date, fn.Now()
     ).set(
         purchases.expire_date, fn.Now() + Interval(days=subscription_days)
+    ).set(
+        purchases.discount_id, discount_id
     ).where(
         Criterion.all([
             purchases.imp_uid == imp_uid,
             purchases.merchant_uid == merchant_uid
         ])
     ).get_sql()
-    # for key in key_values:
-    #     sql.set(key, key_values[key])
-    # query = f"""
-    #     UPDATE
-    #           purchases
-    #       SET
-    #           user_id=%s,
-    #           plan_id=(SELECT id FROM subscribe_plans WHERE title=%s),
-    #           start_date=(SELECT NOW()),
-    #           expire_date=(SELECT NOW() + INTERVAL {subscription_days} DAY)
-    #     WHERE imp_uid=%s
-    #       AND merchant_uid=%s"""
-    # values = (int(user_id), user_subscribed_plan, imp_uid, merchant_uid)
-    # user_id, payment_info, delivery_info
+
     try:
         cursor.execute(sql)
         connection.commit()
@@ -567,30 +541,32 @@ def add_purchase():
 
     # slack_purchase_notification(cursor, user_id, purchase_id)  # 사전설문 저장 완료 시 발송
     connection.close()
+    result = {'result': True}
+    return json.dumps(result, ensure_ascii=False), 201
 
-    # 스타터키트 배송지 정보 node.js 서버로 전송
-    response = requests.post(
-        f"{API_NODEJS_SERVER}",
-        json.dumps({
-            'recipient_name': recipient_name,
-            'post_code': post_code,
-            'address': address,
-            'recipient_phone': recipient_phone,
-            'comment': comment
-        }, ensure_ascii=False).encode('utf-8'))
-
-    if response['result'] is not True:
-        result = {
-            "result": False,
-            "message": "Successed purchasing subscription, but faild to send delivery information to node.js server."
-        }
-        return json.dumps(result, ensure_ascii=False), 200
-    else:
-        result = {
-            "result": True,
-            "message": "Successed purchasing & sending delivery information."
-        }
-        return json.dumps(result, ensure_ascii=False), 200
+    # # 스타터키트 배송지 정보 node.js 서버로 전송
+    # response = requests.post(
+    #     f"{API_NODEJS_SERVER}",
+    #     json.dumps({
+    #         'recipient_name': recipient_name,
+    #         'post_code': post_code,
+    #         'address': address,
+    #         'recipient_phone': recipient_phone,
+    #         'comment': comment
+    #     }, ensure_ascii=False).encode('utf-8'))
+    #
+    # if response['result'] is not True:
+    #     result = {
+    #         "result": False,
+    #         "message": "Successed purchasing subscription, but faild to send delivery information to node.js server."
+    #     }
+    #     return json.dumps(result, ensure_ascii=False), 200
+    # else:
+    #     result = {
+    #         "result": True,
+    #         "message": "Successed purchasing & sending delivery information."
+    #     }
+    #     return json.dumps(result, ensure_ascii=False), 200
 
 
     # sql = Query.into(
@@ -846,6 +822,7 @@ def update_payment_state_by_webhook():
         # values = (import_paid_amount, imp_uid,
         #           merchant_uid, payment_state,
         #           buyer_email, buyer_name, buyer_tel)
+
         sql = Query.into(
             purchases
         ).columns(
@@ -885,16 +862,16 @@ def update_payment_state_by_webhook():
     else:  # 결제 취소 이벤트가 아임포트 어드민(https://admin.iamport.kr/)에서 "취소하기" 버튼을 클릭하여 발생한 경우에만 트리거됨.
         if int(db_paid_amount[0][0]) == int(import_paid_amount):
             if updated_state == 'cancelled':
-                query = f"""
-                    UPDATE 
-                          purchases
-                      SET 
-                          state=%s, 
-                          deleted_at=(SELECT NOW())
-                    WHERE 
-                          imp_uid=%s 
-                      AND merchant_uid=%s"""
-                values = (updated_state, imp_uid, merchant_uid)
+                # query = f"""
+                #     UPDATE
+                #           purchases
+                #       SET
+                #           state=%s,
+                #           deleted_at=(SELECT NOW())
+                #     WHERE
+                #           imp_uid=%s
+                #       AND merchant_uid=%s"""
+                # values = (updated_state, imp_uid, merchant_uid)
                 sql = Query.update(
                     purchases
                 ).set(

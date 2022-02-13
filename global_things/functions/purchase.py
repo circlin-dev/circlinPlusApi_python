@@ -1,6 +1,8 @@
+from global_things.functions.general import login_to_db
+from global_things.functions.slack import slack_error_notification
 import json
+from pypika import MySQLQuery as Query, Table, Order
 import requests
-
 
 def get_import_access_token(api_key: str, api_secret: str):
     response = requests.post(
@@ -22,23 +24,23 @@ def get_import_access_token(api_key: str, api_secret: str):
         return json.dumps(result, ensure_ascii=False)
 
 
-def amount_to_be_paid(plan_name: str):
-    """
-    Must add purchase options as parameter!
+def amount_to_be_paid(subscription_information):
+    """ user_paid_amount는 검증 로직 완료 시 반드시 빠져야 할 부분이다."""
+    # 1원 단위에서 내림 계산
 
-    :return: Total amount to be paid(int).
-    Calculate sales price by purchase options.
-    """
-    if plan_name == "써클인플러스 1개월 회원권":
-        return 60000  # 60000/month
-    elif plan_name == "써클인플러스 3개월 회원권":
-        return 89700  # 29900/month
-    elif plan_name == "써클인플러스 6개월 회원권":
-        return 149400  # 24900/month
-    elif plan_name == "써클인플러스 12개월 회원권":
-        return 238800  # 19900/month
+    # method == percent: price * (1 - (value * 0.01)) == sales_price (user_paid_amount) # 1의 자리에서 반올림
+    # method == amount: price -
+    # method == None: sales_price == user_paid_amount
+    subscription_id, subscription_title, price, sales_price, period_days, discount_id, discount_title, method, value = subscription_information[0]
+
+    if method == 'percent':
+        to_be_paid = round(price * (1 - (value * 0.01)), -1)  # 1의 자리에서 '반올림'
+        return to_be_paid, discount_id
+    elif method == '':
+        to_be_paid = price - value
+        return to_be_paid, discount_id
     else:
-        return None
+        return sales_price, discount_id
 
 
 def request_import_refund(access_token: str, imp_uid: str, merchant_uid: str, amount: int, checksum: int, reason: str):
@@ -50,6 +52,6 @@ def request_import_refund(access_token: str, imp_uid: str, merchant_uid: str, am
             "imp_uid": imp_uid,
             "merchant_uid": merchant_uid,
             "amount": amount,  # 미입력 시 전액 환불됨
-            "checksum": checksum,  # 환불 가능금액: 부분환불이 도입될 경우 DB상의 '현재 환불 가능액'을 체크할 것.
+            # "checksum": checksum,  # 환불 가능금액: 부분환불이 도입될 경우 DB상의 '현재 환불 가능액'을 체크할 것.
         }).json()
     return response

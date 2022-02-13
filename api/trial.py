@@ -63,10 +63,10 @@ def add_trial():
     # data['sports']   # => 리스트 타입
     # data['gender']   # 문자열: M, W
     #
-    # data['intensity']  # 문자열: 고, 중, 저
+    # data['level']  # 문자열: 고, 중, 저
 
     """case: 1 ~ 19"""
-    # case 6: 피트니스, 여자, 저강도를 기준으로 입력
+    # case 9: 필라테스, 남자, 저강도를 기준으로 입력
 
     # dict = {
     #     'day': 1,
