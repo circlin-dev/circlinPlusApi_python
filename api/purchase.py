@@ -221,8 +221,8 @@ def read_purchase_record(user_id):
         purchases.id == starterkit_delivery.purchase_id
     ).where(
         purchases.user_id == user_id
-    ).orderby(purchases.start_date)
-    cursor.execute(sql.get_sql())
+    ).orderby(purchases.start_date).get_sql()
+    cursor.execute(sql)
     purchase_records = cursor.fetchall()
     if query_result_is_none(purchase_records) is True:
         connection.close()
@@ -388,7 +388,7 @@ def add_purchase():
     ).where(
         subscriptions.code == subscription_code
     ).get_sql()
-    cursor.execute(sql.get_sql())
+    cursor.execute(sql)
 
     subscription_information = cursor.fetchall()
 
@@ -407,8 +407,8 @@ def add_purchase():
                     purchases.imp_uid == imp_uid,
                     purchases.merchant_uid == merchant_uid
                 ])
-            )
-            cursor.execute(sql.get_sql())
+            ).get_sql()
+            cursor.execute(sql)
             connection.commit()
         except Exception as e:
             connection.rollback()
@@ -438,7 +438,7 @@ def add_purchase():
         pass
 
     actual_amount, discount_id = amount_to_be_paid(subscription_information)
-    if actual_amount != user_paid_amount:  # Test value(actual_amount): 1004
+    if actual_amount != user_paid_amount:
         """
         1. '부분환불' 도입 시
             - DB에 canceled_amount 추가하기.
@@ -462,8 +462,8 @@ def add_purchase():
                         purchases.imp_uid == imp_uid,
                         purchases.merchant_uid == merchant_uid
                     ])
-                )
-                cursor.execute(sql.get_sql())
+                ).get_sql()
+                cursor.execute(sql)
                 connection.commit()
             except Exception as e:
                 connection.rollback()
@@ -525,80 +525,10 @@ def add_purchase():
         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
         return json.dumps(result, ensure_ascii=False), 500
 
-    # query = f"SELECT p.id FROM purchases p WHERE p.imp_uid=%s AND p.merchant_uid=%s"
-    sql = Query.from_(
-        purchases
-    ).select(
-        purchases.id
-    ).where(
-        Criterion.all([
-            purchases.imp_uid == imp_uid,
-            purchases.merchant_uid == merchant_uid
-        ])
-    ).get_sql()
-    cursor.execute(sql)
-    purchase_id = cursor.fetchall()[0][0]
-
     # slack_purchase_notification(cursor, user_id, purchase_id)  # 사전설문 저장 완료 시 발송
     connection.close()
     result = {'result': True}
     return json.dumps(result, ensure_ascii=False), 201
-
-    # # 스타터키트 배송지 정보 node.js 서버로 전송
-    # response = requests.post(
-    #     f"{API_NODEJS_SERVER}",
-    #     json.dumps({
-    #         'recipient_name': recipient_name,
-    #         'post_code': post_code,
-    #         'address': address,
-    #         'recipient_phone': recipient_phone,
-    #         'comment': comment
-    #     }, ensure_ascii=False).encode('utf-8'))
-    #
-    # if response['result'] is not True:
-    #     result = {
-    #         "result": False,
-    #         "message": "Successed purchasing subscription, but faild to send delivery information to node.js server."
-    #     }
-    #     return json.dumps(result, ensure_ascii=False), 200
-    # else:
-    #     result = {
-    #         "result": True,
-    #         "message": "Successed purchasing & sending delivery information."
-    #     }
-    #     return json.dumps(result, ensure_ascii=False), 200
-
-
-    # sql = Query.into(
-    #     starterkit_delivery
-    # ).columns(
-    #     starterkit_delivery.purchase_id,
-    #     starterkit_delivery.post_code,
-    #     starterkit_delivery.address,
-    #     starterkit_delivery.recipient_name,
-    #     starterkit_delivery.recipient_phone,
-    #     starterkit_delivery.comment
-    # ).insert(
-    #     purchase_id,
-    #     post_code,
-    #     address,
-    #     recipient_name,
-    #     recipient_phone,
-    #     comment
-    # ).get_sql()
-    # try:
-    #     cursor.execute(sql)
-    #     connection.commit()
-    # except Exception as e:
-    #     connection.rollback()
-    #     connection.close()
-    #     error = str(e)
-    #     result = {
-    #         'result': False,
-    #         'error': f'Server error while executing INSERT query(starterkit_delivery): {error}'
-    #     }
-    #     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
-    #     return json.dumps(result, ensure_ascii=False), 500
 
     # 5. 채팅방 생성 or 조회하여 채팅방 id 리턴
     """
@@ -804,8 +734,8 @@ def update_payment_state_by_webhook():
             purchases.imp_uid == imp_uid,
             purchases.merchant_uid == merchant_uid
         ])
-    )
-    cursor.execute(sql.get_sql())
+    ).get_sql()
+    cursor.execute(sql)
     db_paid_amount = cursor.fetchall()
 
     if query_result_is_none(db_paid_amount) is True:   # 2. 결제 정보 조회(import)
@@ -841,10 +771,10 @@ def update_payment_state_by_webhook():
             buyer_email,
             buyer_name,
             buyer_tel
-        )
+        ).get_sql()
         # user_id, payment_info, delivery_info
         try:
-            cursor.execute(sql.get_sql())
+            cursor.execute(sql)
             connection.commit()
             connection.close()
             result = {'result': True}
@@ -883,8 +813,8 @@ def update_payment_state_by_webhook():
                         purchases.imp_uid == imp_uid,
                         purchases.merchant_uid == merchant_uid
                     ])
-                )
-                cursor.execute(sql.get_sql())
+                ).get_sql()
+                cursor.execute(sql)
             else:
                 pass
             connection.commit()
