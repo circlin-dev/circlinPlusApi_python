@@ -117,6 +117,7 @@ def add_user_question():
     try:
         cursor.execute(sql)
         connection.commit()
+        user_question_id = int(cursor.lastrowid)  # 사전설문 데이터 저장 후 client에 반환, 무료 체험 프로그램 배정 시 다시 parameter로 전송받음.
     except Exception as e:
         connection.rollback()
         connection.close()
@@ -129,7 +130,7 @@ def add_user_question():
         return json.dumps(result, ensure_ascii=False), 500
 
     connection.close()
-    result = {'result': True}
+    result = {'result': True, 'user_question_id': user_question_id}
     return json.dumps(result, ensure_ascii=False), 201
 
 
