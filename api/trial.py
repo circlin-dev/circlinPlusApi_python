@@ -5,7 +5,7 @@ from global_things.functions.general import login_to_db, check_session, query_re
 from global_things.functions.trial import TRIAL_DICTIONARY
 from flask import request, url_for
 import json
-from pypika import MySQLQuery as Query, Table, Order
+from pypika import MySQLQuery as Query, Table, Criterion
 
 
 @api.route('/trial', methods=['POST'])  # 매니저 배정 리턴값을 받은 후!
@@ -52,8 +52,10 @@ def create_trial():
     ).select(
         user_questions.data
     ).where(
-        user_questions.user_id == user_id,
-        user_questions.id == user_question_id
+        Criterion.all([
+            user_questions.user_id == user_id,
+            user_questions.id == user_question_id
+        ])
     ).get_sql()
     cursor.execute(sql)
     data = cursor.fetchall()
@@ -91,6 +93,7 @@ def create_trial():
             ON l.id = ul.lecture_id
         WHERE user_id={user_id}
         AND l.program_id IS NULL
+        AND ul.deleted_at IS NOT NULL
     """
     cursor.execute(sql)
     free_lecture_on_progress = cursor.fetchall()

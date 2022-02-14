@@ -378,6 +378,7 @@ def add_purchase():
 
     if query_result_is_none(subscription_information) is True:
         try:
+            ###### 이거 왜 하지?
             sql = Query.update(
                 purchases
             ).set(
