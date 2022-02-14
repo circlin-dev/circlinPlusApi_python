@@ -112,13 +112,13 @@ def create_trial():
         INSERT INTO
             user_lectures(user_id, lecture_id, level, scheduled_at)
         VALUES
-            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, NOW() + INTERVAL DAY {week_routines[0]['day']}),
-            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, NOW() + INTERVAL DAY {week_routines[1]['day']}),
-            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, NOW() + INTERVAL DAY {week_routines[2]['day']}),
-            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, NOW() + INTERVAL DAY {week_routines[3]['day']}),
-            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, NOW() + INTERVAL DAY {week_routines[4]['day']}),
-            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, NOW() + INTERVAL DAY {week_routines[5]['day']}),
-            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, NOW() + INTERVAL DAY {week_routines[6]['day']})"""
+            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT(NOW() + INTERVAL {week_routines[0]['day']} DAY)),
+            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT(NOW()) + INTERVAL {week_routines[1]['day']} DAY)),
+            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT(NOW()) + INTERVAL {week_routines[2]['day']} DAY)),
+            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT(NOW()) + INTERVAL {week_routines[3]['day']} DAY)),
+            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT(NOW()) + INTERVAL {week_routines[4]['day']} DAY)),
+            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT(NOW()) + INTERVAL {week_routines[5]['day']} DAY)),
+            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT(NOW()) + INTERVAL {week_routines[6]['day']} DAY))"""
     values = (week_routines[0]['title'], week_routines[1]['title'], week_routines[2]['title'],
               week_routines[3]['title'], week_routines[4]['title'], week_routines[5]['title'],
               week_routines[6]['title'])
