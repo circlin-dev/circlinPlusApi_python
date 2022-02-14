@@ -355,7 +355,7 @@ def update_payment_state_by_webhook():
                 'result': False,
                 'error': f'Server error while validating : {error}'
             }
-            slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'], query=sql.get_sql())
+            slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'], query=sql)
             return json.dumps(result, ensure_ascii=False), 500
     else:
         # 결제 취소 이벤트가 아임포트 어드민(https://admin.iamport.kr/)에서 "취소하기" 버튼을 클릭하여 발생한 경우에만 트리거됨.
@@ -537,7 +537,7 @@ def add_subscription_order():
                 'result': False,
                 'error': f'Server error while validating : {error}'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
             return json.dumps(result, ensure_ascii=False), 500
     else:
         pass
@@ -592,7 +592,7 @@ def add_subscription_order():
                     'result': False,
                     'error': f'Server error while validating : {error}'
                 }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
                 return json.dumps(result, ensure_ascii=False), 500
             connection.close()
             result = {'result': False,
