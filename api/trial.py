@@ -64,7 +64,7 @@ def create_trial():
         connection.close()
         result = {
             'result': False,
-            'message': 'Failed to create 1 week free trial(Cannot fine user or user_question data).'
+            'message': 'Failed to create 1 week free trial(Cannot find user or user_question data).'
         }
         return json.dumps(result, ensure_ascii=False), 400
 

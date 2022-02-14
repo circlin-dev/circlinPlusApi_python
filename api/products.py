@@ -78,8 +78,8 @@ def read_products():
            p.title as name,
            p.description,
            b.title as brand_name,
-           p.price as price_origin,
-           p.sales_price as price_sales,
+           p.original_price as original_price,
+           p.price as price,
            IFNULL(p.stocks, 0),
            p.thumbnail,
            JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details,
@@ -121,7 +121,7 @@ def read_products():
 
     products_df = pd.DataFrame(result, columns=['id', 'type', 'code',
                                                 'name', 'description', 'brand_name',
-                                                'price_origin', 'price_sales', 'quantity',
+                                                'original_price', 'price', 'quantity',
                                                 'thumbnail', 'details', 'related_program'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
@@ -178,8 +178,8 @@ def read_a_product(product_id: int):
            prod.title as name,
            prod.description,
            b.title as brand_name,
-           prod.price as price_origin,
-           prod.sales_price as price_sales,
+           prod.original_price as original_price,
+           prod.price as price,
            IFNULL(prod.stocks, 0),
            prod.thumbnail,
            JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details,
@@ -220,7 +220,7 @@ def read_a_product(product_id: int):
 
     products_df = pd.DataFrame(result, columns=['id', 'type', 'code',
                                                 'name', 'description', 'brand_name',
-                                                'price_origin', 'price_sales', 'quantity',
+                                                'original_price', 'price', 'quantity',
                                                 'thumbnail', 'details', 'related_program'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
