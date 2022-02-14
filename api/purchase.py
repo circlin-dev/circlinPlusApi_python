@@ -241,15 +241,7 @@ def read_purchase_record(user_id):
                              "buyer_email": data[8],  # 결제자 이메일
                              "buyer_name": data[9],  # 결제자 이름
                              "buyer_phone": data[10],  # 결제자 전화번호
-                             "state": data[11],
-                             "installment": "일시불",  # 이용권
-                             "interest_free_installment": "해당없음",  # 무이자 할부 여부(일시불은 무조건 해당 없음
-                             "option": "비렌탈"  # 선택옵션
-                         },
-                         "delivery_information": {
-                             "recipient_postcode": data[12],  # 배송지 우편번호
-                             "recipient_address": data[13],  # 배송지 주소
-                             "recipient_comment": data[14],
+                             "state": data[11]
                          }}
             result_list.append(each_dict)
         result_dict = {
