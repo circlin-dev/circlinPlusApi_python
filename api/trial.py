@@ -2,6 +2,7 @@ from . import api
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
+from global_things.functions.trial import TRIAL_DICTIONARY
 from flask import request, url_for
 import json
 from pypika import MySQLQuery as Query, Table, Order
@@ -15,6 +16,7 @@ def create_trial():
     parameters = json.loads(request.get_data(), encoding='utf-8')
     user_id = parameters['user_id']
     user_question_id = parameters['user_question_id']
+
     """Define tables required to execute SQL."""
     user_questions = Table('user_questions')
     user_lectures = Table('user_lectures')
@@ -53,25 +55,89 @@ def create_trial():
         user_questions.user_id == user_id,
         user_questions.id == user_question_id
     ).get_sql()
-
     cursor.execute(sql)
     data = cursor.fetchall()
-    data = json.loads(data[0][0].replace("\\", "\\\\"), strict=False)  # To prevent decoding error.
+    # 검증 1: 사전설문 응답값 테이블에 전달받은 user id, id값에 해당하는 데이터가 있는지 여부
+    if query_result_is_none(data) is True:
+        connection.close()
+        result = {
+            'result': False,
+            'message': 'Failed to create 1 week free trial(Cannot fine user or user_question data).'
+        }
+        return json.dumps(result, ensure_ascii=False), 400
 
-    gender = data['gender']  # M , W
-    selected_exercise = data['sports'][0]  # list with string
+    answer = json.loads(data[0][0].replace("\\", "\\\\"), strict=False)  # To prevent decoding error.
+    gender = answer['gender']  # M , W
+    selected_exercise = answer['sports'][0]  # list with string
     selected_level = 0
-    if data['level'] == '저':
+    if answer['level'] == '저':
         pass
-    elif data['level'] == '중':
+    elif answer['level'] == '중':
         selected_level = 1
     else:
         selected_level = 2
 
-    return ''
     # case 4(피트니스, 여자, 고강도), 5(피트니스, 여자, 중강도), 6(피트니스, 여자, 저강도) => 7일치 모두 완료
     # case 9: 필라테스, 남자, 저강도를 기준으로 입력
     # 'guide'는 원래 있던 것, 'drill'은 새로 만든(무료)로! => user_lecture 만드는 로직 여쭤보기
+    sql = f"""
+        SELECT 
+            ul.lecture_id,
+            l.program_id 
+        FROM 
+            user_lectures ul
+        INNER JOIN
+            lectures l
+            ON l.id = ul.lecture_id
+        WHERE user_id={user_id}
+        AND l.program_id IS NULL
+    """
+    cursor.execute(sql)
+    free_lecture_on_progress = cursor.fetchall()
+    # 검증 2: 유저가 이미 무료 강의들을 배정받은 기록이 있는지 여부
+    if query_result_is_none(free_lecture_on_progress) is False:
+        connection.close()
+        result = {
+            'result': False,
+            'message': 'Failed to create 1 week free trial(1 week free trial already exists).'
+        }
+        return json.dumps(result, ensure_ascii=False), 400
+
+    week_routines = TRIAL_DICTIONARY[selected_exercise][gender]  # list
+    week_routines = sorted(week_routines, key=lambda x: x['day'])
+    sql = f"""
+        INSERT INTO
+            user_lectures(user_id, lecture_id, level, scheduled_at)
+        VALUES
+            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, NOW() + INTERVAL DAY {week_routines[0]['day']}),
+            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, NOW() + INTERVAL DAY {week_routines[1]['day']}),
+            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, NOW() + INTERVAL DAY {week_routines[2]['day']}),
+            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, NOW() + INTERVAL DAY {week_routines[3]['day']}),
+            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, NOW() + INTERVAL DAY {week_routines[4]['day']}),
+            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, NOW() + INTERVAL DAY {week_routines[5]['day']}),
+            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, NOW() + INTERVAL DAY {week_routines[6]['day']})"""
+    values = (week_routines[0]['title'], week_routines[1]['title'], week_routines[2]['title'],
+              week_routines[3]['title'], week_routines[4]['title'], week_routines[5]['title'],
+              week_routines[6]['title'])
+    try:
+        cursor.execute(sql, values)
+        connection.commit()
+    except Exception as e:
+        connection.rollback()
+        connection.close()
+        error = str(e)
+        result = {
+            'result': False,
+            'error': f'Server Error while executing INSERT query(user_questions): {error}'
+        }
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+        return json.dumps(result, ensure_ascii=False), 500
+
+    connection.close()
+    result = {'result': True, 'message': 'Created 7 days free trial routine.'}
+
+    return json.dumps(result, ensure_ascii=False), 201
+
 
 
 
