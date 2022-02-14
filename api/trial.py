@@ -93,7 +93,7 @@ def create_trial():
             ON l.id = ul.lecture_id
         WHERE user_id={user_id}
         AND l.program_id IS NULL
-        AND ul.deleted_at IS NOT NULL
+        AND ul.deleted_at IS NULL
     """
     cursor.execute(sql)
     free_lecture_on_progress = cursor.fetchall()
