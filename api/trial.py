@@ -110,15 +110,15 @@ def create_trial():
     week_routines = sorted(week_routines, key=lambda x: x['day'])
     sql = f"""
         INSERT INTO
-            user_lectures(user_id, lecture_id, level, scheduled_at)
+            user_lectures(created_at, updated_at, user_id, lecture_id, level, scheduled_at)
         VALUES
-            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT NOW() + INTERVAL {week_routines[0]['day']} DAY)),
-            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT NOW() + INTERVAL {week_routines[1]['day']} DAY)),
-            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT NOW() + INTERVAL {week_routines[2]['day']} DAY)),
-            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT NOW() + INTERVAL {week_routines[3]['day']} DAY)),
-            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT NOW() + INTERVAL {week_routines[4]['day']} DAY)),
-            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT NOW() + INTERVAL {week_routines[5]['day']} DAY)),
-            ({user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT NOW() + INTERVAL {week_routines[6]['day']} DAY))"""
+            ((SELECT NOW()), (SELECT NOW()), {user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT NOW() + INTERVAL {week_routines[0]['day']} DAY)),
+            ((SELECT NOW()), (SELECT NOW()), {user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT NOW() + INTERVAL {week_routines[1]['day']} DAY)),
+            ((SELECT NOW()), (SELECT NOW()), {user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT NOW() + INTERVAL {week_routines[2]['day']} DAY)),
+            ((SELECT NOW()), (SELECT NOW()), {user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT NOW() + INTERVAL {week_routines[3]['day']} DAY)),
+            ((SELECT NOW()), (SELECT NOW()), {user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT NOW() + INTERVAL {week_routines[4]['day']} DAY)),
+            ((SELECT NOW()), (SELECT NOW()), {user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT NOW() + INTERVAL {week_routines[5]['day']} DAY)),
+            ((SELECT NOW()), (SELECT NOW()), {user_id}, (SELECT id FROM lectures WHERE title=%s), {selected_level}, (SELECT NOW() + INTERVAL {week_routines[6]['day']} DAY))"""
     values = (week_routines[0]['title'], week_routines[1]['title'], week_routines[2]['title'],
               week_routines[3]['title'], week_routines[4]['title'], week_routines[5]['title'],
               week_routines[6]['title'])
