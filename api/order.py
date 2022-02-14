@@ -1,13 +1,13 @@
 from global_things.constants import API_ROOT, API_NODEJS_SERVER
 from global_things.functions.slack import slack_error_notification, slack_purchase_notification
-from global_things.functions.general import login_to_db, check_session, parse_for_mysql, query_result_is_none
+from global_things.functions.general import login_to_db, check_session, query_result_is_none
 from global_things.functions.order import amount_to_be_paid, get_import_access_token, request_import_refund
 from global_things.constants import IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET
 from . import api
 from flask import url_for, request
 import json
 import requests
-from pypika import MySQLQuery as Query, Criterion, Interval, Table, JoinType, Order, functions as fn
+from pypika import MySQLQuery as Query, Criterion, Table, JoinType, Order, functions as fn
 
 
 @api.route('/assign-manager', methods=['POST'])
@@ -396,7 +396,6 @@ def add_subscription_order():
     endpoint = API_ROOT + url_for('api.add_subscription_order')
     # token = request.headers['Authorization']
     """Define tables required to execute SQL."""
-    # purchases = Table('purchases')
     orders = Table('orders')
     order_products = Table('order_products')
     order_product_deliveries = Table('order_product_delivery')
@@ -500,7 +499,6 @@ def add_subscription_order():
     subscription_information = cursor.fetchall()
     if query_result_is_none(subscription_information) is True:
         try:
-            ###### 이거 왜 하지?
             sql = Query.update(
                 orders
             ).set(
