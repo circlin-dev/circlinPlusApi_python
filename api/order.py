@@ -612,8 +612,8 @@ def add_subscription_order():
         pass
 
     # 4. 결제 정보(-> purchases) 저장
-    subscription_id = subscription_information[0][0]
-
+    # subscription_id = subscription_information[0][0]
+    # sql
 
 
     # sql = Query.update(

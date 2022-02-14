@@ -476,7 +476,6 @@ def add_purchase():
 
     # 4. 결제 정보(-> purchases) 저장
     subscription_id = subscription_information[0][0]
-    sales_price = subscription_information[0][3]
     sql = Query.update(
         purchases
     ).set(
