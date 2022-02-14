@@ -288,6 +288,7 @@ def update_payment_state_by_webhook():
     imp_uid = parameters['imp_uid']
     merchant_uid = parameters['merchant_uid']
     updated_state = parameters['status']
+    user_id = int(merchant_uid.split('_')[-1])
 
     # 2. import에서 결제 정보 조회
     get_token = json.loads(get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET))
@@ -328,12 +329,14 @@ def update_payment_state_by_webhook():
         sql = Query.into(
             orders
         ).columns(
+            orders.user_id,
             orders.total_price,
             orders.method,
             orders.imp_uid,
             orders.merchant_uid,
             orders.status
         ).insert(
+            user_id,
             import_paid_amount,
             method,
             imp_uid,

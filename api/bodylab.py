@@ -115,9 +115,9 @@ def add_weekly_data():
             bmi,
             muscle_mass,
             fat_mass
-        )
+        ).get_sql()
         try:
-            cursor.execute(sql.get_sql())
+            cursor.execute(sql)
         except Exception as e:
             connection.rollback()
             connection.close()
@@ -126,7 +126,7 @@ def add_weekly_data():
                 'result': False,
                 'error': f'Server Error while executing INSERT query(bodylabs): {error}'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
             return json.dumps(result, ensure_ascii=False), 500
 
         # Get users latest bodylab data = User's data inserted just before.
@@ -147,9 +147,9 @@ def add_weekly_data():
             bodylabs.user_id == user_id
         ).orderby(
             bodylabs.id, order=Order.desc
-        ).limit(1)
+        ).limit(1).get_sql()
 
-        cursor.execute(sql.get_sql())
+        cursor.execute(sql)
         latest_bodylab_id_tuple = cursor.fetchall()
         if query_result_is_none(latest_bodylab_id_tuple) is True:
             connection.rollback()
@@ -158,7 +158,7 @@ def add_weekly_data():
                 'result': False,
                 'error': f'Cannot find requested bodylab data of user(id: {user_id})(bodylab)'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
             return json.dumps(result, ensure_ascii=False), 400
         else:
             latest_bodylab_id = latest_bodylab_id_tuple[0][0]
@@ -197,7 +197,7 @@ def add_weekly_data():
                 analyze_result['hip_center_to_ankle_center'],
                 analyze_result['whole_body_length'],
                 analyze_result['upper_body_lower_body']
-            )
+            ).get_sql()
         #     query = f" \
         # INSERT INTO bodylab_image \
         #         (bodylab_id, original_url, \
@@ -219,7 +219,7 @@ def add_weekly_data():
         #               analyze_result['shoulder_center_to_hip_center'], analyze_result['hip_center_to_ankle_center'],
         #               analyze_result['whole_body_length'], analyze_result['upper_body_lower_body'])
             try:
-                cursor.execute(sql.get_sql())
+                cursor.execute(sql)
             except Exception as e:
                 connection.rollback()
                 connection.close()
@@ -228,7 +228,7 @@ def add_weekly_data():
                     'result': False,
                     'error': f'Server error while executing INSERT query(bodylab_image): {error}'
                 }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
                 return json.dumps(result, ensure_ascii=False), 400
 
             connection.commit()
@@ -242,7 +242,7 @@ def add_weekly_data():
                 'result': False,
                 'error': f"Failed to analysis requested image({body_image}): {body_analysis_result_json['error']}"
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
             return json.dumps(result, ensure_ascii=False), 400
         elif status_code == 500:
             connection.rollback()
@@ -251,7 +251,7 @@ def add_weekly_data():
                 'result': False,
                 'error': f"Failed to analysis requested image({body_image}): {body_analysis_result_json['error']}"
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
             return json.dumps(result, ensure_ascii=False), 500
 
     else:

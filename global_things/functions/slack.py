@@ -60,9 +60,9 @@ def slack_purchase_notification(cursor, user_id: int = 0, manager_id: int = 0, p
     users.id == purchases.user_id
   ).where(
     purchases.id == purchase_id
-  )
+  ).get_sql()
 
-  cursor.execute(sql.get_sql())
+  cursor.execute(sql)
   start_date, expire_date, plan_title, nickname, manager_name = cursor.fetchall()[0]
 
   send_notification_request = requests.post(

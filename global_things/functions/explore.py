@@ -312,7 +312,7 @@ def make_query_to_find_related_terms(word: str):
         programs.title
     ).where(
         programs.title.like(f'%{word}%')
-    ).orderby(fn.Length(programs.title))
+    ).orderby(fn.Length(programs.title)).get_sql()
 
     query_coach = Query.from_(
         coaches
@@ -321,7 +321,7 @@ def make_query_to_find_related_terms(word: str):
         coaches.name
     ).where(
         coaches.name.like(f'%{word}%')
-    ).orderby(fn.Length(coaches.name))
+    ).orderby(fn.Length(coaches.name)).get_sql()
 
     query_exercise = Query.from_(
         exercises
@@ -330,7 +330,7 @@ def make_query_to_find_related_terms(word: str):
         exercises.title
     ).where(
         exercises.title.like(f'%{word}%')
-    ).orderby(fn.Length(exercises.title))
+    ).orderby(fn.Length(exercises.title)).get_sql()
 
     query_equipment = Query.from_(
         equipments
@@ -339,9 +339,9 @@ def make_query_to_find_related_terms(word: str):
         equipments.name
     ).where(
         equipments.name.like(f'%{word}%')
-    ).orderby(fn.Length(equipments.name))
+    ).orderby(fn.Length(equipments.name)).get_sql()
 
-    return query_program.get_sql(), query_coach.get_sql(), query_exercise.get_sql(), query_equipment.get_sql()
+    return query_program, query_coach, query_exercise, query_equipment
 
 
 def make_query_get_every_titles():
@@ -355,30 +355,30 @@ def make_query_get_every_titles():
     ).select(
         programs.id,
         programs.title
-    ).orderby(fn.Length(programs.title))
+    ).orderby(fn.Length(programs.title)).get_sql()
 
     query_coaches = Query.from_(
         coaches
     ).select(
         coaches.id,
         coaches.name
-    ).orderby(fn.Length(coaches.name))
+    ).orderby(fn.Length(coaches.name)).get_sql()
 
     query_exercises = Query.from_(
         exercises
     ).select(
         exercises.id,
         exercises.title
-    ).orderby(fn.Length(exercises.title))
+    ).orderby(fn.Length(exercises.title)).get_sql()
 
     query_equipments = Query.from_(
         equipments
     ).select(
         equipments.id,
         equipments.name
-    ).orderby(fn.Length(equipments.name))
+    ).orderby(fn.Length(equipments.name)).get_sql()
 
-    return query_programs.get_sql(), query_coaches.get_sql(), query_exercises.get_sql(), query_equipments.get_sql()
+    return query_programs, query_coaches, query_exercises, query_equipments
 
 
 def program_progress(user_id):

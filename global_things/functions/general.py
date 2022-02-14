@@ -27,10 +27,10 @@ def check_session(cursor, session_id):
     ).select(
         sessions.id,
         sessions.user_id
-    ).wher(
+    ).where(
         sessions.id == hashed_session_id
-    )
-    cursor.execute(sql.get_sql())
+    ).get_sql()
+    cursor.execute(sql)
     user_session = cursor.fetchall()
 
     if len(user_session) == 0 or user_session == ():

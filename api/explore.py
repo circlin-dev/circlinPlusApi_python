@@ -104,10 +104,10 @@ def explore():
         'user_id', 'search_term', 'search_result'
     ).insert(
         user_id, word_for_search, json_data
-    )
+    ).get_sql()
 
     try:
-        cursor.execute(sql.get_sql())
+        cursor.execute(sql)
         connection.commit()
     except Exception as e:
         connection.rollback()
@@ -117,7 +117,7 @@ def explore():
             'result': False,
             'error': f'Server Error while executing INSERT query(explore): {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
         return json.dumps(result, ensure_ascii=False), 500
 
     connection.close()
@@ -276,9 +276,11 @@ def explore_log(user_id: int):
             ])
         ).groupby(
             search_logs.search_term
-        ).orderby(search_logs.created_at, order=Order.desc)
+        ).orderby(
+            search_logs.created_at, order=Order.desc
+        ).get_sql()
         try:
-            cursor.execute(sql.get_sql())
+            cursor.execute(sql)
             search_records = cursor.fetchall()
         except Exception as e:
             connection.rollback()
@@ -288,7 +290,7 @@ def explore_log(user_id: int):
                 'result': False,
                 'error': f'Cannot delete the requested search record: {error}'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
             return json.dumps(result, ensure_ascii=False), 400
 
         if query_result_is_none(search_records) is True:
@@ -332,9 +334,10 @@ def explore_log(user_id: int):
                     search_logs.search_term == word_to_delete,
                     search_logs.user_id == user_id,
                     search_logs.deleted_at.isnull()
-                ]))
+                ])
+            ).get_sql()
             try:
-                cursor.execute(sql.get_sql())
+                cursor.execute(sql)
                 connection.commit()
             except Exception as e:
                 connection.rollback()
@@ -344,7 +347,7 @@ def explore_log(user_id: int):
                     'result': False,
                     'error': f'Cannot delete the requested search term: {error}'
                 }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
                 return json.dumps(result, ensure_ascii=False), 400
 
             connection.close()
@@ -367,9 +370,10 @@ def explore_log(user_id: int):
                 Criterion.all([
                     search_logs.user_id == user_id,
                     search_logs.deleted_at.isnull()
-                ]))
+                ])
+            ).get_sql()
             try:
-                cursor.execute(sql.get_sql())
+                cursor.execute(sql)
                 connection.commit()
             except Exception as e:
                 connection.rollback()
@@ -379,7 +383,7 @@ def explore_log(user_id: int):
                     'result': False,
                     'error': f'Cannot delete the requested whole search record: {error}'
                 }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql.get_sql())
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
                 return json.dumps(result, ensure_ascii=False), 400
 
             connection.close()
