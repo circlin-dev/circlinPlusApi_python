@@ -587,9 +587,9 @@ def make_query_get_every_titles():
         products
     ).select(
         products.id,
-        products.name
+        products.title
     ).where(
         products.type == 'equipment'
-    ).orderby(fn.Length(products.name)).get_sql()
+    ).orderby(fn.Length(products.title)).get_sql()
 
     return sql_programs, sql_coaches, sql_exercises, sql_equipments

@@ -221,11 +221,11 @@ def get_related_terms_list():
             equipment_dict = {'id': equipment[0], 'value': equipment[1], 'similarity': jamo_levenshtein(word, equipment[1])}
             related_equipments_list.append(equipment_dict)
 
-        related_programs_list = sorted(related_programs_list, key=lambda x: x['similarity'])[:3]
-        related_coaches_list = sorted(related_coaches_list, key=lambda x: x['similarity'])[:3]
-        related_exercises_list = sorted(related_exercises_list, key=lambda x: x['similarity'])[:3]
-        related_equipments_list = sorted(related_equipments_list, key=lambda x: x['similarity'])[:3]
-        all_searched_result = sorted(related_programs_list + related_coaches_list + related_exercises_list + related_equipments_list, key=lambda x: x['similarity'])
+        related_programs_list = sorted(related_programs_list, key=lambda x: x['similarity'], reverse=True)[:3]
+        related_coaches_list = sorted(related_coaches_list, key=lambda x: x['similarity'], reverse=True)[:3]
+        related_exercises_list = sorted(related_exercises_list, key=lambda x: x['similarity'], reverse=True)[:3]
+        related_equipments_list = sorted(related_equipments_list, key=lambda x: x['similarity'], reverse=True)[:3]
+        all_searched_result = sorted(related_programs_list + related_coaches_list + related_exercises_list + related_equipments_list, key=lambda x: x['similarity'], reverse=True)
 
     connection.close()
     result_dict = {
