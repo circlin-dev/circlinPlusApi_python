@@ -150,105 +150,105 @@ def create_chat_with_manager():
     return json.dumps(result, ensure_ascii=False), 201
 
 
-@api.route('/purchase/<user_id>', methods=['GET'])
-def read_purchase_record(user_id):
-    """
-    검증 조건 1: 존재하는 유저인지 확인
-    검증 조건 2: 현재 구독기간이 끝나지 않은 플랜이 있는지 확인
-
-    return: 현재 구독중인 플랜의 제목, 시작일, 마지막일
-    """
-    ip = request.headers["X-Forwarded-For"] # Both public & private.
-    endpoint = API_ROOT + url_for('api.read_purchase_record', user_id=user_id)
-    # token = request.headers['Authorization']
-    """Define tables required to execute SQL."""
-    purchases = Table('purchases')
-    subscribe_plans = Table('subscriptions')
-
-    try:
-        connection = login_to_db()
-    except Exception as e:
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while connecting to DB: {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-        return json.dumps(result, ensure_ascii=False), 500
-
-    cursor = connection.cursor()
-    # 1. 유저 정보 확인
-    # Verify user is valid or not.
-    # is_valid_user = check_token(cursor, token)
-    # if is_valid_user['result'] is False:
-    #   connection.close()
-    #   result = {
-    #     'result': False,
-    #     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
-    #   }
-    #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
-    #   return json.dumps(result, ensure_ascii=False), 401
-    # elif is_valid_user['result'] is True:
-    #   pass
-
-    # 2. 해당 유저에게 구독중인(기간이 만료되지 않은) 플랜이 있는지 확인
-    sql = Query.from_(
-        purchases
-    ).select(
-        purchases.id.as_('purchase_id'),
-        subscribe_plans.title,
-        subscribe_plans.price,
-        purchases.total_payment,
-        purchases.user_id.as_('user_id'),
-        purchases.start_date,
-        purchases.expire_date,
-        purchases.deleted_at,
-        purchases.buyer_email,
-        purchases.buyer_name,
-        purchases.buyer_tel,
-        purchases.state
-    ).join(
-        subscribe_plans
-    ).on(
-        subscribe_plans.id == purchases.subscription_id
-    ).where(
-        purchases.user_id == user_id
-    ).orderby(purchases.start_date).get_sql()
-    cursor.execute(sql)
-    purchase_records = cursor.fetchall()
-    if query_result_is_none(purchase_records) is True:
-        connection.close()
-        result = {
-            'result': True,
-            'purchase_data': None
-        }
-        return json.dumps(result, ensure_ascii=False), 200
-    else:
-        result_list = []
-        for data in purchase_records:
-            if data[7] is not None:
-                deleted_at = data[7].strftime("%Y-%m-%d %H:%M:%S")
-            else:
-                deleted_at = data[7]
-            each_dict = {"index": data[0],
-                         "payment_information": {
-                             "plan_title": data[2],
-                             "total_price": data[3],  # 정상가
-                             "total_payment": data[4],
-                             "start_date": data[5].strftime("%Y-%m-%d %H:%M:%S"),
-                             "expire_date": data[6].strftime("%Y-%m-%d %H:%M:%S"),
-                             "deleted_at": deleted_at,
-                             "buyer_email": data[8],  # 결제자 이메일
-                             "buyer_name": data[9],  # 결제자 이름
-                             "buyer_phone": data[10],  # 결제자 전화번호
-                             "state": data[11]
-                         }}
-            result_list.append(each_dict)
-        result_dict = {
-            "result": True,
-            "purchase_data": result_list
-        }
-        return json.dumps(result_dict, ensure_ascii=False), 200
+# @api.route('/purchase/<user_id>', methods=['GET'])
+# def read_purchase_record(user_id):
+#     """
+#     검증 조건 1: 존재하는 유저인지 확인
+#     검증 조건 2: 현재 구독기간이 끝나지 않은 플랜이 있는지 확인
+#
+#     return: 현재 구독중인 플랜의 제목, 시작일, 마지막일
+#     """
+#     ip = request.headers["X-Forwarded-For"] # Both public & private.
+#     endpoint = API_ROOT + url_for('api.read_purchase_record', user_id=user_id)
+#     # token = request.headers['Authorization']
+#     """Define tables required to execute SQL."""
+#     purchases = Table('purchases')
+#     subscribe_plans = Table('subscriptions')
+#
+#     try:
+#         connection = login_to_db()
+#     except Exception as e:
+#         error = str(e)
+#         result = {
+#             'result': False,
+#             'error': f'Server Error while connecting to DB: {error}'
+#         }
+#         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+#         return json.dumps(result, ensure_ascii=False), 500
+#
+#     cursor = connection.cursor()
+#     # 1. 유저 정보 확인
+#     # Verify user is valid or not.
+#     # is_valid_user = check_token(cursor, token)
+#     # if is_valid_user['result'] is False:
+#     #   connection.close()
+#     #   result = {
+#     #     'result': False,
+#     #     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
+#     #   }
+#     #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+#     #   return json.dumps(result, ensure_ascii=False), 401
+#     # elif is_valid_user['result'] is True:
+#     #   pass
+#
+#     # 2. 해당 유저에게 구독중인(기간이 만료되지 않은) 플랜이 있는지 확인
+#     sql = Query.from_(
+#         purchases
+#     ).select(
+#         purchases.id.as_('purchase_id'),
+#         subscribe_plans.title,
+#         subscribe_plans.price,
+#         purchases.total_payment,
+#         purchases.user_id.as_('user_id'),
+#         purchases.start_date,
+#         purchases.expire_date,
+#         purchases.deleted_at,
+#         purchases.buyer_email,
+#         purchases.buyer_name,
+#         purchases.buyer_tel,
+#         purchases.status
+#     ).join(
+#         subscribe_plans
+#     ).on(
+#         subscribe_plans.id == purchases.subscription_id
+#     ).where(
+#         purchases.user_id == user_id
+#     ).orderby(purchases.start_date).get_sql()
+#     cursor.execute(sql)
+#     purchase_records = cursor.fetchall()
+#     if query_result_is_none(purchase_records) is True:
+#         connection.close()
+#         result = {
+#             'result': True,
+#             'purchase_data': None
+#         }
+#         return json.dumps(result, ensure_ascii=False), 200
+#     else:
+#         result_list = []
+#         for data in purchase_records:
+#             if data[7] is not None:
+#                 deleted_at = data[7].strftime("%Y-%m-%d %H:%M:%S")
+#             else:
+#                 deleted_at = data[7]
+#             each_dict = {"index": data[0],
+#                          "payment_information": {
+#                              "plan_title": data[2],
+#                              "total_price": data[3],  # 정상가
+#                              "total_payment": data[4],
+#                              "start_date": data[5].strftime("%Y-%m-%d %H:%M:%S"),
+#                              "expire_date": data[6].strftime("%Y-%m-%d %H:%M:%S"),
+#                              "deleted_at": deleted_at,
+#                              "buyer_email": data[8],  # 결제자 이메일
+#                              "buyer_name": data[9],  # 결제자 이름
+#                              "buyer_phone": data[10],  # 결제자 전화번호
+#                              "state": data[11]
+#                          }}
+#             result_list.append(each_dict)
+#         result_dict = {
+#             "result": True,
+#             "purchase_data": result_list
+#         }
+#         return json.dumps(result_dict, ensure_ascii=False), 200
 
 
 @api.route('/purchase/update_notification', methods=['POST'])
@@ -507,7 +507,7 @@ def add_subscription_order():
             ).set(
                 orders.user_id, user_id
             ).set(
-                orders.state, "cancelled"
+                orders.status, "cancelled"
             ).set(
                 orders.deleted_at, fn.Now()
             ).where(
@@ -576,7 +576,7 @@ def add_subscription_order():
                 ).set(
                     orders.user_id, user_id
                 ).set(
-                    orders.state, "cancelled"
+                    orders.status, "cancelled"
                 ).set(
                     orders.deleted_at, fn.Now()
                 ).where(
