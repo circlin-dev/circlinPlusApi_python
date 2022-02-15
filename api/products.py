@@ -74,6 +74,18 @@ def read_products():
             INNER JOIN
                 brands b
             ON p.brand_id = b.id
+            LEFT OUTER JOIN
+                    product_images pi
+                ON pi.product_id = p.id
+            LEFT OUTER JOIN
+                    files f
+                ON f.id = pi.file_id
+            LEFT OUTER JOIN
+                    program_products pp
+                ON p.id = pp.product_id
+            LEFT OUTER JOIN
+                    programs prog
+                ON prog.id = pp.program_id            
             GROUP BY p.id"""
         pass
     else:
