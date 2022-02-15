@@ -652,7 +652,9 @@ def add_subscription_order():
         cursor.execute(sql)
         connection.commit()
         connection.close()
-        result = {'result': True, 'message': 'Saved subscription payment data.'}
+        result = {'result': True,
+                  'message': 'Saved subscription payment data.',
+                  'order_id': order_id}
         return json.dumps(result, ensure_ascii=False), 201
     except Exception as e:
         connection.close()
