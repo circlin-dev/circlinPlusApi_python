@@ -631,7 +631,19 @@ def add_subscription_order():
         values = (imp_uid, merchant_uid)
         cursor.execute(sql, values)
         connection.commit()
-        order_id = int(cursor.lastrowid)
+
+        sql = Query.from_(
+            orders
+        ).select(
+            orders.id
+        ).where(
+            Criterion.all([
+                orders.imp_uid == imp_uid,
+                orders.merchant_uid == merchant_uid
+            ])
+        ).get_sql()
+        cursor.execute(sql)
+        order_id = int(cursor.fetchall()[0][0])
 
         sql = f"""
             INSERT INTO 
