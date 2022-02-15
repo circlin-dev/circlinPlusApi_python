@@ -477,8 +477,8 @@ def add_subscription_order():
         headers={"Authorization": access_token}
     ).json()
     payment_state = payment_validation_import['response']['status']
-    user_paid_amount = int(payment_validation_import['response']['amount'])
-    user_subscribed_plan = payment_validation_import['response']['name']
+    import_paid_amount = int(payment_validation_import['response']['amount'])
+    user_subscription = payment_validation_import['response']['name']
 
     # 3. 결제 정보 검증(DB ~ import 결제액)
     """
@@ -521,7 +521,7 @@ def add_subscription_order():
             connection.close()
 
             refund_reason = "[결제검증 실패]: 결제 요청된 플랜명과 일치하는 플랜명이 없습니다."
-            refund_result = request_import_refund(access_token, imp_uid, merchant_uid, user_paid_amount, user_paid_amount, refund_reason)
+            refund_result = request_import_refund(access_token, imp_uid, merchant_uid, import_paid_amount, import_paid_amount, refund_reason)
             if refund_result['code'] == 0:
                 result = {'result': False,
                           'error': f"결제 검증 실패(주문 플랜명 불일치), 환불처리 성공(imp_uid: {imp_uid}, merchant_uid: {merchant_uid})."}
@@ -551,7 +551,8 @@ def add_subscription_order():
         discounts.id,
         discounts.type,
         discounts.method,
-        discounts.value
+        discounts.value,
+        discounts.code
     ).where(
         discounts.code == discount_code
     ).get_sql()
@@ -559,8 +560,8 @@ def add_subscription_order():
 
     discount_information = cursor.fetchall()
 
-    actual_amount, subscription_original_price, discount_id = amount_to_be_paid(subscription_information, discount_information)
-    if actual_amount != user_paid_amount:
+    to_be_paid, subscription_original_price, discount_id = amount_to_be_paid(subscription_information, discount_information)
+    if to_be_paid != import_paid_amount:
         """
         1. '부분환불' 도입 시
             - DB에 canceled_amount 추가하기.
@@ -568,7 +569,7 @@ def add_subscription_order():
         2. 케이스별 환불사유 준비하기
         """
         refund_reason = "[결제검증 실패]: 판매가와 결제금액이 불일치합니다."
-        refund_result = request_import_refund(access_token, imp_uid, merchant_uid, user_paid_amount, user_subscribed_plan, refund_reason)
+        refund_result = request_import_refund(access_token, imp_uid, merchant_uid, import_paid_amount, user_subscription, refund_reason)
         if refund_result['code'] == 0:
             try:
                 sql = Query.update(
@@ -635,7 +636,7 @@ def add_subscription_order():
         sql = f"""
             INSERT INTO 
                     order_subscriptions(order_id, subscription_id, price, discount_price)
-                VALUES({order_id}, {subscription_id}, {user_paid_amount}, {subscription_original_price - user_paid_amount})"""
+                VALUES({order_id}, {subscription_id}, {import_paid_amount}, {subscription_original_price - import_paid_amount})"""
         cursor.execute(sql)
         connection.commit()
         connection.close()

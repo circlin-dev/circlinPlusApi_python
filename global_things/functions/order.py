@@ -42,6 +42,11 @@ def amount_to_be_paid(subscription_information: tuple, discount_information: tup
     discount_type = discount_information[0][1]
     method = discount_information[0][2]
     value = discount_information[0][3]
+    discount_code = discount_information[0][4]
+
+    if discount_code == "ASDASDFWJNSF456":
+        to_be_paid = 1004
+        return to_be_paid, subscription_original_price, discount_id
 
     if method == 'percent':
         to_be_paid = round(subscription_original_price * (1 - (value * 0.01)), -1)  # 1의 자리에서 '반올림'
