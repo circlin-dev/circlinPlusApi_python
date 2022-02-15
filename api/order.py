@@ -655,6 +655,7 @@ def add_subscription_order():
         result = {'result': True,
                   'message': 'Saved subscription payment data.',
                   'order_id': order_id}
+        slack_purchase_notification()
         return json.dumps(result, ensure_ascii=False), 201
     except Exception as e:
         connection.close()
