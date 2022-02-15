@@ -19,7 +19,6 @@ def create_trial():
 
     """Define tables required to execute SQL."""
     user_questions = Table('user_questions')
-    user_lectures = Table('user_lectures')
 
     try:
         connection = login_to_db()
