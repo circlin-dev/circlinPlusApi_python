@@ -65,7 +65,6 @@ def read_products():
             INNER JOIN
                 brands
             ON products.brand_id = brands.id
-            # WHERE products.`type`='{parameters[0]}'
             GROUP BY products.id"""
         pass
     else:
