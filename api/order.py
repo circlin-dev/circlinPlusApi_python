@@ -23,7 +23,7 @@ def create_chat_with_manager():
     chat_rooms = Table('chat_rooms')
     chat_users = Table('chat_users')
     user_id = int(parameters['user_id'])
-    order_id = int(parameters['order_id'])
+    order_id = parameters['order_id']  # null or int
 
     try:
         connection = login_to_db()
@@ -141,8 +141,8 @@ def create_chat_with_manager():
         }
         return json.dumps(result, ensure_ascii=False), 200
 
-    # slack_purchase_notification(cursor, user_id, manager_id, purchase_id) # 사전설문 저장 완료 시 발송
-    slack_purchase_notification(cursor, user_id, manager_id, order_id)
+    if order_id is not None:
+        slack_purchase_notification(cursor, user_id, manager_id, order_id)
     connection.close()
     result = {
         'result': True,
@@ -365,6 +365,7 @@ def update_payment_state_by_webhook():
     else:
         # 결제 취소 이벤트가 아임포트 어드민(https://admin.iamport.kr/)에서 "취소하기" 버튼을 클릭하여 발생한 경우에만 트리거됨.
         if int(db_paid_amount[0][0]) == int(import_paid_amount):
+            """1. 결제 검증 실패에 의해 취소되는 경우: 어떤 조건들을 추가해 줄까???"""
             if updated_state == 'cancelled':
                 sql = Query.update(
                     orders
@@ -385,6 +386,7 @@ def update_payment_state_by_webhook():
                 connection.close()
                 result = {'result': True}
                 return json.dumps(result, ensure_ascii=False), 201
+            """2. 결제 완료 후 사용자 요청에 의해 아임포트에 의해 취소되는 경우 => 어떤 조건들을 추가하고 어떤 데이터들을 변경할까???"""
         else:
             connection.close()
             result = {

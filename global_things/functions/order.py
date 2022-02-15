@@ -44,6 +44,7 @@ def amount_to_be_paid(subscription_information: tuple, discount_information: tup
     value = discount_information[0][3]
     discount_code = discount_information[0][4]
 
+    # 개발자 할인코드 테스트용
     if discount_code == "ASDASDFWJNSF456":
         to_be_paid = 1004
         return to_be_paid, subscription_original_price, discount_id
