@@ -41,76 +41,76 @@ def read_products():
     cursor = connection.cursor()
     if parameters == [] or len(parameters) == 0:
         """GET everything in 'products' table. => Don't use 'where' clause in sql."""
-        # sql = f"""
-        #     SELECT
-        #        products.id,
-        #        products.type,
-        #        products.code,
-        #        products.title as name,
-        #        p.description, '',
-        #        brands.title as brand_name,
-        #        products.price as price_origin,
-        #        products.sales_price as price_sales,
-        #        IFNULL(p.stocks, 0),
-        #        products.thumbnail,
-        #        JSON_ARRAYAGG(IFNULL(files.pathname, '')) AS details
-        #     FROM
-        #         products
-        #     INNER JOIN
-        #         product_images
-        #     ON product_images.product_id = products.id
-        #     INNER JOIN
-        #         files f
-        #     ON f.id = pi.file_id
-        #     INNER JOIN
-        #         brands
-        #     ON products.brand_id = brands.id
-        #     WHERE products.`type`='{parameters[0]}'
-        #     GROUP BY products.id"""
-        pass
-
-    # related_program이 복수이면 JSON_ARRAYAGG()로 합치고, GROUP BY에 prog.id 또는 pp.program_id 추가해야 할듯.
-    sql = f"""
-        SELECT
-           p.id,
-           p.type,
-           p.code,
-           p.title as name,
-           p.description,
-           b.title as brand_name,
-           p.original_price as original_price,
-           p.price as price,
-           IFNULL(p.stocks, 0),
-           p.thumbnail,
-           JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details,
-            JSON_ARRAYAGG(
-                JSON_OBJECT(
-                    'id', prog.id,
-                    'title', prog.title,
-                    'thumbnail', (SELECT pathname FROM files WHERE id = prog.thumbnail_id),
-                    'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
-                    'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id)
-                )
-            ) AS related_program
-        FROM
-            products p
-        INNER JOIN
-                brands b
-            ON b.id = p.brand_id
-        LEFT OUTER JOIN
-                product_images pi
-            ON pi.product_id = p.id
-        LEFT OUTER JOIN
+        sql = f"""
+            SELECT
+               products.id,
+               products.type,
+               products.code,
+               products.title as name,
+               p.description, '',
+               brands.title as brand_name,
+               products.price as price_origin,
+               products.sales_price as price_sales,
+               IFNULL(p.stocks, 0),
+               products.thumbnail,
+               JSON_ARRAYAGG(IFNULL(files.pathname, '')) AS details
+            FROM
+                products
+            INNER JOIN
+                product_images
+            ON product_images.product_id = products.id
+            INNER JOIN
                 files f
             ON f.id = pi.file_id
-        LEFT OUTER JOIN
-                program_products pp
-            ON p.id = pp.product_id
-        LEFT OUTER JOIN
-                programs prog
-            ON prog.id = pp.program_id
-        WHERE p.`type` = 'item'
-        GROUP BY p.id"""
+            INNER JOIN
+                brands
+            ON products.brand_id = brands.id
+            # WHERE products.`type`='{parameters[0]}'
+            GROUP BY products.id"""
+        pass
+    else:
+    # related_program이 복수이면 JSON_ARRAYAGG()로 합치고, GROUP BY에 prog.id 또는 pp.program_id 추가해야 할듯.
+        sql = f"""
+            SELECT
+               p.id,
+               p.type,
+               p.code,
+               p.title as name,
+               p.description,
+               b.title as brand_name,
+               p.original_price as original_price,
+               p.price as price,
+               IFNULL(p.stocks, 0),
+               p.thumbnail,
+               JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details,
+                JSON_ARRAYAGG(
+                    JSON_OBJECT(
+                        'id', prog.id,
+                        'title', prog.title,
+                        'thumbnail', (SELECT pathname FROM files WHERE id = prog.thumbnail_id),
+                        'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
+                        'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id)
+                    )
+                ) AS related_program
+            FROM
+                products p
+            INNER JOIN
+                    brands b
+                ON b.id = p.brand_id
+            LEFT OUTER JOIN
+                    product_images pi
+                ON pi.product_id = p.id
+            LEFT OUTER JOIN
+                    files f
+                ON f.id = pi.file_id
+            LEFT OUTER JOIN
+                    program_products pp
+                ON p.id = pp.product_id
+            LEFT OUTER JOIN
+                    programs prog
+                ON prog.id = pp.program_id
+            WHERE p.`type` = '{parameters[0]}'
+            GROUP BY p.id"""
     cursor.execute(sql)
     result = cursor.fetchall()
 
