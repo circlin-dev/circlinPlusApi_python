@@ -62,18 +62,12 @@ def read_products():
                         'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
                         'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id)
                     )
-                ) AS related_program               
+                ) AS related_program
             FROM
                 products p
             INNER JOIN
-                product_images pi
-            ON pi.product_id = p.id
-            INNER JOIN
-                files f
-            ON f.id = pi.file_id
-            INNER JOIN
-                brands b
-            ON p.brand_id = b.id
+                    brands b
+                ON b.id = p.brand_id
             LEFT OUTER JOIN
                     product_images pi
                 ON pi.product_id = p.id
@@ -85,7 +79,18 @@ def read_products():
                 ON p.id = pp.product_id
             LEFT OUTER JOIN
                     programs prog
-                ON prog.id = pp.program_id            
+                ON prog.id = pp.program_id                               
+--             FROM
+--                 products p
+--             INNER JOIN
+--                 product_images pi
+--             ON pi.product_id = p.id
+--             INNER JOIN
+--                 files f
+--             ON f.id = pi.file_id
+--             INNER JOIN
+--                 brands b
+--             ON p.brand_id = b.id
             GROUP BY p.id"""
         pass
     else:
