@@ -43,29 +43,29 @@ def read_products():
         """GET everything in 'products' table. => Don't use 'where' clause in sql."""
         sql = f"""
             SELECT
-               products.id,
-               products.type,
-               products.code,
-               products.title as name,
-               p.description, '',
-               brands.title as brand_name,
-               products.price as price_origin,
-               products.sales_price as price_sales,
+               p.id,
+               p.type,
+               p.code,
+               p.title as name,
+               p.description,
+               b.title as brand_name,
+               p.price as price_origin,
+               p.sales_price as price_sales,
                IFNULL(p.stocks, 0),
-               products.thumbnail,
-               JSON_ARRAYAGG(IFNULL(files.pathname, '')) AS details
+               p.thumbnail,
+               JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details
             FROM
-                products
+                products p
             INNER JOIN
-                product_images
-            ON product_images.product_id = products.id
+                product_images pi
+            ON pi.product_id = p.id
             INNER JOIN
                 files f
             ON f.id = pi.file_id
             INNER JOIN
-                brands
-            ON products.brand_id = brands.id
-            GROUP BY products.id"""
+                brands b
+            ON p.brand_id = b.id
+            GROUP BY p.id"""
         pass
     else:
     # related_program이 복수이면 JSON_ARRAYAGG()로 합치고, GROUP BY에 prog.id 또는 pp.program_id 추가해야 할듯.
