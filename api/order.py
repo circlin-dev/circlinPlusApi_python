@@ -23,6 +23,7 @@ def create_chat_with_manager():
     chat_rooms = Table('chat_rooms')
     chat_users = Table('chat_users')
     user_id = int(parameters['user_id'])
+    order_id = int(parameters['order_id'])
 
     try:
         connection = login_to_db()
@@ -141,6 +142,7 @@ def create_chat_with_manager():
         return json.dumps(result, ensure_ascii=False), 200
 
     # slack_purchase_notification(cursor, user_id, manager_id, purchase_id) # 사전설문 저장 완료 시 발송
+    slack_purchase_notification(cursor, user_id, manager_id, order_id)
     connection.close()
     result = {
         'result': True,
@@ -655,7 +657,6 @@ def add_subscription_order():
         result = {'result': True,
                   'message': 'Saved subscription payment data.',
                   'order_id': order_id}
-        slack_purchase_notification()
         return json.dumps(result, ensure_ascii=False), 201
     except Exception as e:
         connection.close()
