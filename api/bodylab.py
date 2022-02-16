@@ -1,5 +1,4 @@
 import datetime
-from app import app
 from global_things.constants import API_ROOT, AMAZON_URL, BUCKET_NAME, BUCKET_BODY_IMAGE_INPUT_PATH, BODY_IMAGE_INPUT_PATH, BUCKET_ATFLEE_IMAGE_PATH, ATFLEE_IMAGE_INPUT_PATH
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
@@ -58,7 +57,7 @@ def add_weekly_data():
     file_name = f'{user_id}_{now}.png'
     local_image_path = f'{BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}'
     secure_file = secure_filename(body_image.filename)
-    body_image.save(app.config['UPLOAD_FOLDER_BODY_IMAGE'], local_image_path)
+    body_image.save(BODY_IMAGE_INPUT_PATH, local_image_path)
 
     # body_image = images['body_image']
     # body_image = np.asarray(bytearray(images['body_image']), dtype=np.uint8)
