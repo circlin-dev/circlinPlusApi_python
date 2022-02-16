@@ -93,12 +93,13 @@ def add_weekly_data():
         # cv2.imwrite(local_image_path, body_image)
         if str(user_id) not in os.listdir(f"{BODY_IMAGE_INPUT_PATH}"):
             os.makedirs(f"{BODY_IMAGE_INPUT_PATH}/{user_id}")
+
         local_image_path = f'{BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}'
         secure_file = secure_filename(body_image.filename)
         body_image.save(secure_file)
         if os.path.exists(secure_file):
             shutil.move(secure_file, f'{BODY_IMAGE_INPUT_PATH}/{user_id}')
-            os.replace(f'{BODY_IMAGE_INPUT_PATH}/{user_id}/{secure_file}', local_image_path)
+            os.rename(f'{BODY_IMAGE_INPUT_PATH}/{user_id}/{secure_file}', local_image_path)
             os.remove(secure_file)
 
         object_name = f"{BUCKET_BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}"
