@@ -145,8 +145,8 @@ def read_products():
         return json.dumps(result_dict, ensure_ascii=False), 200
 
     products_df = pd.DataFrame(result, columns=['id', 'type', 'code',
-                                                'name', 'description', 'brand_name',
-                                                'original_price', 'price', 'quantity',
+                                                'title', 'description', 'brandTitle',
+                                                'original_price', 'price', 'stocks',
                                                 'thumbnail', 'details', 'related_program'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
@@ -200,9 +200,9 @@ def read_a_product(product_id: int):
            prod.id,
            prod.type,
            prod.code,
-           prod.title as name,
+           prod.title as title,
            prod.description,
-           b.title as brand_name,
+           b.title as brandTitle,
            prod.original_price as original_price,
            prod.price as price,
            IFNULL(prod.stocks, 0),
@@ -244,8 +244,8 @@ def read_a_product(product_id: int):
         return json.dumps(result_dict, ensure_ascii=False), 200
 
     products_df = pd.DataFrame(result, columns=['id', 'type', 'code',
-                                                'name', 'description', 'brand_name',
-                                                'original_price', 'price', 'quantity',
+                                                'title', 'description', 'brandTitle',
+                                                'original_price', 'price', 'stocks',
                                                 'thumbnail', 'details', 'related_program'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))

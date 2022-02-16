@@ -1,7 +1,12 @@
 APP_ROOT = "/home/ubuntu/circlinMembersApi_python/circlinMembersApi_flask"
 API_ROOT = "web-api-python.circlin.co.kr"
+
+# region bodylab
 IMAGE_ANALYSYS_SERVER = "3.35.12.179"
-API_NODEJS_SERVER = ""
+BUCKET_NAME = "circlin-plus"
+BUCKET_KEYPOINT_PATH = "bodylab/body_keypoint"
+BUCKET_ATFLEE_PATH = "bodylab/atflee"
+#endregion
 
 # region Slack error notification
 SLACK_NOTIFICATION_WEBHOOK = "https://hooks.slack.com/services/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?"
