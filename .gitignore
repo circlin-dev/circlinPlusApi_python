@@ -10,6 +10,7 @@ pyvenv.cfg
 __pycache__
 
 ./config
+./bodylab
 nohup.out
 execution_log.log
 circlinMembersApi_flask_py3.8
