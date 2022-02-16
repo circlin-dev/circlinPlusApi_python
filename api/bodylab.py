@@ -217,6 +217,8 @@ def add_weekly_data():
         result_code = body_analysis['status_code']
         if result_code == 200:
             analyze_result = body_analysis['result']
+            return json.dumps(analyze_result, ensure_ascii=False), 200
+
             sql = Query.into(
                 bodylab_analyze_bodies
             ).columns(
