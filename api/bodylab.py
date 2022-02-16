@@ -87,7 +87,7 @@ def add_weekly_data():
         # year = period.split('-W')[0]
         # week_number_of_year = period.split('-W')[1]
         # firstdate_of_week, lastdate_of_week = get_date_range_from_week(year, week_number_of_year)
-        now = datetime.now()
+        now = datetime.now().strftime('%Y%m%d%H%M%S')
         file_name = f'{user_id}_{now}.png'
         local_image_path = f'{BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}'
         body_image.save(local_image_path)
