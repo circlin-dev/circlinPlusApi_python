@@ -90,9 +90,13 @@ def add_weekly_data():
         # week_number_of_year = period.split('-W')[1]
         # firstdate_of_week, lastdate_of_week = get_date_range_from_week(year, week_number_of_year)
         # cv2.imwrite(local_image_path, body_image)
+        if str(user_id) not in os.listdir(f"{BODY_IMAGE_INPUT_PATH}"):
+            os.makedirs(f"{BODY_IMAGE_INPUT_PATH}/{user_id}")
         local_image_path = f'{BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}'
-        secure_file = secure_filename(body_image.filename)
+        secure_file = f'{BODY_IMAGE_INPUT_PATH}/{user_id}/{secure_filename(body_image.filename)}'
         body_image.save(secure_file)
+        if os.path.exists(secure_file):
+            os.rename(secure_file, local_image_path)
 
         object_name = f"{BUCKET_BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}"
         if upload_image_to_s3(local_image_path, BUCKET_NAME, object_name) is True:
