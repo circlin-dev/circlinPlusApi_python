@@ -57,7 +57,7 @@ def add_weekly_data():
     file_name = f'{user_id}_{now}.png'
     local_image_path = f'{BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}'
     secure_file = secure_filename(body_image.filename)
-    body_image.save(local_image_path, secure_file)
+    body_image.save(f'{BODY_IMAGE_INPUT_PATH}/{user_id}', secure_file)
 
     # body_image = images['body_image']
     # body_image = np.asarray(bytearray(images['body_image']), dtype=np.uint8)
