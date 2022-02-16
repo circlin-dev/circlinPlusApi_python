@@ -100,7 +100,6 @@ def add_weekly_data():
         if os.path.exists(secure_file):
             shutil.move(secure_file, f'{BODY_IMAGE_INPUT_PATH}/{user_id}')
             os.rename(f'{BODY_IMAGE_INPUT_PATH}/{user_id}/{secure_file}', local_image_path)
-            os.remove(secure_file)
 
         object_name = f"{BUCKET_BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}"
         if upload_image_to_s3(local_image_path, BUCKET_NAME, object_name) is True:
