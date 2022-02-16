@@ -50,11 +50,13 @@ def add_weekly_data():
     bmi = data['bmi']
     muscle_mass = data['muscle_mass']
     fat_mass = data['fat_mass']
-    images = request.files.to_dict()
+    # images = request.files.to_dict()
+    body_image = request.files.getlist('body_image')
+
     # body_image = images['body_image']
     # body_image = np.asarray(bytearray(images['body_image']), dtype=np.uint8)
-    body_image = cv2.imread(images['body_image'], cv2.IMREAD_COLOR)
-    body_image = cv2.imdecode(body_image, -1)
+    # body_image = cv2.imread(images['body_image'], cv2.IMREAD_COLOR)
+    # body_image = cv2.imdecode(body_image, -1)
     # atflee_image = images['atflee_image']
     now = datetime.now()
 
