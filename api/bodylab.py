@@ -55,7 +55,6 @@ def add_weekly_data():
     # body_image = request.files.getlist('body_image')['body_image']
     body_image = request.files.to_dict()['body_image']
     now = datetime.now().strftime('%Y%m%d%H%M%S')
-    file_name = f'{user_id}_{now}.jpg'
 
     # body_image = images['body_image']
     # body_image = np.asarray(bytearray(images['body_image']), dtype=np.uint8)
@@ -94,8 +93,12 @@ def add_weekly_data():
         if str(user_id) not in os.listdir(f"{BODY_IMAGE_INPUT_PATH}"):
             os.makedirs(f"{BODY_IMAGE_INPUT_PATH}/{user_id}")
 
-        local_image_path = f'{BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}'
+
         secure_file = secure_filename(body_image.filename)
+        extension = secure_file.split('.')[-1]
+        file_name = f'{user_id}_{now}.{extension}'
+
+        local_image_path = f'{BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}'
         body_image.save(secure_file)
         if os.path.exists(secure_file):
             shutil.move(secure_file, f'{BODY_IMAGE_INPUT_PATH}/{user_id}')
@@ -217,8 +220,6 @@ def add_weekly_data():
         result_code = body_analysis['status_code']
         if result_code == 200:
             analyze_result = body_analysis['result']
-            return json.dumps(analyze_result, ensure_ascii=False), 200
-
             sql = Query.into(
                 bodylab_analyze_bodies
             ).columns(
