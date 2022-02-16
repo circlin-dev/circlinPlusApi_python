@@ -59,8 +59,6 @@ def add_weekly_data():
     # body_image = cv2.imread(images['body_image'], cv2.IMREAD_COLOR)
     # body_image = cv2.imdecode(body_image, -1)
     # atflee_image = images['atflee_image']
-    now = datetime.now()
-
 
     # atflee_image = request.form.get('atflee_image')
     """Define tables required to execute SQL."""
@@ -89,8 +87,8 @@ def add_weekly_data():
         # year = period.split('-W')[0]
         # week_number_of_year = period.split('-W')[1]
         # firstdate_of_week, lastdate_of_week = get_date_range_from_week(year, week_number_of_year)
-
-        file_name = f'{user_id}_{now}.'
+        now = datetime.now()
+        file_name = f'{user_id}_{now}.png'
         local_image_path = f'{BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}'
         body_image.save(local_image_path)
         # cv2.imwrite(local_image_path, body_image)
