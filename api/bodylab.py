@@ -1,5 +1,5 @@
 import datetime
-
+from app import app
 from global_things.constants import API_ROOT, AMAZON_URL, BUCKET_NAME, BUCKET_BODY_IMAGE_INPUT_PATH, BODY_IMAGE_INPUT_PATH, BUCKET_ATFLEE_IMAGE_PATH, ATFLEE_IMAGE_INPUT_PATH
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
@@ -12,6 +12,7 @@ import json
 import numpy as np
 import os
 from pypika import MySQLQuery as Query, Table, Order
+from werkzeug.utils import secure_filename
 
 """2개의 이미지 전송
     -> 앳플리는 서버 저장 -> S3 저장 -> OCR
@@ -53,6 +54,11 @@ def add_weekly_data():
     # images = request.files.to_dict()
     # body_image = request.files.getlist('body_image')['body_image']
     body_image = request.files.to_dict()['body_image']
+    now = datetime.now().strftime('%Y%m%d%H%M%S')
+    file_name = f'{user_id}_{now}.png'
+    local_image_path = f'{BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}'
+    secure_file = secure_filename(body_image.filename)
+    body_image.save(app.config['UPLOAD_FOLDER_BODY_IMAGE'], local_image_path)
 
     # body_image = images['body_image']
     # body_image = np.asarray(bytearray(images['body_image']), dtype=np.uint8)
@@ -87,10 +93,6 @@ def add_weekly_data():
         # year = period.split('-W')[0]
         # week_number_of_year = period.split('-W')[1]
         # firstdate_of_week, lastdate_of_week = get_date_range_from_week(year, week_number_of_year)
-        now = datetime.now().strftime('%Y%m%d%H%M%S')
-        file_name = f'{user_id}_{now}.png'
-        local_image_path = f'{BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}'
-        body_image.save(local_image_path)
         # cv2.imwrite(local_image_path, body_image)
 
         object_name = f"{BUCKET_BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}"

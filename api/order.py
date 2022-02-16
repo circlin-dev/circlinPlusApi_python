@@ -615,7 +615,7 @@ def add_subscription_order():
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
             return json.dumps(result, ensure_ascii=False), 400
 
-    # 4. 결제 정보(-> purchases) 저장
+    # 4. 결제 정보(orders) 저장
     subscription_id = subscription_information[0][0]
     try:
         sql = f"""

@@ -1,5 +1,5 @@
 from api import api
-from global_things.constants import APP_ROOT
+from global_things.constants import APP_ROOT, BODY_IMAGE_INPUT_PATH, ATFLEE_IMAGE_INPUT_PATH
 from global_things.functions.slack import slack_error_notification
 from flask import Flask, render_template, request
 from flask_cors import CORS
@@ -16,8 +16,12 @@ gunicorn_logger = logging.getLogger('gunicorn.error')
 app.logger.handlers = gunicorn_logger.handlers
 app.logger.setLevel(gunicorn_logger.level)
 
-#   For Blueprint api activation.
+# For Blueprint api activation.
 app.register_blueprint(api, url_prefix="/api")
+
+# For saving image file.
+app.config['UPLOAD_FOLDER_BODY_IMAGE'] = BODY_IMAGE_INPUT_PATH
+app.config['UPLOAD_FOLDER_ATFLEE_IMAGE'] = ATFLEE_IMAGE_INPUT_PATH
 
 
 @app.route('/testing')
