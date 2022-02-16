@@ -91,7 +91,8 @@ def add_weekly_data():
 
         file_name = f'{user_id}_{now}.'
         local_image_path = f'{BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}'
-        cv2.imwrite(local_image_path, body_image)
+        body_image.save(local_image_path)
+        # cv2.imwrite(local_image_path, body_image)
 
         object_name = f"{BUCKET_BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}"
         if upload_image_to_s3(local_image_path, BUCKET_NAME, object_name) is True:
