@@ -286,9 +286,9 @@ def add_weekly_data():
             connection.close()
             result = {
                 'result': False,
-                'error': f"Failed to analysis requested image({body_image}): {body_analysis['error']}"
+                'error': f"Failed to analysis requested image({user_id}, {s3_path_body_input}): {body_analysis['error']}"
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
             return json.dumps(result, ensure_ascii=False), 400
         elif result_code == 500:
             connection.rollback()
@@ -297,7 +297,7 @@ def add_weekly_data():
                 'result': False,
                 'error': f"Failed to analysis requested image({body_image}): {body_analysis['error']}"
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
             return json.dumps(result, ensure_ascii=False), 500
 
     else:
