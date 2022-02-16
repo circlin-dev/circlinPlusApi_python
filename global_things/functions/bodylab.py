@@ -177,6 +177,6 @@ def upload_image_to_s3(file_name, bucket_name, object_name):
   try:
     s3_client.upload_file(file_name, bucket_name, object_name)
   except Exception as e:
-    return e
+    return str(e)
 
   return True

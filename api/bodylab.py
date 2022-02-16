@@ -102,12 +102,13 @@ def add_weekly_data():
             os.rename(f'{BODY_IMAGE_INPUT_PATH}/{user_id}/{secure_file}', local_image_path)
 
         object_name = f"{BUCKET_BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}"
-        if upload_image_to_s3(local_image_path, BUCKET_NAME, object_name) is True:
+        upload_result = upload_image_to_s3(local_image_path, BUCKET_NAME, object_name)
+        if upload_result is True:
             pass
         else:
             result_dict = {
-                'message': f'Failed to upload body image into S3.',
-                'result': 'False'
+                'message': f'Failed to upload body image into S3({upload_result})',
+                'result': False
             }
             return json.dumps(result_dict), 500
         s3_path_body_input = f"{AMAZON_URL}/{object_name}"
