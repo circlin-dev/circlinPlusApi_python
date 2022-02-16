@@ -19,10 +19,6 @@ app.logger.setLevel(gunicorn_logger.level)
 # For Blueprint api activation.
 app.register_blueprint(api, url_prefix="/api")
 
-# For saving image file.
-app.config['UPLOAD_FOLDER_BODY_IMAGE'] = BODY_IMAGE_INPUT_PATH
-app.config['UPLOAD_FOLDER_ATFLEE_IMAGE'] = ATFLEE_IMAGE_INPUT_PATH
-
 
 @app.route('/testing')
 def hello_world():
