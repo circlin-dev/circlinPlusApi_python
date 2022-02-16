@@ -286,7 +286,7 @@ def add_weekly_data():
             connection.close()
             result = {
                 'result': False,
-                'error': f"Failed to analysis requested image({body_image}): {body_analysis['result']['message']}"
+                'error': f"Failed to analysis requested image({body_image}): {body_analysis['error']}"
             }
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
             return json.dumps(result, ensure_ascii=False), 400
@@ -295,7 +295,7 @@ def add_weekly_data():
             connection.close()
             result = {
                 'result': False,
-                'error': f"Failed to analysis requested image({body_image}): {body_analysis['result']['message']}"
+                'error': f"Failed to analysis requested image({body_image}): {body_analysis['error']}"
             }
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
             return json.dumps(result, ensure_ascii=False), 500
