@@ -71,12 +71,12 @@ def create_trial():
     gender = answer['gender']  # M , W
     selected_exercise = answer['sports'][0]  # list with string
     selected_level = 0
-    if answer['level'] == '저':
-        pass
+    if answer['level'] == '고':
+        selected_level = 2
     elif answer['level'] == '중':
         selected_level = 1
     else:
-        selected_level = 2
+        selected_level = 0
 
     # case 4(피트니스, 여자, 고강도), 5(피트니스, 여자, 중강도), 6(피트니스, 여자, 저강도) => 7일치 모두 완료
     # case 9: 필라테스, 남자, 저강도를 기준으로 입력
