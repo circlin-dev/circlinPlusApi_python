@@ -55,7 +55,7 @@ def add_weekly_data():
     # body_image = request.files.getlist('body_image')['body_image']
     body_image = request.files.to_dict()['body_image']
     now = datetime.now().strftime('%Y%m%d%H%M%S')
-    file_name = f'{user_id}_{now}.png'
+    file_name = f'{user_id}_{now}.jpg'
 
     # body_image = images['body_image']
     # body_image = np.asarray(bytearray(images['body_image']), dtype=np.uint8)
