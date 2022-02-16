@@ -11,6 +11,7 @@ import json
 import numpy as np
 import os
 from pypika import MySQLQuery as Query, Table, Order
+import shutil
 from werkzeug.utils import secure_filename
 
 """2개의 이미지 전송
@@ -96,7 +97,8 @@ def add_weekly_data():
         secure_file = secure_filename(body_image.filename)
         body_image.save(secure_file)
         if os.path.exists(secure_file):
-            os.replace(secure_file, local_image_path)
+            shutil.move(secure_file, f'{BODY_IMAGE_INPUT_PATH}/{user_id}')
+            os.replace(f'{BODY_IMAGE_INPUT_PATH}/{user_id}/{secure_file}', local_image_path)
             os.remove(secure_file)
 
         object_name = f"{BUCKET_BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}"
