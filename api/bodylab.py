@@ -507,13 +507,12 @@ def read_user_bodylab_single(user_id, bodylab_id):
                                  method=request.method)
         return json.dumps(result, ensure_ascii=False), 200
 
+    connection.close()
     result_dict = {'result': True}
     for index, value in enumerate(record[0]):
         if type(value) == datetime:
-            print(index, value)
             result_dict[columns[index]] = value.strftime('%Y-%m-%d %H:%M:%S')
         else:
-            print(index, value)
             result_dict[columns[index]] = value
 
     return json.dumps(result_dict, ensure_ascii=False), 200
