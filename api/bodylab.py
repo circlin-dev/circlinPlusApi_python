@@ -345,7 +345,7 @@ def read_user_bodylab(user_id):
         bodylabs.id,
         bodylabs.created_at,
         bodylabs.url_body_image,
-        # bodylabs.url_atflee_image,
+         # bodylabs.url_atflee_image,
         bodylabs.height,
         bodylabs.weight,
         bodylabs.bmi,
