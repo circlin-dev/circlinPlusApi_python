@@ -328,7 +328,7 @@ def read_user_bodylab(user_id):
                "muscle_mass",
                "ideal_muscle_mass",
                "fat_mass",
-               "ideal_fat_mass"
+               "ideal_fat_mass",
                "url_output",
                "shoulder_ratio",
                "hip_ratio",
@@ -442,7 +442,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
                "muscle_mass",
                "ideal_muscle_mass",
                "fat_mass",
-               "ideal_fat_mass"
+               "ideal_fat_mass",
                "url_output",
                "shoulder_ratio",
                "hip_ratio",
