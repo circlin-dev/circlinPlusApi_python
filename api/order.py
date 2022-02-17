@@ -1,7 +1,7 @@
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification, slack_purchase_notification
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
-from global_things.functions.order import amount_to_be_paid, get_import_access_token, request_import_refund
+from global_things.functions.order import validation_subscription_order, validation_equipment_delivery, get_import_access_token, request_import_refund
 from global_things.constants import IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET
 from . import api
 from flask import url_for, request
@@ -564,7 +564,7 @@ def add_subscription_order():
 
     discount_information = cursor.fetchall()
 
-    to_be_paid, subscription_original_price, discount_id = amount_to_be_paid(subscription_information, discount_information)
+    to_be_paid, subscription_original_price, discount_id = validation_subscription_order('subscription', subscription_information, discount_information)
     if to_be_paid != import_paid_amount:
         """
         1. '부분환불' 도입 시
@@ -573,7 +573,7 @@ def add_subscription_order():
         2. 케이스별 환불사유 준비하기
         """
         refund_reason = "[결제검증 실패]: 판매가와 결제금액이 불일치합니다."
-        refund_result = request_import_refund(access_token, imp_uid, merchant_uid, import_paid_amount, user_subscription, refund_reason)
+        refund_result = request_import_refund(access_token, imp_uid, merchant_uid, import_paid_amount, import_paid_amount, refund_reason)
         if refund_result['code'] == 0:
             try:
                 sql = Query.update(
@@ -668,3 +668,187 @@ def add_subscription_order():
                   'error': error}
         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
         return json.dumps(result, ensure_ascii=False), 400
+
+
+@api.route('/validation/delivery-fee', methods=['POST'])
+def validate_delivery_fee():
+    ip = request.headers["X-Forwarded-For"]
+    endpoint = API_ROOT + url_for('api.validate_delivery_fee')
+    # token = request.headers['Authorization']
+    """Define tables required to execute SQL."""
+    orders = Table('orders')
+    order_products = Table('order_products')
+    order_product_deliveries = Table('order_product_delivery')
+    order_subscriptions = Table('order_subscriptions')
+    products = Table('products')
+    discounts = Table('discounts')
+
+    parameters = json.loads(request.get_data(), encoding='utf-8')
+    imp_uid = parameters['imp_uid']
+    merchant_uid = parameters['merchant_uid']
+    discount_code = parameters['discount_code']
+    first_delivery_discount_code = parameters['first_delivery_discount_code'] if parameters['first_delivery_discount_code'] is not None else ''
+    equipment_code = parameters['equipment_code']
+    address = parameters['address']
+    user_id = merchant_uid.split('_')[-1]
+
+    try:
+        connection = login_to_db()
+    except Exception as e:
+        error = str(e)
+        result = {
+            'result': False,
+            'error': f'Server Error while connecting to DB: {error}'
+        }
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
+        return json.dumps(result, ensure_ascii=False), 500
+
+    cursor = connection.cursor()
+    # 2. import에서 결제 정보 조회
+    get_token = json.loads(get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET))
+    if get_token['result'] is False:
+        connection.close()
+        result = {'result': False,
+                  'error': f'Failed to get import access token at server(message: {get_token["message"]})'}
+        slack_error_notification(user_ip=ip, api=endpoint, error_log=get_token['message'], method=request.method)
+        return json.dumps(result, ensure_ascii=False), 500
+    else:
+        access_token = get_token['access_token']
+
+    payment_validation_import = requests.get(
+        f"https://api.iamport.kr/payments/{imp_uid}",
+        headers={"Authorization": access_token}
+    ).json()
+    import_paid_amount = int(payment_validation_import['response']['amount'])
+
+    sql = Query.from_(
+        products
+    ).select(
+        products.id,
+        products.type,
+        products.delivery_fee
+    ).where(
+        Criterion.all([products.code == equipment_code])
+    ).get_sql()
+    cursor.execute(sql)
+    equipment = cursor.fetchall()
+    equipment_dict = {
+        'id': equipment[0][0],
+        'type': equipment[0][1],
+        'delivery_fee': equipment[0][2]
+    }
+
+    sql = Query.from_(
+        discounts
+    ).select(
+        discounts.id,
+        discounts.type,
+        discounts.title,
+        discounts.method,
+        discounts.value,
+        discounts.code
+    ).where(
+        Criterion.all([
+            discounts.code == discount_code
+            # discounts.code == first_delivery_discount_code
+        ])
+    ).get_sql()
+    cursor.execute(sql)
+    area_discount = cursor.fetchall()
+    area_discount_dict = {
+        'id': area_discount[0][0],
+        'type': area_discount[0][1],
+        'title': area_discount[0][2],
+        'method': area_discount[0][3],
+        'value': area_discount[0][4],
+        'code': area_discount[0][5]
+    }
+
+    sql = Query.from_(
+        discounts
+    ).select(
+        discounts.id,
+        discounts.type,
+        discounts.title,
+        discounts.method,
+        discounts.value,
+        discounts.code
+    ).where(
+        Criterion.all([
+            discounts.code == first_delivery_discount_code
+        ])
+    ).get_sql()
+    cursor.execute(sql)
+    first_delivery = cursor.fetchall()
+    if len(first_delivery) == 0:
+        first_delivery_discount_dict = {
+            'is_first': False,
+            'type': None,
+            'title': None,
+            'method': None,
+            'value': 0,
+            'code': None
+        }
+    else:
+        first_delivery_discount_dict = {
+            'is_first': True,
+            'type': first_delivery[0][0],
+            'title': first_delivery[0][1],
+            'method': first_delivery[0][2],
+            'value': first_delivery[0][3],
+            'code': first_delivery[0][4]
+        }
+    discount_dict = {'first_delivery_discount': first_delivery_discount_dict, 'area_discount': area_discount_dict}
+    to_be_paid, total_fee, area_discount_id, first_delivery_discount_value = validation_equipment_delivery(equipment_dict, discount_dict)
+
+    if to_be_paid == import_paid_amount:
+        connection.close()
+        result_dict = {"result": True}
+        return json.dumps(result_dict, ensure_ascii=False)
+    else:
+        connection.close()
+        refund_reason = "[결제검증 실패]: 실제 기구배송비와 결제금액이 불일치합니다."
+        refund_result = request_import_refund(access_token, imp_uid, merchant_uid, import_paid_amount, import_paid_amount, refund_reason)
+        if refund_result['code'] == 0:
+            try:
+                sql = Query.update(
+                    orders
+                ).set(
+                    orders.user_id, user_id
+                ).set(
+                    orders.status, "cancelled"
+                ).set(
+                    orders.deleted_at, fn.Now()
+                ).where(
+                    Criterion.all([
+                        orders.imp_uid == imp_uid,
+                        orders.merchant_uid == merchant_uid
+                    ])
+                ).get_sql()
+                cursor.execute(sql)
+                connection.commit()
+            except Exception as e:
+                connection.rollback()
+                connection.close()
+                error = str(e)
+                result = {
+                    'result': False,
+                    'error': f'Server error while validating : {error}'
+                }
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
+                return json.dumps(result, ensure_ascii=False), 500
+            connection.close()
+            result = {'result': False,
+                      'error': f"결제 검증 실패(결제 금액 불일치), 환불처리 성공(imp_uid: {imp_uid}, merchant_uid: {merchant_uid})."}
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
+            return json.dumps(result, ensure_ascii=False), 400
+        else:
+            # IMPORT 서버의 오류로 인해 환불 요청이 실패할 경우 직접 환불한다.
+            connection.close()
+            result = {'result': False,
+                      'error': f"결제 검증 실패(결제 금액 불일치), 다음 사유로 인해 환불처리 실패하였으니 아임포트 어드민에서 직접 취소 요망(imp_uid: {imp_uid}, merchant_uid: {merchant_uid}) : {refund_result['message']}"}
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
+            return json.dumps(result, ensure_ascii=False), 400
+
+        result_dict = {"result": False}
+        return json.dumps(result_dict, ensure_ascii=False)
