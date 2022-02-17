@@ -306,6 +306,7 @@ def read_user_bodylab(user_id):
     """Define tables required to execute SQL."""
     bodylabs = Table('bodylabs')
     bodylab_analyze_bodies = Table('bodylab_analyze_bodies')  # bodylab_body_images = Table('bodylab_body_images')
+    user_questions = Table('user_questions')
     # bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
 
     try:
@@ -319,6 +320,30 @@ def read_user_bodylab(user_id):
         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
     cursor = connection.cursor()
+
+    sql = Query.from_(
+        user_questions
+    ).select(
+        user_questions.data
+    ).where(
+        Criterion.all([
+            user_questions.user_id == user_id
+        ])
+    ).orderby(
+        user_questions.id, order=Order.desc
+    ).limit(1).get_sql()
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    # 검증 1: 사전설문 응답값 테이블에 전달받은 user id, id값에 해당하는 데이터가 있는지 여부
+    if query_result_is_none(data) is True:
+        connection.close()
+        result = {
+            'result': False,
+            'message': 'Failed to create 1 week free trial(Cannot find user or user_question data).'
+        }
+        return json.dumps(result, ensure_ascii=False), 400
+    answer = json.loads(data[0][0].replace("\\", "\\\\"), strict=False)
+    gender = answer['gender']
 
     columns = ["bodylab_id",
                "created_at",
@@ -384,6 +409,7 @@ def read_user_bodylab(user_id):
     ).get_sql()
     cursor.execute(sql)
     records = cursor.fetchall()
+    connection.close()
 
     if query_result_is_none(records) is True:
         connection.rollback()
@@ -405,10 +431,10 @@ def read_user_bodylab(user_id):
             else:
                 each_dict[columns[index]] = value
         # 건강점수
-        each_dict['bmi_healthiness_score'] = healthiness_score(22.05, each_dict['bmi'])  # each_dict['ideal_bmi']
+        each_dict['bmi_healthiness_score'] = healthiness_score(each_dict['ideal_bmi'], each_dict['bmi'])
         each_dict['fat_mass_healthiness_score'] = healthiness_score(each_dict['ideal_fat_mass'], each_dict['fat_mass'])
         each_dict['muscle_mass_healthiness_score'] = healthiness_score(each_dict['ideal_muscle_mass'], each_dict['muscle_mass'])
-        each_dict['body_image_compare'] = BODY_IMAGE_ANALYSIS_CRITERIA
+        each_dict['body_image_compare'] = BODY_IMAGE_ANALYSIS_CRITERIA[gender]
         result_list.append(each_dict)
 
     result_dict = {
@@ -429,6 +455,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
     bodylabs = Table('bodylabs')
     bodylab_analyze_bodies = Table('bodylab_analyze_bodies')  # bodylb_body_images = Table('bodylab_body_images')
     # bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
+    user_questions = Table('user_questions')
 
     try:
         connection = login_to_db()
@@ -441,6 +468,29 @@ def read_user_bodylab_single(user_id, bodylab_id):
         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
     cursor = connection.cursor()
+    sql = Query.from_(
+        user_questions
+    ).select(
+        user_questions.data
+    ).where(
+        Criterion.all([
+            user_questions.user_id == user_id
+        ])
+    ).orderby(
+        user_questions.id, order=Order.desc
+    ).limit(1).get_sql()
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    # 검증 1: 사전설문 응답값 테이블에 전달받은 user id, id값에 해당하는 데이터가 있는지 여부
+    if query_result_is_none(data) is True:
+        connection.close()
+        result = {
+            'result': False,
+            'message': 'Failed to create 1 week free trial(Cannot find user or user_question data).'
+        }
+        return json.dumps(result, ensure_ascii=False), 400
+    answer = json.loads(data[0][0].replace("\\", "\\\\"), strict=False)
+    gender = answer['gender']
 
     columns = ["bodylab_id",
                "created_at",
@@ -531,9 +581,8 @@ def read_user_bodylab_single(user_id, bodylab_id):
     result_dict['bmi_healthiness_score'] = healthiness_score(result_dict['ideal_bmi'], result_dict['bmi'])
     result_dict['fat_mass_healthiness_score'] = healthiness_score(result_dict['ideal_fat_mass'], result_dict['fat_mass'])
     result_dict['muscle_mass_healthiness_score'] = healthiness_score(result_dict['ideal_muscle_mass'], result_dict['muscle_mass'])
-    result_dict['body_image_compare'] = BODY_IMAGE_ANALYSIS_CRITERIA
+    result_dict['body_image_compare'] = BODY_IMAGE_ANALYSIS_CRITERIA[gender]
     return json.dumps(result_dict, ensure_ascii=False), 200
-
 
     # region body lab score calculating
     '''
