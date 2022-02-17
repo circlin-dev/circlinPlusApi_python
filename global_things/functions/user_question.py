@@ -50,10 +50,10 @@ def replace_number_to_schedule(schedule_list: list):
         41: {"order": 41, "day": "일 21-24"}
     }
 
-    for date in schedule_list:
-        replaced_date.append(schedule_dict[date])
+    for grid_number in schedule_list:
+        replaced_date.append(schedule_dict[grid_number])  # 리스트에 요소 추가하는 파이썬 문법...
 
-    replaced_date = sorted(replaced_date, key=lambda x: x['order'])
+    replaced_date = sorted(replaced_date, key=lambda x: x['order'])  # 리스트 정렬하는 파이썬 문법......
     replaced_date = [date['day'] for date in replaced_date]
 
     return replaced_date

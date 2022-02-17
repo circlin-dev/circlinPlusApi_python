@@ -7,77 +7,93 @@ import requests
 
 
 # region bodylab.py
-def standard_healthiness_score(score_type: str, age: int, sex: str, weight: float, height=0):
-    if score_type is None or age is None or sex is None or weight is None:
-        return 'Some parameter has None value.'
+def standard_healthiness_score(age_group: str, gender: str, weight: float, height: float, bmi: float):
+    if age_group is None or gender is None or weight is None or height is None or bmi is None:
+        return 'Missing data'
 
-    if score_type == 'fat_mass':
-        if sex == 'W':
-            if age < 18:
-                percent = 19.7
-            elif age < 21:
-                percent = (19.7 + 21.5) / 2
-            elif age < 26:
-                percent = 22.1
-            elif age < 31:
-                percent = 22.7
-            elif age < 36:
-                percent = (23.4 + 25.1) / 2
-            elif age < 41:
-                percent = (24.0 + 25.7) / 2
-            elif age < 46:
-                percent = (24.6 + 26.3) / 2
-            elif age < 51:
-                percent = 26.9
-            elif age < 56:
-                percent = 27.6
-            else:
-                percent = (28.2 + 29.8) / 2
-        elif sex == 'M':
-            if age < 18:
-                percent = 9.4
-            elif age < 21:
-                percent = 10.5
-            elif age < 26:
-                percent = 11.6
-            elif age < 31:
-                percent = (12.7 + 14.6) / 2
-            elif age < 36:
-                percent = (13.7 + 15.7) / 2
-            elif age < 41:
-                percent = 16.8
-            elif age < 46:
-                percent = 17.8
-            elif age < 51:
-                percent = (18.9 + 20.7) / 2
-            elif age < 56:
-                percent = (20.0 + 21.8) / 2
-            else:
-                percent = 22.8
+    if gender == 'W':
+        if age_group == "10대":
+            percent = (19.7 + ((19.7 + 21.5) / 2)) / 2
+        elif age_group == "20대":
+            percent = (22.1 + 22.7) / 2
+        elif age_group == "30대":
+            percent = (((23.4 + 25.1) / 2) + ((24.0 + 25.7) / 2)) / 2
+        elif age_group == "40대":
+            percent = (((24.6 + 26.3) / 2) + 26.9) / 2
+        elif age_group == "50대":
+            percent = (27.6 + (28.2 + 29.8) / 2) / 2
         else:
-            return 'Out of category: gender'
+            percent = (28.2 + 29.8) / 2
         ideal_fat_mass = (weight * percent) / 100
-        return ideal_fat_mass  # float
+        # if age < 18:
+        #     percent = 19.7
+        # elif age < 21:
+        #     percent = (19.7 + 21.5) / 2
+        # elif age < 26:
+        #     percent = 22.1
+        # elif age < 31:
+        #     percent = 22.7
+        # elif age < 36:
+        #     percent = (23.4 + 25.1) / 2
+        # elif age < 41:
+        #     percent = (24.0 + 25.7) / 2
+        # elif age < 46:
+        #     percent = (24.6 + 26.3) / 2
+        # elif age < 51:
+        #     percent = 26.9
+        # elif age < 56:
+        #     percent = 27.6
+        # else:
+        #     percent = (28.2 + 29.8) / 2
 
-    elif score_type == 'muscle_mass':
-        if sex == 'W':
-            ideal_muscle_mass = weight * 0.34
-        elif sex == 'M':
-            ideal_muscle_mass = weight * 0.4
-        else:
-            return 'Out of category: gender'
-        return ideal_muscle_mass  # float
-
-    elif score_type == 'bmi_index':
-        if height != 0 and type(height) == float:
-            height_float = round(height / 100, 3)  # Scale of height in BMI index is 'meter'.
-            my_bmi = weight / (height_float ** 2)
-        else:
-            return 'Out of category: height'
-        return my_bmi  # float
-
+        ideal_muscle_mass = weight * 0.34
     else:
-        return 'Out of category: score type'
+        if age_group == "10대":
+            percent = (9.4 + 10.5) / 2
+        elif age_group == "20대":
+            percent = (11.6 + (12.7 + 14.6) / 2) / 2
+        elif age_group == "30대":
+            percent = (((13.7 + 15.7) / 2) + 16.8) / 2
+        elif age_group == "40대":
+            percent = (17.8 + ((18.9 + 20.7) / 2)) / 2
+        elif age_group == "50대":
+            percent = (((20.0 + 21.8) / 2) + 22.8) / 2
+        else:
+            percent = 22.8
+        ideal_fat_mass = (weight * percent) / 100
+
+        # if age < 18:
+        #     percent = 9.4
+        # elif age < 21:
+        #     percent = 10.5
+        # elif age < 26:
+        #     percent = 11.6
+        # elif age < 31:
+        #     percent = (12.7 + 14.6) / 2
+        # elif age < 36:
+        #     percent = (13.7 + 15.7) / 2
+        # elif age < 41:
+        #     percent = 16.8
+        # elif age < 46:
+        #     percent = 17.8
+        # elif age < 51:
+        #     percent = (18.9 + 20.7) / 2
+        # elif age < 56:
+        #     percent = (20.0 + 21.8) / 2
+        # else:
+        #     percent = 22.8
+        ideal_muscle_mass = weight * 0.4
+
+    if 0 <= bmi <= 18.5:
+        bmi_status = "저체중"
+    elif 18.5 < bmi <= 23:
+        bmi_status = "정상"
+    elif 23 < bmi <= 25:
+        bmi_status = "경도비만"
+    else:
+        bmi_status = "중등도비만"
+
+    return ideal_fat_mass, ideal_muscle_mass, bmi_status
 
 
 def analyze_body_images(user_id, url):

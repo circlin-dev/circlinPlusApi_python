@@ -2,7 +2,7 @@ import datetime
 from global_things.constants import API_ROOT, AMAZON_URL, BUCKET_NAME, BUCKET_BODY_IMAGE_INPUT_PATH, BODY_IMAGE_INPUT_PATH, BUCKET_ATFLEE_IMAGE_PATH, ATFLEE_IMAGE_INPUT_PATH
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
-from global_things.functions.bodylab import analyze_body_images, anaylze_atflee_images, upload_image_to_s3
+from global_things.functions.bodylab import analyze_body_images, anaylze_atflee_images, upload_image_to_s3, standard_healthiness_score
 from . import api
 import cv2
 from datetime import datetime
@@ -40,16 +40,13 @@ def weekly_bodylab():
         이미지 서버 임시 저장 & 업로드 코드 추가 필요
           - 눈바디 이미지, 앳플리 이미지 S3 업로드 후 URL 가져오는 코드 추가해야 함!
         """
-        """
-        요청이 html form으로부터가 아닌, axios나 fetch로 온다면 파라미터를 아래와 같이 다뤄야 할 수도 있다.
-        -> parameters = json.loads(request.get_data(), encoding='utf-8')
-        """
         # period = request.form.get('period')  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
 
         """Define tables required to execute SQL."""
         bodylabs = Table('bodylabs')
         bodylab_analyze_bodies = Table('bodylab_analyze_bodies')  # bodylab_body_images = Table('bodylab_body_images')
         # bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
+        user_questions = Table('user_questions')
 
         # Verify if mandatory information is not null.
         if not(user_id or height or weight or bmi or muscle_mass or fat_mass or body_image):
@@ -123,6 +120,40 @@ def weekly_bodylab():
         #   return json.dumps(result, ensure_ascii=False), 401
         # elif is_valid_user['result'] is True:
         #   pass
+
+
+        """
+        !!!데이터 추가 저장!!!
+        - standard_healthiness_score()로 나에게의 권장되는 수치 및 차이 구해서 저장
+        - 신체 수치는 1위와의 
+        """
+        sql = Query.from_(
+            user_questions
+        ).select(
+            user_questions.data
+        ).where(
+            Criterion.all([
+                user_questions.user_id == user_id
+            ])
+        ).orderby(
+            user_questions.id, order=Order.desc
+        ).limit(1).get_sql()
+        cursor.execute(sql)
+        data = cursor.fetchall()
+        # 검증 1: 사전설문 응답값 테이블에 전달받은 user id, id값에 해당하는 데이터가 있는지 여부
+        if query_result_is_none(data) is True:
+            connection.close()
+            result = {
+                'result': False,
+                'message': 'Failed to create 1 week free trial(Cannot find user or user_question data).'
+            }
+            return json.dumps(result, ensure_ascii=False), 400
+        answer = json.loads(data[0][0].replace("\\", "\\\\"), strict=False)
+        gender = answer['gender']
+        age_group = answer['age_group']
+
+        ideal_fat_mass, ideal_muscle_mass, bmi_status = standard_healthiness_score(str(age_group), str(gender), float(weight), float(height), float(bmi))
+
         try:
             sql = Query.into(
                 bodylabs
@@ -132,16 +163,22 @@ def weekly_bodylab():
                 bodylabs.height,
                 bodylabs.weight,
                 bodylabs.bmi,
+                bodylabs.bmi_status,
                 bodylabs.muscle_mass,
-                bodylabs.fat_mass
+                bodylabs.ideal_muscle_mass,
+                bodylabs.fat_mass,
+                bodylabs.ideal_fat_mass,
             ).insert(
                 user_id,
                 s3_path_body_input,
                 height,
                 weight,
                 bmi,
+                bmi_status,
                 muscle_mass,
-                fat_mass
+                ideal_muscle_mass,
+                fat_mass,
+                ideal_fat_mass
             ).get_sql()
             cursor.execute(sql)
             connection.commit()
@@ -287,8 +324,11 @@ def read_user_bodylab(user_id):
                "height",
                "weight",
                "bmi",
+               "bmi_status",
                "muscle_mass",
+               "ideal_muscle_mass",
                "fat_mass",
+               "ideal_fat_mass"
                "url_output",
                "shoulder_ratio",
                "hip_ratio",
@@ -309,8 +349,11 @@ def read_user_bodylab(user_id):
         bodylabs.height,
         bodylabs.weight,
         bodylabs.bmi,
+        bodylabs.bmi_status,
         bodylabs.muscle_mass,
+        bodylabs.ideal_muscle_mass,
         bodylabs.fat_mass,
+        bodylabs.ideal_fat_mass,
         bodylab_analyze_bodies.url_output,
         bodylab_analyze_bodies.shoulder_ratio,
         bodylab_analyze_bodies.hip_ratio,
@@ -418,8 +461,11 @@ def read_user_bodylab_single(user_id, bodylab_id):
         bodylabs.height,
         bodylabs.weight,
         bodylabs.bmi,
+        bodylabs.bmi_status,
         bodylabs.muscle_mass,
+        bodylabs.ideal_muscle_mass,
         bodylabs.fat_mass,
+        bodylabs.ideal_fat_mass,
         bodylab_analyze_bodies.url_output,
         bodylab_analyze_bodies.shoulder_ratio,
         bodylab_analyze_bodies.hip_ratio,
