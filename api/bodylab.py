@@ -163,7 +163,7 @@ def weekly_bodylab():
                 bodylabs.height,
                 bodylabs.weight,
                 bodylabs.bmi,
-                # bodylabs.ideal_bmi,
+                bodylabs.ideal_bmi,
                 bodylabs.bmi_status,
                 bodylabs.muscle_mass,
                 bodylabs.ideal_muscle_mass,
@@ -175,7 +175,7 @@ def weekly_bodylab():
                 height,
                 weight,
                 bmi,
-                # ideal_bmi,
+                ideal_bmi,
                 bmi_status,
                 muscle_mass,
                 ideal_muscle_mass,
@@ -326,7 +326,7 @@ def read_user_bodylab(user_id):
                "height",
                "weight",
                "bmi",
-               # "ideal_bmi",
+               "ideal_bmi",
                "bmi_status",
                "muscle_mass",
                "ideal_muscle_mass",
@@ -352,7 +352,7 @@ def read_user_bodylab(user_id):
         bodylabs.height,
         bodylabs.weight,
         bodylabs.bmi,
-        # bodylabs.ideal_bmi,
+        bodylabs.ideal_bmi,
         bodylabs.bmi_status,
         bodylabs.muscle_mass,
         bodylabs.ideal_muscle_mass,
@@ -447,7 +447,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
                "height",
                "weight",
                "bmi",
-               # "ideal_bmi",
+               "ideal_bmi",
                "bmi_status",
                "muscle_mass",
                "ideal_muscle_mass",
@@ -473,7 +473,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
         bodylabs.height,
         bodylabs.weight,
         bodylabs.bmi,
-        # bodylabs.ideal_bmi,
+        bodylabs.ideal_bmi,
         bodylabs.bmi_status,
         bodylabs.muscle_mass,
         bodylabs.ideal_muscle_mass,
@@ -527,7 +527,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
             result_dict[columns[index]] = value
 
     # 건강점수
-    result_dict['bmi_healthiness_score'] = healthiness_score(22.05, result_dict['bmi'])  # result_dict['ideal_bmi']
+    result_dict['bmi_healthiness_score'] = healthiness_score(result_dict['ideal_bmi'], result_dict['bmi'])
     result_dict['fat_mass_healthiness_score'] = healthiness_score(result_dict['ideal_fat_mass'], result_dict['fat_mass'])
     result_dict['muscle_mass_healthiness_score'] = healthiness_score(result_dict['ideal_muscle_mass'], result_dict['muscle_mass'])
 
