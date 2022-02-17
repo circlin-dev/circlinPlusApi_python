@@ -298,7 +298,7 @@ def read_user_bodylab(user_id):
                "shoulder_center_to_hip_center",
                "hip_center_to_ankle_center",
                "whole_body_length",
-               "upper_body_lower_body"]
+               "upperbody_lowerbody"]
     sql = Query.from_(
         bodylabs
     ).select(
@@ -322,7 +322,7 @@ def read_user_bodylab(user_id):
         bodylab_analyze_bodies.shoulder_center_to_hip_center,
         bodylab_analyze_bodies.hip_center_to_ankle_center,
         bodylab_analyze_bodies.whole_body_length,
-        bodylab_analyze_bodies.upper_body_lower_body
+        bodylab_analyze_bodies.upperbody_lowerbody
         #     bodylab_analyze_atflees.star
     ).join(
         bodylab_analyze_bodies
@@ -405,7 +405,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
                "shoulder_center_to_hip_center",
                "hip_center_to_ankle_center",
                "whole_body_length",
-               "upper_body_lower_body"]
+               "upperbody_lowerbody"]
 
     sql = Query.from_(
         bodylabs
@@ -430,7 +430,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
         bodylab_analyze_bodies.shoulder_center_to_hip_center,
         bodylab_analyze_bodies.hip_center_to_ankle_center,
         bodylab_analyze_bodies.whole_body_length,
-        bodylab_analyze_bodies.upper_body_lower_body
+        bodylab_analyze_bodies.upperbody_lowerbody
         #     bodylab_analyze_atflees.star
     ).join(
         bodylab_analyze_bodies
