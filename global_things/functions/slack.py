@@ -59,7 +59,7 @@ def slack_purchase_notification(cursor, user_id: int = 0, manager_id: int = 0, o
   ).join(
     order_subscriptions
   ).on(
-    orders.id == order_subscriptions.id
+    order_subscriptions.order_id == orders.id
   ).join(
     subscriptions
   ).on(
