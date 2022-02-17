@@ -196,3 +196,26 @@ def upload_image_to_s3(file_name, bucket_name, object_name):
     return str(e)
 
   return True
+
+
+columns = ["bodylab_id",
+           "created_at",
+           "url_body_input",
+           "height",
+           "weight",
+           "bmi",
+           "bmi_status",
+           "muscle_mass",
+           "ideal_muscle_mass",
+           "fat_mass",
+           "ideal_fat_mass"
+           "url_output",
+           "shoulder_ratio",
+           "hip_ratio",
+           "shoulder_width",
+           "hip_width",
+           "nose_to_shoulder_center",
+           "shoulder_center_to_hip_center",
+           "hip_center_to_ankle_center",
+           "whole_body_length",
+           "upperbody_lowerbody"]
