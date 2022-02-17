@@ -491,8 +491,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
     ).where(
         Criterion.all([
             bodylabs.user_id == user_id,
-            bodylabs.id == bodylab_analyze_bodies.bodylab_id,
-            # bodylabs.id == bodylab_analyze_atflees.bodylab_id
+            bodylabs.id == bodylab_id
         ])
     ).get_sql()
 
