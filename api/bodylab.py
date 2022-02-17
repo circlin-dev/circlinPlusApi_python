@@ -353,7 +353,7 @@ def read_user_bodylab(user_id):
     for data in records:
         each_dict = {}
         for index, value in enumerate(data):
-            if type(value) == 'datetime':
+            if type(value) == datetime:
                 each_dict[columns[index]] = value.strftime('%Y-%m-%d %H:%M:%S')
             else:
                 each_dict[columns[index]] = value
@@ -463,7 +463,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
 
     result_dict = {'result': True}
     for index, value in enumerate(record):
-        if type(value) == 'datetime':
+        if type(value) == datetime:
             result_dict[columns[index]] = value.strftime('%Y-%m-%d %H:%M:%S')
         else:
             result_dict[columns[index]] = value
