@@ -281,7 +281,7 @@ def read_user_bodylab(user_id):
         return json.dumps(result, ensure_ascii=False), 500
     cursor = connection.cursor()
 
-    columns = ["boylab_id",
+    columns = ["bodylab_id",
                "created_at",
                "url_body_input",
                "height",
@@ -302,8 +302,8 @@ def read_user_bodylab(user_id):
     sql = Query.from_(
         bodylabs
     ).select(
-        bodylab_analyze_bodies.id,
-        bodylab_analyze_bodies.created_at,
+        bodylabs.id,
+        bodylabs.created_at,
         bodylabs.url_body_image,
         # bodylabs.url_atflee_image,
         bodylabs.height,
@@ -311,8 +311,6 @@ def read_user_bodylab(user_id):
         bodylabs.bmi,
         bodylabs.muscle_mass,
         bodylabs.fat_mass,
-        # bodylab_analyze_bodies.id,
-        # bodylab_analyze_bodies.created_at,
         bodylab_analyze_bodies.url_output,
         bodylab_analyze_bodies.shoulder_ratio,
         bodylab_analyze_bodies.hip_ratio,
@@ -388,7 +386,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
         return json.dumps(result, ensure_ascii=False), 500
     cursor = connection.cursor()
 
-    columns = ["boylab_id",
+    columns = ["bodylab_id",#
                "created_at",
                "url_body_input",
                "height",
@@ -410,8 +408,8 @@ def read_user_bodylab_single(user_id, bodylab_id):
     sql = Query.from_(
         bodylabs
     ).select(
-        bodylab_analyze_bodies.id,
-        bodylab_analyze_bodies.created_at,
+        bodylabs.id,
+        bodylabs.created_at,
         bodylabs.url_body_image,
         # bodylabs.url_atflee_image,
         bodylabs.height,
@@ -419,8 +417,6 @@ def read_user_bodylab_single(user_id, bodylab_id):
         bodylabs.bmi,
         bodylabs.muscle_mass,
         bodylabs.fat_mass,
-        bodylab_analyze_bodies.id,
-        bodylab_analyze_bodies.created_at,
         bodylab_analyze_bodies.url_output,
         bodylab_analyze_bodies.shoulder_ratio,
         bodylab_analyze_bodies.hip_ratio,
@@ -465,6 +461,11 @@ def read_user_bodylab_single(user_id, bodylab_id):
     result_dict = {'result': True}
     for index, value in enumerate(record):
         result_dict[columns[index]] = value
+    # for data in records:
+    #     each_dict = {}
+    #     for index, value in enumerate(data):
+    #         each_dict[columns[index]] = value
+    #     result_list.append(each_dict)
 
     return json.dumps(result_dict, ensure_ascii=False), 200
 
