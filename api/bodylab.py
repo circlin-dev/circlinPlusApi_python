@@ -467,11 +467,6 @@ def read_user_bodylab_single(user_id, bodylab_id):
             result_dict[columns[index]] = value.strftime('%Y-%m-%d %H:%M:%S')
         else:
             result_dict[columns[index]] = value
-    # for data in records:
-    #     each_dict = {}
-    #     for index, value in enumerate(data):
-    #         each_dict[columns[index]] = value
-    #     result_list.append(each_dict)
 
     return json.dumps(result_dict, ensure_ascii=False), 200
 
