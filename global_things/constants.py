@@ -65,7 +65,7 @@ ATTRACTIVENESS_SCORE_CRITERIA = {
 BODY_IMAGE_ANALYSIS_CRITERIA = {
     # https://github.com/circlin-dev/circlin5.0/blob/39c2acd2b02d8cdba3d2e606e16d0ad6ab1d4302/circlin/src/screens/user/UserAnalysisScreen.js
     # line 330 ~ 351
-    "man": {
+    "M": {
         "name": "Ho Jung Jeong",
         "height": 175,
         "shoulder_width": 164.6,
@@ -74,7 +74,7 @@ BODY_IMAGE_ANALYSIS_CRITERIA = {
         "upperbody_height": 242.83541870117188,
         "lowerbody_height": 372.2978515625
     },
-    "woman": {
+    "W": {
         "name": "Si Young Lee",
         "height": 169,
         "shoulder_width": 227.68,

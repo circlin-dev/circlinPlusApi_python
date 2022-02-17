@@ -1,5 +1,5 @@
 import datetime
-from global_things.constants import API_ROOT, AMAZON_URL, BUCKET_NAME, BUCKET_BODY_IMAGE_INPUT_PATH, BODY_IMAGE_INPUT_PATH, BUCKET_ATFLEE_IMAGE_PATH, ATFLEE_IMAGE_INPUT_PATH
+from global_things.constants import API_ROOT, AMAZON_URL, BUCKET_NAME, BUCKET_BODY_IMAGE_INPUT_PATH, BODY_IMAGE_INPUT_PATH, BUCKET_ATFLEE_IMAGE_PATH, ATFLEE_IMAGE_INPUT_PATH, BODY_IMAGE_ANALYSIS_CRITERIA
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
 from global_things.functions.bodylab import analyze_body_images, anaylze_atflee_images, upload_image_to_s3, standard_healthiness_value, healthiness_score, attractiveness_score
@@ -408,6 +408,7 @@ def read_user_bodylab(user_id):
         each_dict['bmi_healthiness_score'] = healthiness_score(22.05, each_dict['bmi'])  # each_dict['ideal_bmi']
         each_dict['fat_mass_healthiness_score'] = healthiness_score(each_dict['ideal_fat_mass'], each_dict['fat_mass'])
         each_dict['muscle_mass_healthiness_score'] = healthiness_score(each_dict['ideal_muscle_mass'], each_dict['muscle_mass'])
+        each_dict['body_image_compare'] = BODY_IMAGE_ANALYSIS_CRITERIA
         result_list.append(each_dict)
 
     result_dict = {
@@ -530,7 +531,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
     result_dict['bmi_healthiness_score'] = healthiness_score(result_dict['ideal_bmi'], result_dict['bmi'])
     result_dict['fat_mass_healthiness_score'] = healthiness_score(result_dict['ideal_fat_mass'], result_dict['fat_mass'])
     result_dict['muscle_mass_healthiness_score'] = healthiness_score(result_dict['ideal_muscle_mass'], result_dict['muscle_mass'])
-
+    result_dict['body_image_compare'] = BODY_IMAGE_ANALYSIS_CRITERIA
     return json.dumps(result_dict, ensure_ascii=False), 200
 
 
