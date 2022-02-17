@@ -7,7 +7,8 @@ import requests
 
 
 # region bodylab.py
-def standard_healthiness_score(age_group: str, gender: str, weight: float, height: float, bmi: float):
+def standard_healthiness_value(age_group: str, gender: str, weight: float, height: float, bmi: float):
+    # 남녀 평균 BMI(ideal_bmi) 근거: https://www.kjfp.or.kr/journal/download_pdf.php?doi=10.21215/kjfp.2021.11.1.81 연구자료 82p 결과.2.비만도에 따른 성별별 분포
     if age_group is None or gender is None or weight is None or height is None or bmi is None:
         return 'Missing data'
 
@@ -47,6 +48,7 @@ def standard_healthiness_score(age_group: str, gender: str, weight: float, heigh
         #     percent = (28.2 + 29.8) / 2
 
         ideal_muscle_mass = weight * 0.34
+        ideal_bmi = 22.52
     else:
         if age_group == "10대":
             percent = (9.4 + 10.5) / 2
@@ -83,6 +85,7 @@ def standard_healthiness_score(age_group: str, gender: str, weight: float, heigh
         # else:
         #     percent = 22.8
         ideal_muscle_mass = weight * 0.4
+        ideal_bmi = 25.05
 
     if 0 <= bmi <= 18.5:
         bmi_status = "저체중"
@@ -93,7 +96,7 @@ def standard_healthiness_score(age_group: str, gender: str, weight: float, heigh
     else:
         bmi_status = "중등도비만"
 
-    return ideal_fat_mass, ideal_muscle_mass, bmi_status
+    return ideal_fat_mass, ideal_muscle_mass, bmi_status, ideal_bmi
 
 
 def analyze_body_images(user_id, url):
@@ -198,24 +201,11 @@ def upload_image_to_s3(file_name, bucket_name, object_name):
   return True
 
 
-columns = ["bodylab_id",
-           "created_at",
-           "url_body_input",
-           "height",
-           "weight",
-           "bmi",
-           "bmi_status",
-           "muscle_mass",
-           "ideal_muscle_mass",
-           "fat_mass",
-           "ideal_fat_mass"
-           "url_output",
-           "shoulder_ratio",
-           "hip_ratio",
-           "shoulder_width",
-           "hip_width",
-           "nose_to_shoulder_center",
-           "shoulder_center_to_hip_center",
-           "hip_center_to_ankle_center",
-           "whole_body_length",
-           "upperbody_lowerbody"]
+def healthiness_score(recommended, mine):
+    score = (1 - (abs(recommended - mine) / mine)) * 100
+    return score
+
+
+def attractiveness_score(best_person, mine):
+    score = (1 - (abs(best_person - mine) / mine)) * 100
+    return score

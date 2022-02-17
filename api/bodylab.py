@@ -2,7 +2,7 @@ import datetime
 from global_things.constants import API_ROOT, AMAZON_URL, BUCKET_NAME, BUCKET_BODY_IMAGE_INPUT_PATH, BODY_IMAGE_INPUT_PATH, BUCKET_ATFLEE_IMAGE_PATH, ATFLEE_IMAGE_INPUT_PATH
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
-from global_things.functions.bodylab import analyze_body_images, anaylze_atflee_images, upload_image_to_s3, standard_healthiness_score
+from global_things.functions.bodylab import analyze_body_images, anaylze_atflee_images, upload_image_to_s3, standard_healthiness_value, healthiness_score, attractiveness_score
 from . import api
 import cv2
 from datetime import datetime
@@ -124,7 +124,7 @@ def weekly_bodylab():
 
         """
         !!!데이터 추가 저장!!!
-        - standard_healthiness_score()로 나에게의 권장되는 수치 및 차이 구해서 저장
+        - standard_healthiness_value()로 나에게의 권장되는 수치 및 차이 구해서 저장
         - 신체 수치는 1위와의 
         """
         sql = Query.from_(
@@ -152,7 +152,7 @@ def weekly_bodylab():
         gender = answer['gender']
         age_group = answer['age_group']
 
-        ideal_fat_mass, ideal_muscle_mass, bmi_status = standard_healthiness_score(str(age_group), str(gender), float(weight), float(height), float(bmi))
+        ideal_fat_mass, ideal_muscle_mass, bmi_status, ideal_bmi = standard_healthiness_value(str(age_group), str(gender), float(weight), float(height), float(bmi))
 
         try:
             sql = Query.into(
@@ -163,6 +163,7 @@ def weekly_bodylab():
                 bodylabs.height,
                 bodylabs.weight,
                 bodylabs.bmi,
+                # bodylabs.ideal_bmi,
                 bodylabs.bmi_status,
                 bodylabs.muscle_mass,
                 bodylabs.ideal_muscle_mass,
@@ -174,6 +175,7 @@ def weekly_bodylab():
                 height,
                 weight,
                 bmi,
+                # ideal_bmi,
                 bmi_status,
                 muscle_mass,
                 ideal_muscle_mass,
@@ -324,6 +326,7 @@ def read_user_bodylab(user_id):
                "height",
                "weight",
                "bmi",
+               # "ideal_bmi",
                "bmi_status",
                "muscle_mass",
                "ideal_muscle_mass",
@@ -349,6 +352,7 @@ def read_user_bodylab(user_id):
         bodylabs.height,
         bodylabs.weight,
         bodylabs.bmi,
+        # bodylabs.ideal_bmi,
         bodylabs.bmi_status,
         bodylabs.muscle_mass,
         bodylabs.ideal_muscle_mass,
@@ -400,12 +404,17 @@ def read_user_bodylab(user_id):
                 each_dict[columns[index]] = value.strftime('%Y-%m-%d %H:%M:%S')
             else:
                 each_dict[columns[index]] = value
+        # 건강점수
+        each_dict['bmi_healthiness_score'] = healthiness_score(22.05, each_dict['bmi'])  # each_dict['ideal_bmi']
+        each_dict['fat_mass_healthiness_score'] = healthiness_score(each_dict['ideal_fat_mass'], each_dict['fat_mass'])
+        each_dict['muscle_mass_healthiness_score'] = healthiness_score(each_dict['ideal_muscle_mass'], each_dict['muscle_mass'])
         result_list.append(each_dict)
 
     result_dict = {
         'result': True,
         'bodylab_data': result_list
     }
+
     return json.dumps(result_dict, ensure_ascii=False), 200
 
 
@@ -438,6 +447,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
                "height",
                "weight",
                "bmi",
+               # "ideal_bmi",
                "bmi_status",
                "muscle_mass",
                "ideal_muscle_mass",
@@ -463,6 +473,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
         bodylabs.height,
         bodylabs.weight,
         bodylabs.bmi,
+        # bodylabs.ideal_bmi,
         bodylabs.bmi_status,
         bodylabs.muscle_mass,
         bodylabs.ideal_muscle_mass,
@@ -514,6 +525,11 @@ def read_user_bodylab_single(user_id, bodylab_id):
             result_dict[columns[index]] = value.strftime('%Y-%m-%d %H:%M:%S')
         else:
             result_dict[columns[index]] = value
+
+    # 건강점수
+    result_dict['bmi_healthiness_score'] = healthiness_score(22.05, result_dict['bmi'])  # result_dict['ideal_bmi']
+    result_dict['fat_mass_healthiness_score'] = healthiness_score(result_dict['ideal_fat_mass'], result_dict['fat_mass'])
+    result_dict['muscle_mass_healthiness_score'] = healthiness_score(result_dict['ideal_muscle_mass'], result_dict['muscle_mass'])
 
     return json.dumps(result_dict, ensure_ascii=False), 200
 
