@@ -366,9 +366,9 @@ def read_user_bodylab(user_id):
 
 
 @api.route('/user/<user_id>/bodylab/<bodylab_id>', methods=['GET'])
-def read_user_bodylab(user_id, bodylab_id):
+def read_user_bodylab_single(user_id, bodylab_id):
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
-    endpoint = API_ROOT + url_for('api.read_user_bodylab', user_id=user_id, bodylab_id=bodylab_id)
+    endpoint = API_ROOT + url_for('api.read_user_bodylab_single', user_id=user_id, bodylab_id=bodylab_id)
     # token = request.headers['Authorization']
 
     """Define tables required to execute SQL."""
