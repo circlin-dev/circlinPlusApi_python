@@ -379,7 +379,7 @@ def read_user_bodylab(user_id):
         ])
     ).get_sql()
     cursor.execute(sql)
-    records = cursor.fetchall()[0]
+    records = cursor.fetchall()
 
     if query_result_is_none(records) is True:
         connection.rollback()
