@@ -33,7 +33,7 @@ def create_chat_with_manager():
             'result': False,
             'error': f'Server Error while connecting to DB: {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
 
     cursor = connection.cursor()
@@ -56,7 +56,7 @@ def create_chat_with_manager():
             'result': False,
             'error': f': No pre-survey answer data of user({user_id})'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 403
 
     gender = json.loads(answer_data[0][0].replace("\\", "\\\\"), strict=False)['gender']
@@ -105,7 +105,7 @@ def create_chat_with_manager():
                 'result': False,
                 'error': f'Server Error while executing INSERT query(chat_rooms): {error}'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
             return json.dumps(result, ensure_ascii=False), 500
 
         try:
@@ -130,7 +130,7 @@ def create_chat_with_manager():
                 'result': False,
                 'error': f'Server Error while executing INSERT query(chat_users): {error}'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
             return json.dumps(result, ensure_ascii=False), 500
     else:
         connection.close()
@@ -175,7 +175,7 @@ def create_chat_with_manager():
 #             'result': False,
 #             'error': f'Server Error while connecting to DB: {error}'
 #         }
-#         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+#         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
 #         return json.dumps(result, ensure_ascii=False), 500
 #
 #     cursor = connection.cursor()
@@ -188,7 +188,7 @@ def create_chat_with_manager():
 #     #     'result': False,
 #     #     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
 #     #   }
-#     #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+#     #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
 #     #   return json.dumps(result, ensure_ascii=False), 401
 #     # elif is_valid_user['result'] is True:
 #     #   pass
@@ -281,7 +281,7 @@ def update_payment_state_by_webhook():
             'result': False,
             'error': f'Server Error while connecting to DB: {error}'
         }
-        slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'])
+        slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
     cursor = connection.cursor()
 
@@ -298,7 +298,7 @@ def update_payment_state_by_webhook():
         connection.close()
         result = {'result': False,
                   'error': f'Failed to get import access token at server(message: {get_token["message"]})'}
-        slack_error_notification(user_ip=ip, api=endpoint, error_log=get_token['message'])
+        slack_error_notification(user_ip=ip, api=endpoint, error_log=get_token['message'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
     else:
         access_token = get_token['access_token']
@@ -360,7 +360,7 @@ def update_payment_state_by_webhook():
                 'result': False,
                 'error': f'Server error while validating : {error}'
             }
-            slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'], query=sql)
+            slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'], query=sql, method=request.method)
             return json.dumps(result, ensure_ascii=False), 500
     else:
         # 결제 취소 이벤트가 아임포트 어드민(https://admin.iamport.kr/)에서 "취소하기" 버튼을 클릭하여 발생한 경우에만 트리거됨.
@@ -393,7 +393,7 @@ def update_payment_state_by_webhook():
                 'result': False,
                 'error': f': Error while validating payment information: Paid amount that was sent from IMPORT is {import_paid_amount} WON(imp_uid: {imp_uid}), but found {db_paid_amount} WON in orders table.'
             }
-            slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'])
+            slack_error_notification(user_ip=ip, api=endpoint, error_log=result['error'], method=request.method)
             return json.dumps(result, ensure_ascii=False), 403
 
 
@@ -448,7 +448,7 @@ def add_subscription_order():
             'result': False,
             'error': f'Server Error while connecting to DB: {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
 
     cursor = connection.cursor()
@@ -461,7 +461,7 @@ def add_subscription_order():
     #     'result': False,
     #     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
     #   }
-    #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+    #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
     #   return json.dumps(result, ensure_ascii=False), 401
     # elif is_valid_user['result'] is True:
     #   pass
@@ -471,7 +471,7 @@ def add_subscription_order():
     if get_token['result'] is False:
         result = {'result': False,
                   'error': f'Failed to get import access token at server(message: {get_token["message"]})'}
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=get_token['message'])
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=get_token['message'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
     else:
         access_token = get_token['access_token']
@@ -529,12 +529,12 @@ def add_subscription_order():
             if refund_result['code'] == 0:
                 result = {'result': False,
                           'error': f"결제 검증 실패(주문 플랜명 불일치), 환불처리 성공(imp_uid: {imp_uid}, merchant_uid: {merchant_uid})."}
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
                 return json.dumps(result, ensure_ascii=False), 400
             else:
                 result = {'result': False,
                           'error': f"결제 검증 실패(주문 플랜명 불일치), 다음 사유로 인해 환불처리 실패하여 아임포트 어드민에서 직접 취소 요망(imp_uid: {imp_uid}, merchant_uid: {merchant_uid}) : {refund_result['message']}"}
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
                 return json.dumps(result, ensure_ascii=False), 400
         except Exception as e:
             connection.rollback()
@@ -544,7 +544,7 @@ def add_subscription_order():
                 'result': False,
                 'error': f'Server error while validating : {error}'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
             return json.dumps(result, ensure_ascii=False), 500
     else:
         pass
@@ -600,19 +600,19 @@ def add_subscription_order():
                     'result': False,
                     'error': f'Server error while validating : {error}'
                 }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
                 return json.dumps(result, ensure_ascii=False), 500
             connection.close()
             result = {'result': False,
                       'error': f"결제 검증 실패(결제 금액 불일치), 환불처리 성공(imp_uid: {imp_uid}, merchant_uid: {merchant_uid})."}
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
             return json.dumps(result, ensure_ascii=False), 400
         else:
             # IMPORT 서버의 오류로 인해 환불 요청이 실패할 경우 직접 환불한다.
             connection.close()
             result = {'result': False,
                       'error': f"결제 검증 실패(결제 금액 불일치), 다음 사유로 인해 환불처리 실패하였으니 아임포트 어드민에서 직접 취소 요망(imp_uid: {imp_uid}, merchant_uid: {merchant_uid}) : {refund_result['message']}"}
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
             return json.dumps(result, ensure_ascii=False), 400
 
     # 4. 결제 정보(orders) 저장
@@ -666,5 +666,5 @@ def add_subscription_order():
         error = str(e)
         result = {'result': False,
                   'error': error}
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
         return json.dumps(result, ensure_ascii=False), 400

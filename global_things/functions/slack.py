@@ -6,7 +6,7 @@ import requests
 
 # Slack notification: error
 def slack_error_notification(user_ip: str = '', user_id: int = 0, nickname: str = '', api: str = '',
-                             error_log: str = '', query: str = ''):
+                             error_log: str = '', query: str = '', method: str = ''):
   if user_ip == '' or user_id == '':
     user_ip = "Server error"
     user_id = "Server error"
@@ -16,6 +16,7 @@ def slack_error_notification(user_ip: str = '', user_id: int = 0, nickname: str 
     json.dumps({
       "channel": "#circlin-plus-log",
       "username": "써클인 플러스 - python",
+      "method": method,
       "text": f"*써클인 플러스(python)에서 오류가 발생했습니다.* \n \
 사용자 IP: `{user_ip}` \n \
 닉네임 (ID): `{nickname}({user_id})`\n \

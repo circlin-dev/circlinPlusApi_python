@@ -30,7 +30,7 @@ def read_products():
             'result': False,
             'error': f'Server Error while connecting to DB: {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=0, api=endpoint, error_log=result['error'])
+        slack_error_notification(user_ip=ip, user_id=0, api=endpoint, error_log=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
 
     query_parameter = request.args.to_dict()  # type: equipment(기구), starterkit(스타터키트), item(상품)
@@ -189,7 +189,7 @@ def read_a_product(product_id: int):
             'result': False,
             'error': f'Server Error while connecting to DB: {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=0, api=endpoint, error_log=result['error'])
+        slack_error_notification(user_ip=ip, user_id=0, api=endpoint, error_log=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
 
     cursor = connection.cursor()

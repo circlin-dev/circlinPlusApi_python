@@ -76,7 +76,7 @@ def add_user_question():
             'result': False,
             'error': f'Server Error while connecting to DB: {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
 
     cursor = connection.cursor()
@@ -89,7 +89,7 @@ def add_user_question():
     #     'result': False,
     #     'error': f"Cannot find user {user_id}: No such user."
     #   }
-    #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+    #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
     #   return json.dumps(result, ensure_ascii=False), 401
     # elif is_valid_user['result'] is True:
     #   pass
@@ -126,7 +126,7 @@ def add_user_question():
             'result': False,
             'error': f'Server Error while executing INSERT query(user_questions): {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
 
     connection.close()
@@ -151,7 +151,7 @@ def read_user_question(user_id):
             'result': False,
             'error': f'Server Error while connecting to DB: {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
 
     cursor = connection.cursor()
@@ -164,7 +164,7 @@ def read_user_question(user_id):
     #     'result': False,
     #     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
     #   }
-    #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+    #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
     #   return json.dumps(result, ensure_ascii=False), 401
     # elif is_valid_user['result'] is True:
     #   pass
@@ -195,7 +195,7 @@ def read_user_question(user_id):
             'result': False,
             'error': f'Cannot find requested answer data of user(id: {user_id})(users)'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
         return json.dumps(result, ensure_ascii=False), 401
     else:
         connection.close()

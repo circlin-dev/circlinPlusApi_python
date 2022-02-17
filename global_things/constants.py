@@ -83,3 +83,24 @@ BODY_IMAGE_ANALYSIS_CRITERIA = {
     }
 }
 # endregion
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -10,10 +10,9 @@ from flask import url_for, request
 import json
 import numpy as np
 import os
-from pypika import MySQLQuery as Query, Table, Order
+from pypika import MySQLQuery as Query, Criterion, Table, Order
 import shutil
 from werkzeug.utils import secure_filename
-
 """2개의 이미지 전송
     -> 앳플리는 서버 저장 -> S3 저장 -> OCR
     -> 바디랩은 서버 저장 -> S3 저장 -> 바디랩 서버에 분석 -> 바디랩 서버에 키포인트 이미지 저장 -> S3 저장
@@ -22,28 +21,10 @@ from werkzeug.utils import secure_filename
 
 
 @api.route('/bodylab', methods=['POST'])
-def add_weekly_data():
-    # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+def weekly_bodylab():
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
-    endpoint = API_ROOT + url_for('api.add_weekly_data')
+    endpoint = API_ROOT + url_for('api.weekly_bodylab')
     # token = request.headers['Authorization']
-    """
-    이미지 서버 임시 저장 & 업로드 코드 추가 필요
-      - 눈바디 이미지, 앳플리 이미지 S3 업로드 후 URL 가져오는 코드 추가해야 함!
-    """
-    """
-    요청이 html form으로부터가 아닌, axios나 fetch로 온다면 파라미터를 아래와 같이 다뤄야 할 수도 있다.
-    -> parameters = json.loads(request.get_data(), encoding='utf-8')
-    """
-    # period = request.form.get('period')  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
-    user_id = request.form.get('user_id')
-    # height = request.form.get('height')
-    # weight = request.form.get('weight')
-    # bmi = request.form.get('bmi')
-    # muscle_mass = request.form.get('muscle_mass')
-    # fat_mass = request.form.get('fat_mass')
-    # body_image = request.form.get('body_image')
-
     data = request.form.to_dict()  # {'body': ~~~~~.png, 'atflee': ~~~~~.png}
     user_id = data['user_id']
     height = data['height']
@@ -51,25 +32,26 @@ def add_weekly_data():
     bmi = data['bmi']
     muscle_mass = data['muscle_mass']
     fat_mass = data['fat_mass']
-    # images = request.files.to_dict()
-    # body_image = request.files.getlist('body_image')['body_image']
     body_image = request.files.to_dict()['body_image']
-    now = datetime.now().strftime('%Y%m%d%H%M%S')
+    # atflee_image = request.files.to_dict()['atflee_image']
 
-    # body_image = images['body_image']
-    # body_image = np.asarray(bytearray(images['body_image']), dtype=np.uint8)
-    # body_image = cv2.imread(images['body_image'], cv2.IMREAD_COLOR)
-    # body_image = cv2.imdecode(body_image, -1)
-    # atflee_image = images['atflee_image']
-
-    # atflee_image = request.form.get('atflee_image')
-    """Define tables required to execute SQL."""
-    bodylabs = Table('bodylabs')
-    bodylab_analyze_bodies = Table('bodylab_analyze_bodies')  # bodylab_body_images = Table('bodylab_body_images')
-    # bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
-
-    # Verify if mandatory information is not null.
     if request.method == 'POST':
+        """
+        이미지 서버 임시 저장 & 업로드 코드 추가 필요
+          - 눈바디 이미지, 앳플리 이미지 S3 업로드 후 URL 가져오는 코드 추가해야 함!
+        """
+        """
+        요청이 html form으로부터가 아닌, axios나 fetch로 온다면 파라미터를 아래와 같이 다뤄야 할 수도 있다.
+        -> parameters = json.loads(request.get_data(), encoding='utf-8')
+        """
+        # period = request.form.get('period')  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
+
+        """Define tables required to execute SQL."""
+        bodylabs = Table('bodylabs')
+        bodylab_analyze_bodies = Table('bodylab_analyze_bodies')  # bodylab_body_images = Table('bodylab_body_images')
+        # bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
+
+        # Verify if mandatory information is not null.
         if not(user_id or height or weight or bmi or muscle_mass or fat_mass or body_image):
             result = {
                 'result': False,
@@ -86,14 +68,12 @@ def add_weekly_data():
             }
             return json.dumps(result, ensure_ascii=False), 400
 
+        now = datetime.now().strftime('%Y%m%d%H%M%S')
         # year = period.split('-W')[0]
         # week_number_of_year = period.split('-W')[1]
         # firstdate_of_week, lastdate_of_week = get_date_range_from_week(year, week_number_of_year)
-        # cv2.imwrite(local_image_path, body_image)
         if str(user_id) not in os.listdir(f"{BODY_IMAGE_INPUT_PATH}"):
             os.makedirs(f"{BODY_IMAGE_INPUT_PATH}/{user_id}")
-
-
         secure_file = secure_filename(body_image.filename)
         extension = secure_file.split('.')[-1]
         file_name = f'{user_id}_{now}.{extension}'
@@ -126,7 +106,7 @@ def add_weekly_data():
                 'result': False,
                 'error': f'Server Error while connecting to DB: {error}'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
             return json.dumps(result, ensure_ascii=False), 500
 
         cursor = connection.cursor()
@@ -139,7 +119,7 @@ def add_weekly_data():
         #     'result': False,
         #     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
         #   }
-        #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+        #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
         #   return json.dumps(result, ensure_ascii=False), 401
         # elif is_valid_user['result'] is True:
         #   pass
@@ -164,11 +144,6 @@ def add_weekly_data():
                 fat_mass
             ).get_sql()
             cursor.execute(sql)
-
-            sql = Query.into(
-                bodylab_analyze_bodies
-            ).get_sql()
-
             connection.commit()
         except Exception as e:
             connection.rollback()
@@ -178,19 +153,10 @@ def add_weekly_data():
                 'result': False,
                 'error': f'Server Error while executing INSERT query(bodylabs): {error}'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
             return json.dumps(result, ensure_ascii=False), 500
 
         # Get users latest bodylab data = User's data inserted just before.
-      #   query = f'''
-      # SELECT
-      #       id
-      #   FROM
-      #       bodylab
-      #   WHERE
-      #       user_id={user_id}
-      #   ORDER BY id DESC
-      #       LIMIT 1'''
         sql = Query.from_(
             bodylabs
         ).select(
@@ -200,9 +166,9 @@ def add_weekly_data():
         ).orderby(
             bodylabs.id, order=Order.desc
         ).limit(1).get_sql()
-
         cursor.execute(sql)
         latest_bodylab_id_tuple = cursor.fetchall()
+
         if query_result_is_none(latest_bodylab_id_tuple) is True:
             connection.rollback()
             connection.close()
@@ -210,7 +176,7 @@ def add_weekly_data():
                 'result': False,
                 'error': f'Cannot find requested bodylab data of user(id: {user_id})(bodylab)'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
             return json.dumps(result, ensure_ascii=False), 400
         else:
             latest_bodylab_id = latest_bodylab_id_tuple[0][0]
@@ -247,26 +213,6 @@ def add_weekly_data():
                 analyze_result['whole_body_length'],
                 analyze_result['upper_body_lower_body']
             ).get_sql()
-        #     query = f" \
-        # INSERT INTO bodylab_image \
-        #         (bodylab_id, original_url, \
-        #         analyzed_url, shoulder_ratio, \
-        #         hip_ratio, shoulder_width, \
-        #         hip_width, nose_to_shoulder_center, \
-        #         shoulder_center_to_hip_center, hip_center_to_ankle_center, \
-        #         whole_body_length, upperbody_lowerbody) \
-        # VALUES (%s, %s, \
-        #         %s, %s, \
-        #         %s, %s, \
-        #         %s, %s, \
-        #         %s, %s, \
-        #         %s, %s)"
-        #     values = (latest_bodylab_id, body_image,
-        #               analyze_result['output_url'], analyze_result['shoulder_ratio'],
-        #               analyze_result['hip_ratio'], analyze_result['shoulder_width'],
-        #               analyze_result['hip_width'], analyze_result['nose_to_shoulder_center'],
-        #               analyze_result['shoulder_center_to_hip_center'], analyze_result['hip_center_to_ankle_center'],
-        #               analyze_result['whole_body_length'], analyze_result['upper_body_lower_body'])
             try:
                 cursor.execute(sql)
             except Exception as e:
@@ -277,7 +223,7 @@ def add_weekly_data():
                     'result': False,
                     'error': f'Server error while executing INSERT query(bodylab_image): {error}'
                 }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
                 return json.dumps(result, ensure_ascii=False), 400
 
             connection.commit()
@@ -291,7 +237,7 @@ def add_weekly_data():
                 'result': False,
                 'error': f"Failed to analysis requested image({user_id}, {s3_path_body_input}): {body_analysis['error']}"
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
             return json.dumps(result, ensure_ascii=False), 400
         elif result_code == 500:
             connection.rollback()
@@ -300,16 +246,227 @@ def add_weekly_data():
                 'result': False,
                 'error': f"Failed to analysis requested image({body_image}): {body_analysis['error']}"
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
             return json.dumps(result, ensure_ascii=False), 500
-
     else:
         result = {
             'result': False,
             'error': 'Method Not Allowed'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 403
+
+
+
+@api.route('/user/<user_id>/bodylab', methods=['GET'])
+def read_user_bodylab(user_id):
+    ip = request.headers["X-Forwarded-For"]  # Both public & private.
+    endpoint = API_ROOT + url_for('api.read_user_bodylab', user_id=user_id)
+    # token = request.headers['Authorization']
+
+    """Define tables required to execute SQL."""
+    bodylabs = Table('bodylabs')
+    bodylab_analyze_bodies = Table('bodylab_analyze_bodies')  # bodylab_body_images = Table('bodylab_body_images')
+    # bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
+
+    try:
+        connection = login_to_db()
+    except Exception as e:
+        error = str(e)
+        result = {
+            'result': False,
+            'error': f'Server Error while connecting to DB: {error}'
+        }
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
+        return json.dumps(result, ensure_ascii=False), 500
+    cursor = connection.cursor()
+
+    columns = ["boylab_id",
+               "created_at",
+               "url_body_input",
+               "height",
+               "weight",
+               "bmi",
+               "muscle_mass",
+               "fat_mass",
+               "url_output",
+               "shoulder_ratio",
+               "hip_ratio",
+               "shoulder_width",
+               "hip_width",
+               "nose_to_shoulder_center",
+               "shoulder_center_to_hip_center",
+               "hip_center_to_ankle_center",
+               "whole_body_length",
+               "upper_body_lower_body"]
+    sql = Query.from_(
+        bodylabs
+    ).select(
+        bodylab_analyze_bodies.id,
+        bodylab_analyze_bodies.created_at,
+        bodylabs.url_body_image,
+        # bodylabs.url_atflee_image,
+        bodylabs.height,
+        bodylabs.weight,
+        bodylabs.bmi,
+        bodylabs.muscle_mass,
+        bodylabs.fat_mass,
+        # bodylab_analyze_bodies.id,
+        # bodylab_analyze_bodies.created_at,
+        bodylab_analyze_bodies.url_output,
+        bodylab_analyze_bodies.shoulder_ratio,
+        bodylab_analyze_bodies.hip_ratio,
+        bodylab_analyze_bodies.shoulder_width,
+        bodylab_analyze_bodies.hip_width,
+        bodylab_analyze_bodies.nose_to_shoulder_center,
+        bodylab_analyze_bodies.shoulder_center_to_hip_center,
+        bodylab_analyze_bodies.hip_center_to_ankle_center,
+        bodylab_analyze_bodies.whole_body_length,
+        bodylab_analyze_bodies.upper_body_lower_body
+        #     bodylab_analyze_atflees.star
+    ).join(
+        bodylab_analyze_bodies
+    ).on(
+        bodylab_analyze_bodies.bodylab_id == bodylabs.id
+        # ).join(
+        #     bodylab_analyze_atflees
+        # ).on(
+        #     bodylab_analyze_atflees.bodylab_id == bodylabs.id
+    ).where(
+        Criterion.all([
+            bodylabs.user_id == user_id
+        ])
+    ).get_sql()
+    cursor.execute(sql)
+    records = cursor.fetchall()
+
+    if query_result_is_none(records) is True:
+        connection.rollback()
+        connection.close()
+        result = {
+            'result': False,
+            'error': f'No bodylab data for user(id: {user_id})'
+        }
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql,
+                                 method=request.method)
+        return json.dumps(result, ensure_ascii=False), 200
+
+    result_list = []
+    for data in records:
+        each_dict = {}
+        for index, value in enumerate(data):
+            each_dict[columns[index]] = value
+        result_list.append(each_dict)
+
+    result_dict = {
+        'result': True,
+        'bodylab_data': result_list
+    }
+    return json.dumps(result_dict, ensure_ascii=False), 200
+
+
+@api.route('/user/<user_id>/bodylab/<bodylab_id>', methods=['GET'])
+def read_user_bodylab(user_id, bodylab_id):
+    ip = request.headers["X-Forwarded-For"]  # Both public & private.
+    endpoint = API_ROOT + url_for('api.read_user_bodylab', user_id=user_id, bodylab_id=bodylab_id)
+    # token = request.headers['Authorization']
+
+    """Define tables required to execute SQL."""
+    bodylabs = Table('bodylabs')
+    bodylab_analyze_bodies = Table('bodylab_analyze_bodies')  # bodylb_body_images = Table('bodylab_body_images')
+    # bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
+
+    try:
+        connection = login_to_db()
+    except Exception as e:
+        error = str(e)
+        result = {
+            'result': False,
+            'error': f'Server Error while connecting to DB: {error}'
+        }
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
+        return json.dumps(result, ensure_ascii=False), 500
+    cursor = connection.cursor()
+
+    columns = ["boylab_id",
+               "created_at",
+               "url_body_input",
+               "height",
+               "weight",
+               "bmi",
+               "muscle_mass",
+               "fat_mass",
+               "url_output",
+               "shoulder_ratio",
+               "hip_ratio",
+               "shoulder_width",
+               "hip_width",
+               "nose_to_shoulder_center",
+               "shoulder_center_to_hip_center",
+               "hip_center_to_ankle_center",
+               "whole_body_length",
+               "upper_body_lower_body"]
+
+    sql = Query.from_(
+        bodylabs
+    ).select(
+        bodylab_analyze_bodies.id,
+        bodylab_analyze_bodies.created_at,
+        bodylabs.url_body_image,
+        # bodylabs.url_atflee_image,
+        bodylabs.height,
+        bodylabs.weight,
+        bodylabs.bmi,
+        bodylabs.muscle_mass,
+        bodylabs.fat_mass,
+        bodylab_analyze_bodies.id,
+        bodylab_analyze_bodies.created_at,
+        bodylab_analyze_bodies.url_output,
+        bodylab_analyze_bodies.shoulder_ratio,
+        bodylab_analyze_bodies.hip_ratio,
+        bodylab_analyze_bodies.shoulder_width,
+        bodylab_analyze_bodies.hip_width,
+        bodylab_analyze_bodies.nose_to_shoulder_center,
+        bodylab_analyze_bodies.shoulder_center_to_hip_center,
+        bodylab_analyze_bodies.hip_center_to_ankle_center,
+        bodylab_analyze_bodies.whole_body_length,
+        bodylab_analyze_bodies.upper_body_lower_body
+        #     bodylab_analyze_atflees.star
+    ).join(
+        bodylab_analyze_bodies
+    ).on(
+        bodylab_analyze_bodies.bodylab_id == bodylabs.id
+        # ).join(
+        #     bodylab_analyze_atflees
+        # ).on(
+        #     bodylab_analyze_atflees.bodylab_id == bodylabs.id
+    ).where(
+        Criterion.all([
+            bodylabs.user_id == user_id,
+            bodylabs.id == bodylab_analyze_bodies.bodylab_id,
+            # bodylabs.id == bodylab_analyze_atflees.bodylab_id
+        ])
+    ).get_sql()
+
+    cursor.execute(sql)
+    record = cursor.fetchall()
+
+    if query_result_is_none(record) is True:
+        connection.rollback()
+        connection.close()
+        result = {
+            'result': False,
+            'error': f'No data for bodylab_id({bodylab_id})'
+        }
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql,
+                                 method=request.method)
+        return json.dumps(result, ensure_ascii=False), 200
+
+    result_dict = {'result': True}
+    for index, value in enumerate(record):
+        result_dict[columns[index]] = value
+
+    return json.dumps(result_dict, ensure_ascii=False), 200
 
 
     # region body lab score calculating
@@ -394,7 +551,7 @@ def add_weekly_data():
 #       'result': False,
 #       'error': f'Server Error while connecting to DB:{error}'
 #     }
-#     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=error)
+#     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
 #     return json.dumps(result, ensure_ascii=False), 500
 #
 #   cursor = connection.cursor()
@@ -407,7 +564,7 @@ def add_weekly_data():
 #     'result': False,
 #     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
 #   }
-#   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+#   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
 #   return json.dumps(result, ensure_ascii=False), 401
 # elif is_valid_user['result'] is True:
 #   pass
@@ -433,7 +590,7 @@ def add_weekly_data():
 #       'result': False,
 #       'error': f'Server Error while executing SELECT query: {error}'
 #     }
-#     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=error, query=query)
+#     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query, , method=request.method)
 #     return json.dumps(result), 500
 #
 #   return ''

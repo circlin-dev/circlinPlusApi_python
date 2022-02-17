@@ -38,7 +38,7 @@ def explore():
             'result': False,
             'error': f'Server Error while connecting to DB: {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
 
     cursor = connection.cursor()
@@ -117,7 +117,7 @@ def explore():
             'result': False,
             'error': f'Server Error while executing INSERT query(explore): {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
 
     connection.close()
@@ -144,7 +144,7 @@ def get_related_terms_list():
             'result': False,
             'error': f'Server Error while connecting to DB: {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=0, api=endpoint, error_log=result['error'])
+        slack_error_notification(user_ip=ip, user_id=0, api=endpoint, error_log=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
 
     query_parameter = request.args.to_dict()
@@ -259,7 +259,7 @@ def explore_log(user_id: int):
             'result': False,
             'error': f'DB connection error: {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'])
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
     cursor = connection.cursor()
 
@@ -290,7 +290,7 @@ def explore_log(user_id: int):
                 'result': False,
                 'error': f'Cannot delete the requested search record: {error}'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
             return json.dumps(result, ensure_ascii=False), 400
 
         if query_result_is_none(search_records) is True:
@@ -347,7 +347,7 @@ def explore_log(user_id: int):
                     'result': False,
                     'error': f'Cannot delete the requested search term: {error}'
                 }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
                 return json.dumps(result, ensure_ascii=False), 400
 
             connection.close()
@@ -383,7 +383,7 @@ def explore_log(user_id: int):
                     'result': False,
                     'error': f'Cannot delete the requested whole search record: {error}'
                 }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql)
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
                 return json.dumps(result, ensure_ascii=False), 400
 
             connection.close()
