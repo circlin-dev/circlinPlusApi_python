@@ -176,7 +176,7 @@ def read_user_question(user_id):
             IFNULL(uq.updated_data, uq.data) AS answer
         FROM
             user_questions uq
-        WHERE up.user_id = {user_id}
+        WHERE uq.user_id = {user_id}
         ORDER BY uq.id DESC
         LIMIT 1
     """
