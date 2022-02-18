@@ -21,8 +21,9 @@ def slack_error_notification(user_ip: str = '', user_id: int = 0, nickname: str 
 사용자 IP: `{user_ip}` \n \
 닉네임 (ID): `{nickname}({user_id})`\n \
 API URL: `{api}` \n \
-```{error_log} \n \
-{query}```",
+HTTP method: `{method}` \n \
+query: `{query}` \n \
+```{error_log}```",
       "icon_url": "https://www.circlin.co.kr/new/assets/favicon/apple-icon-180x180.png"
     }, ensure_ascii=False).encode('utf-8')
   )
