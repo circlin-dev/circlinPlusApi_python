@@ -1,7 +1,7 @@
 from api import api
 from global_things.constants import APP_ROOT, BODY_IMAGE_INPUT_PATH, ATFLEE_IMAGE_INPUT_PATH
 from global_things.functions.slack import slack_error_notification
-from flask import abort, Flask, render_template, request
+from flask import abort, Flask, jsonify, render_template, request
 from flask_cors import CORS
 import json
 import logging
@@ -45,7 +45,8 @@ def bodylab_form():
 def handle_400_error(e):
     result_dict = {'result': False, 'error': str(e)}
     slack_error_notification(error_log=str(e))
-    return json.dumps(result_dict, ensure_ascii=False), 400
+    return jsonify(error=str(e)), 400
+    # return json.dumps(result_dict, ensure_ascii=False), 400
 
 
 @app.errorhandler(405)
