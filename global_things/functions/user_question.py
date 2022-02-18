@@ -49,7 +49,8 @@ def replace_number_to_schedule(schedule_list: list):
         40: {"order": 35, "day": "토 21-24"},
         41: {"order": 41, "day": "일 21-24"}
     }
-    if len(schedule_list) == 0:
+
+    if schedule_list is []:
         return replaced_date
 
     for grid_number in schedule_list:
