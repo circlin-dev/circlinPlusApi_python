@@ -3,6 +3,7 @@ from global_things.constants import APP_ROOT, BODY_IMAGE_INPUT_PATH, ATFLEE_IMAG
 from global_things.functions.slack import slack_error_notification
 from flask import Flask, render_template, request
 from flask_cors import CORS
+import json
 import logging
 from werkzeug.exceptions import HTTPException
 
@@ -40,16 +41,30 @@ def bodylab_form():
     return render_template('bodylab_form.html')
 
 
+@app.errorhandler(400)
+def handle_400_error(e):
+    result_dict = {'result': False, 'error': str(e)}
+    slack_error_notification(error_log=str(e))
+    return json.dumps(result_dict, ensure_ascii=False), 400
+
+
+@app.errorhandler(405)
+def handle_400_error(e):
+    result_dict = {'result': False, 'error': str(e)}
+    slack_error_notification(error_log=str(e))
+    return json.dumps(result_dict, ensure_ascii=False), 405
+
+
 @app.errorhandler(Exception)
 def handle_exception(e):
     # pass through HTTP errors
     if isinstance(e, HTTPException):
         slack_error_notification(error_log=str(e))
-        return str(e)
+        return str(e), 500
 
     # now you're handling non-HTTP exceptions only
     slack_error_notification(error_log=str(e))
-    return str(e)
+    return str(e), 500
 
 
 if __name__ == '__main__':
