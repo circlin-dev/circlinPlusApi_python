@@ -60,16 +60,16 @@ def handle_400_error(e):
     return json.dumps(result_dict, ensure_ascii=False), 405
 
 
-@app.errorhandler(Exception)
-def handle_exception(e):
-    # pass through HTTP errors
-    if isinstance(e, HTTPException):
-        slack_error_notification(error_log=str(e))
-        return str(e), 500
-
-    # now you're handling non-HTTP exceptions only
-    slack_error_notification(error_log=str(e))
-    return str(e), 500
+# @app.errorhandler(Exception)
+# def handle_exception(e):
+#     # pass through HTTP errors
+#     if isinstance(e, HTTPException):
+#         slack_error_notification(error_log=str(e))
+#         return str(e), 500
+#
+#     # now you're handling non-HTTP exceptions only
+#     slack_error_notification(error_log=str(e))
+#     return str(e), 500
 
 
 if __name__ == '__main__':

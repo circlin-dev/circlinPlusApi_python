@@ -123,6 +123,8 @@ def weekly_bodylab():
 
         # user_week_id 가져오거나 생성하기
 
+
+
         # user_question 데이터 불러오기
         sql = Query.from_(
             user_questions
