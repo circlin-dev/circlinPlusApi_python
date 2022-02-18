@@ -181,8 +181,8 @@ def read_user_question(user_id):
         LIMIT 1
     """
     cursor.execute(sql)
-    latest_answers = cursor.fetchall()
-    if query_result_is_none(latest_answers) is True:
+    data = cursor.fetchall()
+    if query_result_is_none(data) is True:
         connection.close()
         result = {
             'result': False,
@@ -192,13 +192,16 @@ def read_user_question(user_id):
         return json.dumps(result, ensure_ascii=False), 401
     else:
         connection.close()
-        latest_answers = json.loads(latest_answers[0][2].replace("\\", "\\\\"), strict=False)  # To prevent decoding error.
-        latest_answers['result'] = True
-        latest_answers['schedule'] = replace_number_to_schedule(latest_answers['schedule'])
-        latest_answers['id'] = latest_answers[0][0]
-        latest_answers['created_at'] = latest_answers[0][1]
+        answer_id = data[0][0]
+        created_at = data[0][1]
+        answer = data[0][2]
+        result_dict = json.loads(answer.replace("\\", "\\\\"), strict=False)  # To prevent decoding error.
+        result_dict['result'] = True
+        result_dict['schedule'] = replace_number_to_schedule(answer['schedule'])
+        result_dict['id'] = answer_id
+        result_dict['created_at'] = created_at
 
-        return json.dumps(latest_answers, ensure_ascii=False), 200
+        return json.dumps(result_dict, ensure_ascii=False), 200
 
 
 @api.route('/user/<user_id>/user-schedule/<question_id>', methods=['PATCH'])
@@ -274,7 +277,6 @@ def update_user_question(user_id, question_id):
         cursor.execute(sql)
         connection.commit()
         connection.close()
-        user_question_id = int(cursor.lastrowid)  # 사전설문 데이터 저장 후 client에 반환, 무료 체험 프로그램 배정 시 다시 parameter로 전송받음.
     except Exception as e:
         connection.rollback()
         connection.close()
@@ -286,6 +288,6 @@ def update_user_question(user_id, question_id):
         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
 
-    result = {'result': True, 'user_question_id': user_question_id}
+    result = {'result': True}
 
     return json.dumps(result, ensure_ascii=False), 200
