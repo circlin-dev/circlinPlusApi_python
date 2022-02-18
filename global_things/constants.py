@@ -79,39 +79,6 @@ BODY_IMAGE_ANALYSIS_CRITERIA = {
 
 
 
-{
-    bodylabs.id,
-        bodylabs.created_at,
-        bodylabs.url_body_image,
-        bodylabs.height,
-        bodylabs.weight,
-        bodylabs.bmi,
-        bodylabs.ideal_bmi,
-        bodylabs.bmi_healthiness_score,
-        bodylabs.bmi_attractiveness_score,
-        bodylabs.bmi_status,
-        bodylabs.muscle_mass,
-        bodylabs.ideal_muscle_mass,
-        bodylabs.muscle_mass_healthiness_score,
-        bodylabs.muscle_mass_attractiveness_score,
-        bodylabs.fat_mass,
-        bodylabs.ideal_fat_mass,
-        bodylabs.fat_mass_healthiness_score,
-        bodylabs.fat_mass_attractiveness_score,
-        bodylab_analyze_bodies.url_output,
-        bodylab_analyze_bodies.shoulder_width,
-        bodylab_analyze_bodies.shoulder_ratio,
-        bodylab_analyze_bodies.hip_width,
-        bodylab_analyze_bodies.hip_ratio,
-        bodylab_analyze_bodies.nose_to_shoulder_center,
-        bodylab_analyze_bodies.shoulder_center_to_hip_center,
-        bodylab_analyze_bodies.hip_center_to_ankle_center,
-        bodylab_analyze_bodies.shoulder_center_to_ankle_center,
-        bodylab_analyze_bodies.whole_body_length
-}
-
-
-
 
 
 
