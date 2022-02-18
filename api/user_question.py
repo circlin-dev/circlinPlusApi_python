@@ -197,7 +197,7 @@ def read_user_question(user_id):
         answer = data[0][2]
         result_dict = json.loads(answer.replace("\\", "\\\\"), strict=False)  # To prevent decoding error.
         result_dict['result'] = True
-        result_dict['schedule'] = replace_number_to_schedule(answer['schedule'])
+        result_dict['schedule'] = replace_number_to_schedule(result_dict['schedule'])
         result_dict['id'] = answer_id
         result_dict['created_at'] = created_at
 
