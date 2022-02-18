@@ -32,8 +32,7 @@ def weekly_bodylab():
     bmi = data['bmi']
     muscle_mass = data['muscle_mass']
     fat_mass = data['fat_mass']
-    body_image = data['body_image']
-    # body_image = request.files.to_dict()['body_image']
+    body_image = request.files.to_dict()['body_image']
     # atflee_image = request.files.to_dict()['atflee_image']
 
     if request.method == 'POST':
