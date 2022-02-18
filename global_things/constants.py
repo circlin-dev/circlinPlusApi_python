@@ -25,8 +25,8 @@ IMPORT_REST_API_SECRET = "aa8f4f6206e82213fc1665f0cd6f8967a59def6fd2be1321a34a48
 # region bodylab criteria data
 ATTRACTIVENESS_SCORE_CRITERIA = {
     0: {
-        "sex": "man",
-        "preferred_by": "man",
+        "gender": "M",
+        "preferred_by": "M",
         'weight': 0,
         'height': 0,
         "bmi": 00.00,
@@ -34,8 +34,8 @@ ATTRACTIVENESS_SCORE_CRITERIA = {
         "fat_mass": 00.00,
     },
     1: {
-        "sex": "man",
-        "preferred_by": "woman",
+        "gender": "M",
+        "preferred_by": "W",
         'weight': 0,
         'height': 0,
         "bmi": 00.00,
@@ -43,8 +43,8 @@ ATTRACTIVENESS_SCORE_CRITERIA = {
         "fat_mass": 00.00,
     },
     2: {
-        "sex": "woman",
-        "preferred_by": "man",
+        "gender": "W",
+        "preferred_by": "M",
         'weight': 0,
         'height': 0,
         "bmi": 00.00,
@@ -52,8 +52,8 @@ ATTRACTIVENESS_SCORE_CRITERIA = {
         "fat_mass": 00.00,
     },
     3: {
-        "sex": "woman",
-        "preferred_by": "woman",
+        "gender": "W",
+        "preferred_by": "W",
         'weight': 0,
         'height': 0,
         "bmi": 00.00,
