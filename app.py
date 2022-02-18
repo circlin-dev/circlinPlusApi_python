@@ -45,8 +45,8 @@ def bodylab_form():
 def handle_400_error(e):
     result_dict = {'result': False, 'error': str(e)}
     slack_error_notification(error_log=str(e))
-    return jsonify(error=str(e)), 400
-    # return json.dumps(result_dict, ensure_ascii=False), 400
+    # return jsonify(error=str(e)), 400
+    return json.dumps(result_dict, ensure_ascii=False), 400
 
 
 @app.errorhandler(405)
