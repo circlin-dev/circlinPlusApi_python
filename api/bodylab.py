@@ -26,12 +26,12 @@ def weekly_bodylab():
     endpoint = API_ROOT + url_for('api.weekly_bodylab')
     # token = request.headers['Authorization']
     data = request.form.to_dict()  # {'body': ~~~~~.png, 'atflee': ~~~~~.png}
-    user_id = data['user_id']
-    height = data['height']
-    weight = data['weight']
-    bmi = data['bmi']
-    muscle_mass = data['muscle_mass']
-    fat_mass = data['fat_mass']
+    user_id = int(data['user_id'])
+    height = float(data['height'])
+    weight = float(data['weight'])
+    bmi = float(data['bmi'])
+    muscle_mass = float(data['muscle_mass'])
+    fat_mass = float(data['fat_mass'])
     body_image = request.files.to_dict()['body_image']
     # atflee_image = request.files.to_dict()['atflee_image']
 
