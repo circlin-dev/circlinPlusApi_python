@@ -49,6 +49,8 @@ def replace_number_to_schedule(schedule_list: list):
         40: {"order": 35, "day": "토 21-24"},
         41: {"order": 41, "day": "일 21-24"}
     }
+    if len(schedule_list) == 0:
+        return replaced_date
 
     for grid_number in schedule_list:
         replaced_date.append(schedule_dict[grid_number])  # 리스트에 요소 추가하는 파이썬 문법...
