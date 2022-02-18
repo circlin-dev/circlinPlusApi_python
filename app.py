@@ -28,7 +28,11 @@ app.register_blueprint(api, url_prefix="/api")
 def hello_world():
     ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
 
-    raise InvalidAPIUsage(ip, 11, '최건우', '/testing', '에러 테스트 에러 테스트', 'query', 'method', 'status_code', 'payload', False)
+    raise InvalidAPIUsage(user_ip=ip, user_id=11, nickname='최건우',
+                          api='/testing', error_message='에러 테스트 에러 테스트',
+                          query='query', method='method', status_code='status_code',
+                          payload='payload', result=False)
+
     query_parameter_dict = request.args.to_dict()
     values = ''
     for key in query_parameter_dict.keys():
@@ -43,7 +47,7 @@ def bodylab_form():
 
 @app.errorhandler(InvalidAPIUsage)
 def invalid_api_usage(e):
-    return json.dumps({'result': False, 'error': str(e)})
+    return jsonify(e.to_dict())
 
 
 @app.errorhandler(400)
