@@ -40,5 +40,5 @@ class InvalidAPIUsage(Exception):
         error['status_code'] = self.status_code
         error['payload'] = self.payload
         error['result'] = self.result
-        slack_error_notification(self.user_ip, self.user_id, self.nickname, self.error_message, self.query, self.method)
+        slack_error_notification(self.user_ip, self.user_id, self.nickname, self.api, self.error_message, self.query, self.method)
         return error
