@@ -1,5 +1,5 @@
 import datetime
-from global_things.constants import API_ROOT, AMAZON_URL, BUCKET_NAME, BUCKET_BODY_IMAGE_INPUT_PATH, BODY_IMAGE_INPUT_PATH, BUCKET_ATFLEE_IMAGE_PATH, ATFLEE_IMAGE_INPUT_PATH, BODY_IMAGE_ANALYSIS_CRITERIA
+from global_things.constants import API_ROOT, AMAZON_URL, BUCKET_NAME, BUCKET_BODY_IMAGE_INPUT_PATH, BODY_IMAGE_INPUT_PATH, BUCKET_ATFLEE_IMAGE_PATH, ATFLEE_IMAGE_INPUT_PATH, ATTRACTIVENESS_SCORE_CRITERIA, BODY_IMAGE_ANALYSIS_CRITERIA
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
 from global_things.functions.bodylab import analyze_body_images, anaylze_atflee_images, upload_image_to_s3, standard_healthiness_value, healthiness_score, attractiveness_score
@@ -121,12 +121,9 @@ def weekly_bodylab():
         # elif is_valid_user['result'] is True:
         #   pass
 
+        # user_week_id 가져오거나 생성하기
 
-        """
-        !!!데이터 추가 저장!!!
-        - standard_healthiness_value()로 나에게의 권장되는 수치 및 차이 구해서 저장
-        - 신체 수치는 1위와의 
-        """
+        # user_question 데이터 불러오기
         sql = Query.from_(
             user_questions
         ).select(
@@ -154,33 +151,57 @@ def weekly_bodylab():
 
         ideal_fat_mass, ideal_muscle_mass, bmi_status, ideal_bmi = standard_healthiness_value(str(age_group), str(gender), float(weight), float(height), float(bmi))
 
+        # 건강점수
+        bmi_healthiness_score = healthiness_score(ideal_bmi, bmi)
+        muscle_mass_healthiness_score = healthiness_score(ideal_muscle_mass, muscle_mass)
+        fat_mass_healthiness_score = healthiness_score(ideal_fat_mass, fat_mass)
+
+        # 매력점수
+        bmi_attractiveness_score = attractiveness_score(ATTRACTIVENESS_SCORE_CRITERIA[gender]['bmi'], bmi)
+        muscle_mass_attractiveness_score = attractiveness_score(ATTRACTIVENESS_SCORE_CRITERIA[gender]['muscle_mass'], muscle_mass)
+        fat_mass_attractiveness_score = attractiveness_score(ATTRACTIVENESS_SCORE_CRITERIA[gender]['fat_mass'], fat_mass)
+
         try:
             sql = Query.into(
                 bodylabs
             ).columns(
                 bodylabs.user_id,
+                bodylabs.user_week_id,
                 bodylabs.url_body_image,
                 bodylabs.height,
                 bodylabs.weight,
                 bodylabs.bmi,
                 bodylabs.ideal_bmi,
                 bodylabs.bmi_status,
+                bodylabs.bmi_healthiness_score,
+                bodylabs.bmi_attractiveness_score,
                 bodylabs.muscle_mass,
                 bodylabs.ideal_muscle_mass,
+                bodylabs.muscle_mass_healthiness_score,
+                bodylabs.muscle_mass_attractiveness_score,
                 bodylabs.fat_mass,
                 bodylabs.ideal_fat_mass,
+                bodylabs.fat_mass_healthiness_score,
+                bodylabs.fat_mass_attractiveness_score,
             ).insert(
                 user_id,
+                user_week_id,
                 s3_path_body_input,
                 height,
                 weight,
                 bmi,
                 ideal_bmi,
                 bmi_status,
+                bmi_healthiness_score,
+                bmi_attractiveness_score,
                 muscle_mass,
                 ideal_muscle_mass,
+                muscle_mass_healthiness_score,
+                muscle_mass_attractiveness_score,
                 fat_mass,
-                ideal_fat_mass
+                ideal_fat_mass,
+                fat_mass_healthiness_score,
+                fat_mass_attractiveness_score
             ).get_sql()
             cursor.execute(sql)
             connection.commit()
@@ -230,27 +251,27 @@ def weekly_bodylab():
             ).columns(
                 bodylab_analyze_bodies.bodylab_id,
                 bodylab_analyze_bodies.url_output,
-                bodylab_analyze_bodies.shoulder_ratio,
-                bodylab_analyze_bodies.hip_ratio,
                 bodylab_analyze_bodies.shoulder_width,
+                bodylab_analyze_bodies.shoulder_ratio,
                 bodylab_analyze_bodies.hip_width,
+                bodylab_analyze_bodies.hip_ratio,
                 bodylab_analyze_bodies.nose_to_shoulder_center,
                 bodylab_analyze_bodies.shoulder_center_to_hip_center,
                 bodylab_analyze_bodies.hip_center_to_ankle_center,
-                bodylab_analyze_bodies.whole_body_length,
-                bodylab_analyze_bodies.upperbody_lowerbody
+                bodylab_analyze_bodies.shoulder_center_to_ankle_center,
+                bodylab_analyze_bodies.whole_body_length
             ).insert(
                 latest_bodylab_id,
                 analyze_result['output_url'],
-                analyze_result['shoulder_ratio'],
-                analyze_result['hip_ratio'],
                 analyze_result['shoulder_width'],
+                analyze_result['shoulder_ratio'],
                 analyze_result['hip_width'],
+                analyze_result['hip_ratio'],
                 analyze_result['nose_to_shoulder_center'],
                 analyze_result['shoulder_center_to_hip_center'],
                 analyze_result['hip_center_to_ankle_center'],
-                analyze_result['whole_body_length'],
-                analyze_result['upper_body_lower_body']
+                analyze_result['shoulder_center_to_ankle_center'],
+                analyze_result['whole_body_length']
             ).get_sql()
             try:
                 cursor.execute(sql)
@@ -353,47 +374,59 @@ def read_user_bodylab(user_id):
                "bmi",
                "ideal_bmi",
                "bmi_status",
+               "bmi_healthiness_score",
+               "bmi_attractiveness_score",
                "muscle_mass",
                "ideal_muscle_mass",
+               "muscle_mass_healthiness_score",
+               "muscle_mass_attractiveness_score",
                "fat_mass",
                "ideal_fat_mass",
+               "fat_mass_healthiness_score",
+               "fat_mass_attractiveness_score",
                "url_output",
-               "shoulder_ratio",
-               "hip_ratio",
                "shoulder_width",
+               "shoulder_ratio",
                "hip_width",
+               "hip_ratio",
                "nose_to_shoulder_center",
                "shoulder_center_to_hip_center",
                "hip_center_to_ankle_center",
-               "whole_body_length",
-               "upperbody_lowerbody"]
+               "shoulder_center_to_ankle_center",
+               "whole_body_length"]
     sql = Query.from_(
         bodylabs
     ).select(
         bodylabs.id,
         bodylabs.created_at,
         bodylabs.url_body_image,
-         # bodylabs.url_atflee_image,
         bodylabs.height,
         bodylabs.weight,
         bodylabs.bmi,
         bodylabs.ideal_bmi,
+        bodylabs.bmi_healthiness_score,
+        bodylabs.bmi_attractiveness_score,
         bodylabs.bmi_status,
         bodylabs.muscle_mass,
         bodylabs.ideal_muscle_mass,
+        bodylabs.muscle_mass_healthiness_score,
+        bodylabs.muscle_mass_attractiveness_score,
         bodylabs.fat_mass,
         bodylabs.ideal_fat_mass,
+        bodylabs.fat_mass_healthiness_score,
+        bodylabs.fat_mass_attractiveness_score,
         bodylab_analyze_bodies.url_output,
-        bodylab_analyze_bodies.shoulder_ratio,
-        bodylab_analyze_bodies.hip_ratio,
         bodylab_analyze_bodies.shoulder_width,
+        bodylab_analyze_bodies.shoulder_ratio,
         bodylab_analyze_bodies.hip_width,
+        bodylab_analyze_bodies.hip_ratio,
         bodylab_analyze_bodies.nose_to_shoulder_center,
         bodylab_analyze_bodies.shoulder_center_to_hip_center,
         bodylab_analyze_bodies.hip_center_to_ankle_center,
-        bodylab_analyze_bodies.whole_body_length,
-        bodylab_analyze_bodies.upperbody_lowerbody
-        #     bodylab_analyze_atflees.star
+        bodylab_analyze_bodies.shoulder_center_to_ankle_center,
+        bodylab_analyze_bodies.whole_body_length
+        # bodylabs.url_atflee_image,
+        # bodylab_analyze_atflees.~~~~~
     ).join(
         bodylab_analyze_bodies
     ).on(
@@ -423,19 +456,60 @@ def read_user_bodylab(user_id):
         return json.dumps(result, ensure_ascii=False), 200
 
     result_list = []
-    for data in records:
-        each_dict = {}
-        for index, value in enumerate(data):
-            if type(value) == datetime:
-                each_dict[columns[index]] = value.strftime('%Y-%m-%d %H:%M:%S')
-            else:
-                each_dict[columns[index]] = value
-        # 건강점수
-        each_dict['bmi_healthiness_score'] = healthiness_score(each_dict['ideal_bmi'], each_dict['bmi'])
-        each_dict['fat_mass_healthiness_score'] = healthiness_score(each_dict['ideal_fat_mass'], each_dict['fat_mass'])
-        each_dict['muscle_mass_healthiness_score'] = healthiness_score(each_dict['ideal_muscle_mass'], each_dict['muscle_mass'])
-        each_dict['body_image_compare'] = BODY_IMAGE_ANALYSIS_CRITERIA[gender]
-        result_list.append(each_dict)
+    for record in records:
+        result_dict = {
+            "result": True,
+            "id": record[0],
+            "created_at": record[1].strftime('%Y-%m-%d %H:%M:%S'),
+            "bmi": {
+                "user": record[5],
+                "ideal": record[6],
+                "healthiness_score": record[7],
+                "attractiveness_score": record[8],
+                "bmi_status": record[9]
+            },
+            "muscle": {
+                "user": record[10],
+                "ideal": record[11],
+                "healthiness_score": record[12],
+                "attractiveness_score": record[13]
+            },
+            "fat": {
+                "user": record[14],
+                "ideal": record[15],
+                "healthiness_score": record[16],
+                "attractiveness_score": record[17]
+            },
+            "body_image_analysis": {
+                "url_body_input": record[2],
+                "url_output": record[18],
+                "user": {
+                    "height": record[3],
+                    "weight": record[4],
+                    "shoulder_width": record[19],
+                    "shoulder_ratio": record[20],
+                    "hip_width": record[21],
+                    "hip_ratio": record[22],
+                    "nose_to_shoulder_center": record[23],
+                    "shoulder_center_to_hip_center": record[24],
+                    "hip_center_to_ankle_center": record[25],
+                    "shoulder_center_to_ankle_center": record[26],
+                    "whole_body_length": record[27]
+                },
+                "compare": BODY_IMAGE_ANALYSIS_CRITERIA[gender]
+            }
+        }
+        # for index, value in enumerate(data):
+        #     if type(value) == datetime:
+        #         each_dict[columns[index]] = value.strftime('%Y-%m-%d %H:%M:%S')
+        #     else:
+        #         each_dict[columns[index]] = value
+        # # 건강점수
+        # each_dict['bmi_healthiness_score'] = healthiness_score(each_dict['ideal_bmi'], each_dict['bmi'])
+        # each_dict['fat_mass_healthiness_score'] = healthiness_score(each_dict['ideal_fat_mass'], each_dict['fat_mass'])
+        # each_dict['muscle_mass_healthiness_score'] = healthiness_score(each_dict['ideal_muscle_mass'], each_dict['muscle_mass'])
+        # each_dict['body_image_compare'] = BODY_IMAGE_ANALYSIS_CRITERIA[gender]
+        result_list.append(result_dict)
 
     result_dict = {
         'result': True,
@@ -500,21 +574,26 @@ def read_user_bodylab_single(user_id, bodylab_id):
                "bmi",
                "ideal_bmi",
                "bmi_status",
+               "bmi_healthiness_score",
+               "bmi_attractiveness_score",
                "muscle_mass",
                "ideal_muscle_mass",
+               "muscle_mass_healthiness_score",
+               "muscle_mass_attractiveness_score",
                "fat_mass",
                "ideal_fat_mass",
+               "fat_mass_healthiness_score",
+               "fat_mass_attractiveness_score",
                "url_output",
-               "shoulder_ratio",
-               "hip_ratio",
                "shoulder_width",
+               "shoulder_ratio",
                "hip_width",
+               "hip_ratio",
                "nose_to_shoulder_center",
                "shoulder_center_to_hip_center",
                "hip_center_to_ankle_center",
-               "whole_body_length",
-               "upperbody_lowerbody"]
-
+               "shoulder_center_to_ankle_center",
+               "whole_body_length"]
     sql = Query.from_(
         bodylabs
     ).select(
@@ -525,21 +604,29 @@ def read_user_bodylab_single(user_id, bodylab_id):
         bodylabs.weight,
         bodylabs.bmi,
         bodylabs.ideal_bmi,
+        bodylabs.bmi_healthiness_score,
+        bodylabs.bmi_attractiveness_score,
         bodylabs.bmi_status,
         bodylabs.muscle_mass,
         bodylabs.ideal_muscle_mass,
+        bodylabs.muscle_mass_healthiness_score,
+        bodylabs.muscle_mass_attractiveness_score,
         bodylabs.fat_mass,
         bodylabs.ideal_fat_mass,
+        bodylabs.fat_mass_healthiness_score,
+        bodylabs.fat_mass_attractiveness_score,
         bodylab_analyze_bodies.url_output,
-        bodylab_analyze_bodies.shoulder_ratio,
-        bodylab_analyze_bodies.hip_ratio,
         bodylab_analyze_bodies.shoulder_width,
+        bodylab_analyze_bodies.shoulder_ratio,
         bodylab_analyze_bodies.hip_width,
+        bodylab_analyze_bodies.hip_ratio,
         bodylab_analyze_bodies.nose_to_shoulder_center,
         bodylab_analyze_bodies.shoulder_center_to_hip_center,
         bodylab_analyze_bodies.hip_center_to_ankle_center,
-        bodylab_analyze_bodies.whole_body_length,
-        bodylab_analyze_bodies.upperbody_lowerbody
+        bodylab_analyze_bodies.shoulder_center_to_ankle_center,
+        bodylab_analyze_bodies.whole_body_length
+        # bodylabs.url_atflee_image,
+        # bodylab_analyze_atflees.~~~~~
     ).join(
         bodylab_analyze_bodies
     ).on(
@@ -570,84 +657,115 @@ def read_user_bodylab_single(user_id, bodylab_id):
         return json.dumps(result, ensure_ascii=False), 200
 
     connection.close()
-    result_dict = {'result': True}
-    for index, value in enumerate(record[0]):
-        if type(value) == datetime:
-            result_dict[columns[index]] = value.strftime('%Y-%m-%d %H:%M:%S')
-        else:
-            result_dict[columns[index]] = value
+    result_dict = {
+        "result": True,
+        "id": record[0][0],
+        "created_at": record[0][1].strftime('%Y-%m-%d %H:%M:%S'),
+        "bmi": {
+            "user": record[0][5],
+            "ideal": record[0][6],
+            "healthiness_score": record[0][7],
+            "attractiveness_score": record[0][8],
+            "bmi_status": record[0][9]
+        },
+        "muscle": {
+            "user": record[0][10],
+            "ideal": record[0][11],
+            "healthiness_score": record[0][12],
+            "attractiveness_score": record[0][13]
+        },
+        "fat": {
+            "user": record[0][14],
+            "ideal": record[0][15],
+            "healthiness_score": record[0][16],
+            "attractiveness_score": record[0][17]
+        },
+        "body_image_analysis": {
+            "url_body_input": record[0][2],
+            "url_output": record[0][18],
+            "user": {
+                "height": record[0][3],
+                "weight": record[0][4],
+                "shoulder_width": record[0][19],
+                "shoulder_ratio": record[0][20],
+                "hip_width": record[0][21],
+                "hip_ratio": record[0][22],
+                "nose_to_shoulder_center": record[0][23],
+                "shoulder_center_to_hip_center": record[0][24],
+                "hip_center_to_ankle_center": record[0][25],
+                "shoulder_center_to_ankle_center": record[0][26],
+                "whole_body_length": record[0][27]
+            },
+            "compare": BODY_IMAGE_ANALYSIS_CRITERIA[gender]
+        }
+    }
 
-    # 건강점수
-    result_dict['bmi_healthiness_score'] = healthiness_score(result_dict['ideal_bmi'], result_dict['bmi'])
-    result_dict['fat_mass_healthiness_score'] = healthiness_score(result_dict['ideal_fat_mass'], result_dict['fat_mass'])
-    result_dict['muscle_mass_healthiness_score'] = healthiness_score(result_dict['ideal_muscle_mass'], result_dict['muscle_mass'])
-    result_dict['body_image_compare'] = BODY_IMAGE_ANALYSIS_CRITERIA[gender]
     return json.dumps(result_dict, ensure_ascii=False), 200
 
-    # region body lab score calculating
-    '''
-    * 바디랩: 총점, 순위 ==> 월요일 기준 갱신! 이지만 일요일에 운동하는 사람이 있을 수 있으니 월요일 정오 기준으로 계산한다.
-      (1) 바디점수(바디랩 총점): 신체점수 & 매력점수 평균(정수), (전체 동성 유저의 신체 + 매력 점수 합산 결과에 대한)순위
-      (2) 신체점수: 총점, (전체 동성 유저 중)순위
-          - BMI, 체지방, 근육량 가중평균
-      (3) 매력점수: 총점, (전체 동성 유저 중)순위
-          - BMI, 체지방, 근육량, 사진분석값 가중평균  ==> 사진분석값을 활용한 눈바디 점수 계산식 확인 요망
-      (4) BMI:
-          - 수치에 따른 상단 한줄 코멘트
-          - 나의 수치 & 권장수치/이성 선호/동성 선호 각각과의 차이(절대량)
-          - 권장수치
-          - 신체점수
-          - 이성 선호(이성이 좋아하는 나와의 동성 1등의 금주 BMI), 동성 선호(동성이 좋아하는 나와의 동성 1등의 금주 BMI),
-          - 매력점수
-          - 최근 1주일의 날짜 & 일자별 내 점수
-      (5) 체지방
-          - 수치에 따른 상단 한줄 코멘트
-          - 나의 수치 & 권장수치/이성 선호/동성 선호 각각과의 차이(절대량)
-          - 권장수치
-          - 신체점수
-          - 이성 선호(이성이 좋아하는 나와의 동성 1등의 금주 체지방), 동성 선호(동성이 좋아하는 나와의 동성 1등의 금주 체지방)
-          - 매력점수
-          - 최근 1주일의 날짜 & 일자별 내 점수
-      (6) 근육량:
-          - 수치에 따른 상단 한줄 코멘트
-          - 나의 수치 & 권장수치/이성 선호/동성 선호 각각과의 차이(절대량)
-          - 권장수치
-          - 신체점수
-          - 이성 선호(이성이 좋아하는 나와의 동성 1등의 금주 근육량), 동성 선호(동성이 좋아하는 나와의 동성 1등의 금주 근육량)
-          - 매력점수
-          - 최근 1주일의 날짜 & 일자별 내 점수
-      (7) 사진분석값: 우선은 점수만 그대로 보내주는 것으로.
-      ##########################################################
-      - 입력값: period(default: 금주), 유저 id
-      - 반환값 예시
-      {
-        'WEEKLY_RECORD': {
-          'total_body_score': '',
-          'total_attractiveness_score': '',
-          'total_bodylab_score': '',
-          'weekly_body_rank': '',
-          'weekly_attractiveness_rank': '',
-          'weekly_bodylab_rank': ''
-        }
-        'BMI': {
-          'comment': '',
-          'amount_recommended': '',
-          'amount_mine': '',
-          'gap_with_recommended_amount': '',
-          'body_score': '',
-          'amount_of_person_most_preferred_by_same_sex': '',
-          'amount_of_person_most_preferred_by_other_sex': '',
-          'gap_with_person_most_preferred_by_same_sex': '',
-          'gap_with_person_most_preferred_by_other_sex': '',
-          'attractiveness_score': '',
-          'history_4weeks': {'2022-01-01': '', '2022-01-02': '', ...}     #입력받은 period 포함한 최근 4주치의 my_amount
-        },
-        'MUSCLE': {},
-        'FAT': {},
-        'picture_analysis': {}
-      }
-      ##########################################################
-    '''
+# region body lab score calculating
+'''
+* 바디랩: 총점, 순위 ==> 월요일 기준 갱신! 이지만 일요일에 운동하는 사람이 있을 수 있으니 월요일 정오 기준으로 계산한다.
+  (1) 바디점수(바디랩 총점): 신체점수 & 매력점수 평균(정수), (전체 동성 유저의 신체 + 매력 점수 합산 결과에 대한)순위
+  (2) 신체점수: 총점, (전체 동성 유저 중)순위
+      - BMI, 체지방, 근육량 가중평균
+  (3) 매력점수: 총점, (전체 동성 유저 중)순위
+      - BMI, 체지방, 근육량, 사진분석값 가중평균  ==> 사진분석값을 활용한 눈바디 점수 계산식 확인 요망
+  (4) BMI:
+      - 수치에 따른 상단 한줄 코멘트
+      - 나의 수치 & 권장수치/이성 선호/동성 선호 각각과의 차이(절대량)
+      - 권장수치
+      - 신체점수
+      - 이성 선호(이성이 좋아하는 나와의 동성 1등의 금주 BMI), 동성 선호(동성이 좋아하는 나와의 동성 1등의 금주 BMI),
+      - 매력점수
+      - 최근 1주일의 날짜 & 일자별 내 점수
+  (5) 체지방
+      - 수치에 따른 상단 한줄 코멘트
+      - 나의 수치 & 권장수치/이성 선호/동성 선호 각각과의 차이(절대량)
+      - 권장수치
+      - 신체점수
+      - 이성 선호(이성이 좋아하는 나와의 동성 1등의 금주 체지방), 동성 선호(동성이 좋아하는 나와의 동성 1등의 금주 체지방)
+      - 매력점수
+      - 최근 1주일의 날짜 & 일자별 내 점수
+  (6) 근육량:
+      - 수치에 따른 상단 한줄 코멘트
+      - 나의 수치 & 권장수치/이성 선호/동성 선호 각각과의 차이(절대량)
+      - 권장수치
+      - 신체점수
+      - 이성 선호(이성이 좋아하는 나와의 동성 1등의 금주 근육량), 동성 선호(동성이 좋아하는 나와의 동성 1등의 금주 근육량)
+      - 매력점수
+      - 최근 1주일의 날짜 & 일자별 내 점수
+  (7) 사진분석값: 우선은 점수만 그대로 보내주는 것으로.
+  ##########################################################
+  - 입력값: period(default: 금주), 유저 id
+  - 반환값 예시
+  {
+    'WEEKLY_RECORD': {
+      'total_body_score': '',
+      'total_attractiveness_score': '',
+      'total_bodylab_score': '',
+      'weekly_body_rank': '',
+      'weekly_attractiveness_rank': '',
+      'weekly_bodylab_rank': ''
+    }
+    'BMI': {
+      'comment': '',
+      'amount_recommended': '',
+      'amount_mine': '',
+      'gap_with_recommended_amount': '',
+      'body_score': '',
+      'amount_of_person_most_preferred_by_same_sex': '',
+      'amount_of_person_most_preferred_by_other_sex': '',
+      'gap_with_person_most_preferred_by_same_sex': '',
+      'gap_with_person_most_preferred_by_other_sex': '',
+      'attractiveness_score': '',
+      'history_4weeks': {'2022-01-01': '', '2022-01-02': '', ...}     #입력받은 period 포함한 최근 4주치의 my_amount
+    },
+    'MUSCLE': {},
+    'FAT': {},
+    'picture_analysis': {}
+  }
+  ##########################################################
+'''
 
 # @api.route('/bodylab/<user_id>/<week>', methods=['GET'])    #check_token 추가하기!!!!!
 # def read_weekly_score(user_id, period):

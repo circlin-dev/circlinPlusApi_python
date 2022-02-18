@@ -24,41 +24,21 @@ IMPORT_REST_API_SECRET = "aa8f4f6206e82213fc1665f0cd6f8967a59def6fd2be1321a34a48
 
 # region bodylab criteria data
 ATTRACTIVENESS_SCORE_CRITERIA = {
-    0: {
-        "gender": "M",
-        "preferred_by": "M",
-        'weight': 0,
-        'height': 0,
-        "bmi": 00.00,
-        "muscle_mass": 00.00,
-        "fat_mass": 00.00,
+    "M": {
+        # 유연규님
+        'weight': 66,
+        'height': 170,
+        "bmi": 22.83,
+        "muscle_mass": 33,
+        "fat_mass": 8,
     },
-    1: {
-        "gender": "M",
-        "preferred_by": "W",
-        'weight': 0,
-        'height': 0,
-        "bmi": 00.00,
-        "muscle_mass": 00.00,
-        "fat_mass": 00.00,
-    },
-    2: {
-        "gender": "W",
-        "preferred_by": "M",
-        'weight': 0,
-        'height': 0,
-        "bmi": 00.00,
-        "muscle_mass": 00.00,
-        "fat_mass": 00.00,
-    },
-    3: {
-        "gender": "W",
-        "preferred_by": "W",
-        'weight': 0,
-        'height': 0,
-        "bmi": 00.00,
-        "muscle_mass": 00.00,
-        "fat_mass": 00.00,
+    "W": {
+        # 임희정님
+        'weight': 50,
+        'height': 159,
+        "bmi": 19.302487059715,
+        "muscle_mass": 21,
+        "fat_mass": 8,
     }
 }
 
@@ -68,20 +48,30 @@ BODY_IMAGE_ANALYSIS_CRITERIA = {
     "M": {
         "name": "Ho Jung Jeong",
         "height": 175,
+        "head_width": 92.03,
         "shoulder_width": 164.6,
-        "hip_width": 92.03,
-        "head_height": 105.88973999023438,
-        "upperbody_height": 242.83541870117188,
-        "lowerbody_height": 372.2978515625
+        "shoulder_ratio": 1.55,
+        "hip_width": 105.88973999023438,
+        "hip_ratio": 1.15,
+        "nose_to_shoulder_center": 81.9,
+        "shoulder_center_to_hip_center": 242.83541870117188,
+        "hip_center_to_ankle_center": 372.2978515625,
+        "shoulder_center_to_ankle_center": 615.13327026367188,
+        "whole_body_length": 721.02301025390626
     },
     "W": {
         "name": "Si Young Lee",
         "height": 169,
+        "head_width": 125.29998779296875,
         "shoulder_width": 227.68,
+        "shoulder_ratio": 1.8,
         "hip_width": 139.67,
-        "head_height": 125.29998779296875,
-        "upperbody_height": 341.46636962890625,
-        "lowerbody_height": 555.2415771484375
+        "hip_ratio": 1.11,
+        "nose_to_shoulder_center": 113.8,
+        "shoulder_center_to_hip_center": 341.46636962890625,
+        "hip_center_to_ankle_center": 555.2415771484375,
+        "shoulder_center_to_ankle_center": 896.70794677734375,
+        "whole_body_length": 1022.0079345703125
     }
 }
 # endregion
@@ -89,7 +79,36 @@ BODY_IMAGE_ANALYSIS_CRITERIA = {
 
 
 
-
+{
+    bodylabs.id,
+        bodylabs.created_at,
+        bodylabs.url_body_image,
+        bodylabs.height,
+        bodylabs.weight,
+        bodylabs.bmi,
+        bodylabs.ideal_bmi,
+        bodylabs.bmi_healthiness_score,
+        bodylabs.bmi_attractiveness_score,
+        bodylabs.bmi_status,
+        bodylabs.muscle_mass,
+        bodylabs.ideal_muscle_mass,
+        bodylabs.muscle_mass_healthiness_score,
+        bodylabs.muscle_mass_attractiveness_score,
+        bodylabs.fat_mass,
+        bodylabs.ideal_fat_mass,
+        bodylabs.fat_mass_healthiness_score,
+        bodylabs.fat_mass_attractiveness_score,
+        bodylab_analyze_bodies.url_output,
+        bodylab_analyze_bodies.shoulder_width,
+        bodylab_analyze_bodies.shoulder_ratio,
+        bodylab_analyze_bodies.hip_width,
+        bodylab_analyze_bodies.hip_ratio,
+        bodylab_analyze_bodies.nose_to_shoulder_center,
+        bodylab_analyze_bodies.shoulder_center_to_hip_center,
+        bodylab_analyze_bodies.hip_center_to_ankle_center,
+        bodylab_analyze_bodies.shoulder_center_to_ankle_center,
+        bodylab_analyze_bodies.whole_body_length
+}
 
 
 
