@@ -121,9 +121,34 @@ def weekly_bodylab():
         # elif is_valid_user['result'] is True:
         #   pass
 
-        # user_week_id 가져오거나 생성하기
+        # user_week_id 없으면 생성하고, 이후 SELECT
+        sql = f"""
+            INSERT INTO
+                    user_weeks(created_at, updated_at, user_id, start_date)
+                SELECT (SELECT NOW()), (SELECT NOW()), {user_id}, (SELECT ADDDATE(CURDATE(), - WEEKDAY(CURDATE()))) FROM dual
+            WHERE NOT EXISTS(
+                        SELECT 
+                            id 
+                        FROM 
+                            user_weeks 
+                        WHERE 
+                            user_id={user_id} 
+                        AND 
+                            start_date=(SELECT ADDDATE(CURDATE(), - WEEKDAY(CURDATE())))
+            )"""
+        cursor.execute(sql)
 
-
+        sql = f"""
+            SELECT 
+                id 
+            FROM 
+                user_weeks 
+            WHERE 
+                user_id={user_id} 
+            AND 
+                start_date=(SELECT ADDDATE(CURDATE(), - WEEKDAY(CURDATE())))"""
+        cursor.execute(sql)
+        user_week_id = cursor.fetchall()[0][0]
 
         # user_question 데이터 불러오기
         sql = Query.from_(
@@ -168,7 +193,7 @@ def weekly_bodylab():
                 bodylabs
             ).columns(
                 bodylabs.user_id,
-                # bodylabs.user_week_id,
+                bodylabs.user_week_id,
                 bodylabs.url_body_image,
                 bodylabs.height,
                 bodylabs.weight,
@@ -187,7 +212,7 @@ def weekly_bodylab():
                 bodylabs.fat_mass_attractiveness_score,
             ).insert(
                 user_id,
-                # user_week_id,
+                user_week_id,
                 s3_path_body_input,
                 height,
                 weight,

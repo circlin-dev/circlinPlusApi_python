@@ -60,3 +60,21 @@ def replace_number_to_schedule(schedule_list: list):
     replaced_date = [date['day'] for date in replaced_date]
 
     return replaced_date
+
+
+def replace_number_to_experience(experience_group: int):
+    if experience_group == 0:
+        experience = '처음'
+    elif experience_group == 1:
+        experience = '~1개월 이내'
+    elif experience_group == 2:
+        experience = '~3개월 이내'
+    elif experience_group == 3:
+        experience = '~1년 이내'
+    elif experience_group == 4:
+        experience = '~3년 이내'
+    elif experience_group == 5:
+        experience = '~5년 이내'
+    else:
+        experience = '5년이상'
+    return experience

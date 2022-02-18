@@ -2,7 +2,7 @@ from . import api
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, parse_for_mysql, query_result_is_none
-from global_things.functions.user_question import replace_number_to_schedule
+from global_things.functions.user_question import replace_number_to_schedule, replace_number_to_experience
 from flask import request, url_for
 import json
 from pypika import MySQLQuery as Query, Table, Order, Criterion
@@ -197,7 +197,8 @@ def read_user_question(user_id):
         answer = data[0][2]
         result_dict = json.loads(answer.replace("\\", "\\\\"), strict=False)  # To prevent decoding error.
         result_dict['result'] = True
-        # result_dict['schedule'] = replace_number_to_schedule(result_dict['schedule'])
+        result_dict['schedule'] = replace_number_to_schedule(result_dict['schedule'])
+        result_dict['experience_group'] = replace_number_to_experience(result_dict['experience_group'])
         result_dict['id'] = answer_id
         result_dict['created_at'] = created_at.strftime('%Y-%m-%d %H:%M:%S')
 
