@@ -29,7 +29,7 @@ class InvalidAPIUsage(Exception):
         self.result = result
 
     def to_dict(self):
-        error = dict(self.payload or ())
+        error = dict()
         error['user_ip'] = self.user_ip
         error['user_id'] = self.user_id
         error['nickname'] = self.nickname
