@@ -1,7 +1,7 @@
 from api import api
 from global_things.constants import APP_ROOT, BODY_IMAGE_INPUT_PATH, ATFLEE_IMAGE_INPUT_PATH
 from global_things.functions.slack import slack_error_notification
-from flask import Flask, render_template, request
+from flask import abort, Flask, render_template, request
 from flask_cors import CORS
 import json
 import logging
@@ -27,7 +27,7 @@ app.register_blueprint(api, url_prefix="/api")
 def hello_world():
     ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
     test = [1, 2, 3]
-    error_evoke = test[10]
+    abort(400, description="Error handler test")
 
     query_parameter_dict = request.args.to_dict()
     values = ''
