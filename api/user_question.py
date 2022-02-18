@@ -199,7 +199,7 @@ def read_user_question(user_id):
         result_dict['result'] = True
         result_dict['schedule'] = replace_number_to_schedule(result_dict['schedule'])
         result_dict['id'] = answer_id
-        result_dict['created_at'] = created_at
+        result_dict['created_at'] = created_at.strftime('%Y-%m-%d %H:%M:%S')
 
         return json.dumps(result_dict, ensure_ascii=False), 200
 
