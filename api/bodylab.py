@@ -458,7 +458,6 @@ def read_user_bodylab(user_id):
     result_list = []
     for record in records:
         result_dict = {
-            "result": True,
             "id": record[0],
             "created_at": record[1].strftime('%Y-%m-%d %H:%M:%S'),
             "bmi": {
