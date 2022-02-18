@@ -564,7 +564,7 @@ def add_subscription_order():
 
     discount_information = cursor.fetchall()
 
-    to_be_paid, subscription_original_price, discount_id = validation_subscription_order('subscription', subscription_information, discount_information)
+    to_be_paid, subscription_original_price, discount_id = validation_subscription_order(subscription_information, discount_information)
     if to_be_paid != import_paid_amount:
         """
         1. '부분환불' 도입 시
