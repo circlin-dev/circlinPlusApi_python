@@ -4,6 +4,8 @@ from global_things.functions.slack import slack_error_notification
 from flask import Flask, render_template, request
 from flask_cors import CORS
 import logging
+from werkzeug.exceptions import HTTPException
+
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -23,6 +25,8 @@ app.register_blueprint(api, url_prefix="/api")
 @app.route('/testing')
 def hello_world():
     ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+    test = [1, 2, 3]
+    error_evoke = test[10]
 
     query_parameter_dict = request.args.to_dict()
     values = ''
@@ -34,6 +38,18 @@ def hello_world():
 @app.route('/bodylab_form')
 def bodylab_form():
     return render_template('bodylab_form.html')
+
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # pass through HTTP errors
+    if isinstance(e, HTTPException):
+        slack_error_notification(error_log=str(e))
+        return str(e)
+
+    # now you're handling non-HTTP exceptions only
+    slack_error_notification(error_log=str(e))
+    return str(e)
 
 
 if __name__ == '__main__':

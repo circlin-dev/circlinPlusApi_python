@@ -849,6 +849,3 @@ def validate_delivery_fee():
                       'error': f"결제 검증 실패(결제 금액 불일치), 다음 사유로 인해 환불처리 실패하였으니 아임포트 어드민에서 직접 취소 요망(imp_uid: {imp_uid}, merchant_uid: {merchant_uid}) : {refund_result['message']}"}
             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
             return json.dumps(result, ensure_ascii=False), 400
-
-        result_dict = {"result": False}
-        return json.dumps(result_dict, ensure_ascii=False)

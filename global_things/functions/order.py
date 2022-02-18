@@ -81,6 +81,7 @@ def validation_equipment_delivery(equipment_information: dict, discount_informat
         total_fee = equipment_delivery_fee - area_discount_value
         return total_fee, total_fee, area_discount_id, first_delivery_discount_value
 
+
 def request_import_refund(access_token: str, imp_uid: str, merchant_uid: str, amount: int, checksum: int, reason: str):
     response = requests.post(
         "https://api.iamport.kr/payments/cancel",
