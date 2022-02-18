@@ -1,5 +1,6 @@
 from api import api
 from global_things.constants import APP_ROOT, BODY_IMAGE_INPUT_PATH, ATFLEE_IMAGE_INPUT_PATH
+from global_things.error_handler import InvalidAPIUsage
 from global_things.functions.slack import slack_error_notification
 from flask import abort, Flask, jsonify, render_template, request
 from flask_cors import CORS
@@ -26,9 +27,8 @@ app.register_blueprint(api, url_prefix="/api")
 @app.route('/testing')
 def hello_world():
     ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
-    test = [1, 2, 3]
-    abort(400, description="Error handler test")
 
+    raise InvalidAPIUsage(ip, 11, '최건우', '/testing', '에러 테스트 에러 테스트', 'query', 'method', 'status_code', 'payload', False)
     query_parameter_dict = request.args.to_dict()
     values = ''
     for key in query_parameter_dict.keys():
@@ -39,6 +39,11 @@ def hello_world():
 @app.route('/bodylab_form')
 def bodylab_form():
     return render_template('bodylab_form.html')
+
+
+@app.errorhandler(InvalidAPIUsage)
+def invalid_api_usage(e):
+    return json.dumps({'result': False, 'error': str(e)})
 
 
 @app.errorhandler(400)
