@@ -166,7 +166,7 @@ def weekly_bodylab():
                 bodylabs
             ).columns(
                 bodylabs.user_id,
-                bodylabs.user_week_id,
+                # bodylabs.user_week_id,
                 bodylabs.url_body_image,
                 bodylabs.height,
                 bodylabs.weight,
@@ -185,7 +185,7 @@ def weekly_bodylab():
                 bodylabs.fat_mass_attractiveness_score,
             ).insert(
                 user_id,
-                user_week_id,
+                # user_week_id,
                 s3_path_body_input,
                 height,
                 weight,
