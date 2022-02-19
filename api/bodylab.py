@@ -483,8 +483,7 @@ def weekly_bodylab():
                 'result': False,
                 'error': f"Failed to execute POST request: {error}"
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'],
-                                     method=request.method)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method, query=sql)
             return json.dumps(result, ensure_ascii=False), 500
     else:
         result = {
