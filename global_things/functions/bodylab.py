@@ -192,7 +192,7 @@ def analyze_atflee_images(user_id, url):
 #         return str(firstdate_of_week), str(lastdate_of_week)
 # endregion
 
-def generate_resized_image(LOCAL_SAVE_PATH, user_id, category, now, extension, original_image_path):
+def generate_resized_image(local_save_path, user_id, category, now, extension, original_image_path):
     # file_name = user_id + now + extension
     # local_image_path = BODY_IMAGE_INPUT_PATH, user_id, file_name
     # 새롭게 생성되는 resized file들은 file_name = user_id + now + {width}w + extension
@@ -214,7 +214,7 @@ def generate_resized_image(LOCAL_SAVE_PATH, user_id, category, now, extension, o
 
         original_name = f'bodylab_{category}_input_{user_id}_{now}.{extension}'
         file_name = f'bodylab_{category}_input_{user_id}_{now}_{new_width}w.{extension}'
-        resized_image_path = f'{LOCAL_SAVE_PATH}/{user_id}/{file_name}'
+        resized_image_path = f'{local_save_path}/{user_id}/{file_name}'
 
         if category == 'body':
             object_name = f'{BUCKET_IMAGE_PATH_BODY_INPUT}/{user_id}/{file_name}'
@@ -223,7 +223,7 @@ def generate_resized_image(LOCAL_SAVE_PATH, user_id, category, now, extension, o
         cv2.imwrite(resized_image_path, resized_image)
         image_dict = {
             # For DB when INSERT
-            'pathname': f'{AMAZON_URL}/object_name',
+            'pathname': f'{AMAZON_URL}/{object_name}',
             'original_name': original_name,
             'mime_type': get_image_information(resized_image_path)['mime_type'],
             'size': get_image_information(resized_image_path)['size'],
