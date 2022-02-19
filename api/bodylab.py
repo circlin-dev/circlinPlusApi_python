@@ -338,19 +338,20 @@ def weekly_bodylab():
                 bodylabs.id, order=Order.desc
             ).limit(1).get_sql()
             cursor.execute(sql)
-            latest_bodylab_id_tuple = cursor.fetchall()
-
-            if query_result_is_none(latest_bodylab_id_tuple) is True:
-                connection.rollback()
-                connection.close()
-                result = {
-                    'result': False,
-                    'error': f'Cannot find requested bodylab data of user(id: {user_id})(bodylab)'
-                }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
-                return json.dumps(result, ensure_ascii=False), 400
-            else:
-                latest_bodylab_id = latest_bodylab_id_tuple[0][0]
+            latest_bodylab_id = cursor.lastrowid
+            # latest_bodylab_id_tuple = cursor.fetchall()
+            #
+            # if query_result_is_none(latest_bodylab_id_tuple) is True:
+            #     connection.rollback()
+            #     connection.close()
+            #     result = {
+            #         'result': False,
+            #         'error': f'Cannot find requested bodylab data of user(id: {user_id})(bodylab)'
+            #     }
+            #     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
+            #     return json.dumps(result, ensure_ascii=False), 400
+            # else:
+            #     latest_bodylab_id = latest_bodylab_id_tuple[0][0]
 
             # Analyze user's image and store the result.
             body_analysis = json.loads(analyze_body_images(user_id, s3_path_body_input))
