@@ -545,7 +545,8 @@ def read_user_bodylab(user_id):
 
     columns = ["bodylab_id",
                "created_at",
-               "url_body_input",
+               "body_input_url",
+               "body_input_url_resized",
                "height",
                "weight",
                "bmi",
@@ -561,7 +562,8 @@ def read_user_bodylab(user_id):
                "ideal_fat_mass",
                "fat_mass_healthiness_score",
                "fat_mass_attractiveness_score",
-               "url_output",
+               "body_output_url",
+               "body_output_url_resized"
                "shoulder_width",
                "shoulder_ratio",
                "hip_width",
@@ -575,7 +577,34 @@ def read_user_bodylab(user_id):
         SELECT
             b.id,
             b.created_at,
-            (SELECT f.pathname FROM files f INNER JOIN bodylabs ON f.id = bodylabs.file_id_body_input WHERE bodylabs.id = b.id) AS input_url,
+            b.user_week_id,
+            (SELECT 
+                    f.pathname 
+            FROM 
+                    files f 
+            INNER JOIN 
+                    bodylabs 
+            ON 
+                f.id = bodylabs.file_id_body_input 
+            WHERE bodylabs.id = b.id) AS body_input_url,
+            (SELECT
+                    JSON_ARRAYAGG(JSON_OBJECT('width', ff.width, 'pathname', ff.pathname)) AS resized
+            FROM
+                 files ff
+            INNER JOIN
+                (SELECT
+                       f.id,
+                       f.pathname
+                FROM
+                     files f
+                INNER JOIN
+                     bodylabs
+                ON
+                    f.id = bodylabs.file_id_body_input
+                WHERE
+                      bodylabs.id = b.id) AS original
+            ON
+                original.id = ff.original_file_id) AS body_input_url_resized,
             b.height,
             b.weight,
             b.bmi,
@@ -591,7 +620,33 @@ def read_user_bodylab(user_id):
             b.ideal_muscle_mass,
             b.muscle_mass_healthiness_score,
             b.muscle_mass_attractiveness_score,
-            (SELECT f.pathname FROM files f INNER JOIN bodylab_analyze_bodies ON f.id = bodylab_analyze_bodies.file_id_body_output WHERE bodylab_analyze_bodies.id = bab.id) output_url,
+            (SELECT 
+                    f.pathname 
+            FROM 
+                files f 
+            INNER JOIN 
+                bodylab_analyze_bodies 
+            ON 
+                f.id = bodylab_analyze_bodies.file_id_body_output 
+            WHERE 
+                bodylab_analyze_bodies.id = bab.id) AS body_output_url,
+            (SELECT
+                   JSON_ARRAYAGG(JSON_OBJECT('width', ff.width, 'pathname', ff.pathname)) AS resized
+            FROM
+                 files ff
+            INNER JOIN
+                (SELECT 
+                    f.pathname 
+                FROM 
+                    files f 
+                INNER JOIN 
+                    bodylab_analyze_bodies 
+                ON 
+                    f.id = bodylab_analyze_bodies.file_id_body_output
+                WHERE 
+                    bodylab_analyze_bodies.id = bab.id) AS original
+            ON
+                original.id = ff.original_file_id) AS body_output_url_resized,
             bab.shoulder_width,
             bab.shoulder_ratio,
             bab.hip_width,
@@ -629,40 +684,43 @@ def read_user_bodylab(user_id):
         result_dict = {
             "id": record[0],
             "created_at": record[1].strftime('%Y-%m-%d %H:%M:%S'),
+            "user_week_id": record[2],
             "bmi": {
-                "user": record[5],
-                "ideal": record[6],
-                "healthiness_score": record[7],
-                "attractiveness_score": record[8],
-                "bmi_status": record[9]
+                "user": record[7],
+                "ideal": record[8],
+                "healthiness_score": record[9],
+                "attractiveness_score": record[10],
+                "bmi_status": record[11]
             },
             "muscle": {
-                "user": record[10],
-                "ideal": record[11],
-                "healthiness_score": record[12],
-                "attractiveness_score": record[13]
+                "user": record[12],
+                "ideal": record[13],
+                "healthiness_score": record[14],
+                "attractiveness_score": record[15]
             },
             "fat": {
-                "user": record[14],
-                "ideal": record[15],
-                "healthiness_score": record[16],
-                "attractiveness_score": record[17]
+                "user": record[16],
+                "ideal": record[17],
+                "healthiness_score": record[18],
+                "attractiveness_score": record[19]
             },
             "body_image_analysis": {
-                "url_body_input": record[2],
-                "url_output": record[18],
+                "body_input_url": record[3],
+                "body_input_url_resized": json.loads(record[4]),
+                "body_output_url": record[20],
+                "body_output_url_resized": json.loads(record[21]),
                 "user": {
-                    "height": record[3],
-                    "weight": record[4],
-                    "shoulder_width": record[19],
-                    "shoulder_ratio": record[20],
-                    "hip_width": record[21],
-                    "hip_ratio": record[22],
-                    "nose_to_shoulder_center": record[23],
-                    "shoulder_center_to_hip_center": record[24],
-                    "hip_center_to_ankle_center": record[25],
-                    "shoulder_center_to_ankle_center": record[26],
-                    "whole_body_length": record[27]
+                    "height": record[5],
+                    "weight": record[6],
+                    "shoulder_width": record[22],
+                    "shoulder_ratio": record[23],
+                    "hip_width": record[24],
+                    "hip_ratio": record[25],
+                    "nose_to_shoulder_center": record[26],
+                    "shoulder_center_to_hip_center": record[27],
+                    "hip_center_to_ankle_center": record[28],
+                    "shoulder_center_to_ankle_center": record[29],
+                    "whole_body_length": record[30]
                 },
                 "compare": BODY_IMAGE_ANALYSIS_CRITERIA[gender]
             }
@@ -736,7 +794,8 @@ def read_user_bodylab_single(user_id, bodylab_id):
 
     columns = ["bodylab_id",
                "created_at",
-               "url_body_input",
+               "body_input_url",
+               "body_input_url_resized",
                "height",
                "weight",
                "bmi",
@@ -752,7 +811,8 @@ def read_user_bodylab_single(user_id, bodylab_id):
                "ideal_fat_mass",
                "fat_mass_healthiness_score",
                "fat_mass_attractiveness_score",
-               "url_output",
+               "body_output_url",
+               "body_output_url_resized"
                "shoulder_width",
                "shoulder_ratio",
                "hip_width",
@@ -766,7 +826,34 @@ def read_user_bodylab_single(user_id, bodylab_id):
         SELECT
             b.id,
             b.created_at,
-            (SELECT f.pathname FROM files f INNER JOIN bodylabs ON f.id = bodylabs.file_id_body_input WHERE bodylabs.id = b.id) AS input_url,
+            b.user_week_id,
+            (SELECT 
+                    f.pathname 
+            FROM 
+                    files f 
+            INNER JOIN 
+                    bodylabs 
+            ON 
+                f.id = bodylabs.file_id_body_input 
+            WHERE bodylabs.id = b.id) AS body_input_url,
+            (SELECT
+                    JSON_ARRAYAGG(JSON_OBJECT('width', ff.width, 'pathname', ff.pathname)) AS resized
+            FROM
+                 files ff
+            INNER JOIN
+                (SELECT
+                       f.id,
+                       f.pathname
+                FROM
+                     files f
+                INNER JOIN
+                     bodylabs
+                ON
+                    f.id = bodylabs.file_id_body_input
+                WHERE
+                      bodylabs.id = b.id) AS original
+            ON
+                original.id = ff.original_file_id) AS body_input_url_resized,
             b.height,
             b.weight,
             b.bmi,
@@ -782,7 +869,33 @@ def read_user_bodylab_single(user_id, bodylab_id):
             b.ideal_muscle_mass,
             b.muscle_mass_healthiness_score,
             b.muscle_mass_attractiveness_score,
-            (SELECT f.pathname FROM files f INNER JOIN bodylab_analyze_bodies ON f.id = bodylab_analyze_bodies.file_id_body_output WHERE bodylab_analyze_bodies.id = bab.id) output_url,
+            (SELECT 
+                    f.pathname 
+            FROM 
+                files f 
+            INNER JOIN 
+                bodylab_analyze_bodies 
+            ON 
+                f.id = bodylab_analyze_bodies.file_id_body_output 
+            WHERE 
+                bodylab_analyze_bodies.id = bab.id) AS body_output_url,
+            (SELECT
+                   JSON_ARRAYAGG(JSON_OBJECT('width', ff.width, 'pathname', ff.pathname)) AS resized
+            FROM
+                 files ff
+            INNER JOIN
+                (SELECT 
+                    f.pathname 
+                FROM 
+                    files f 
+                INNER JOIN 
+                    bodylab_analyze_bodies 
+                ON 
+                    f.id = bodylab_analyze_bodies.file_id_body_output
+                WHERE 
+                    bodylab_analyze_bodies.id = bab.id) AS original
+            ON
+                original.id = ff.original_file_id) AS body_output_url_resized,
             bab.shoulder_width,
             bab.shoulder_ratio,
             bab.hip_width,
@@ -799,9 +912,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
         ON
             bab.bodylab_id = b.id
         WHERE
-            b.user_id = {user_id}
-        AND
-            b.id = {bodylab_id}"""
+            b.user_id = {user_id}"""
 
     cursor.execute(sql)
     record = cursor.fetchall()
@@ -819,43 +930,45 @@ def read_user_bodylab_single(user_id, bodylab_id):
 
     connection.close()
     result_dict = {
-        "result": True,
-        "id": record[0][0],
-        "created_at": record[0][1].strftime('%Y-%m-%d %H:%M:%S'),
+        "id": record[0],
+        "created_at": record[1].strftime('%Y-%m-%d %H:%M:%S'),
+        "user_week_id": record[2],
         "bmi": {
-            "user": record[0][5],
-            "ideal": record[0][6],
-            "healthiness_score": record[0][7],
-            "attractiveness_score": record[0][8],
-            "bmi_status": record[0][9]
+            "user": record[7],
+            "ideal": record[8],
+            "healthiness_score": record[9],
+            "attractiveness_score": record[10],
+            "bmi_status": record[11]
         },
         "muscle": {
-            "user": record[0][10],
-            "ideal": record[0][11],
-            "healthiness_score": record[0][12],
-            "attractiveness_score": record[0][13]
+            "user": record[12],
+            "ideal": record[13],
+            "healthiness_score": record[14],
+            "attractiveness_score": record[15]
         },
         "fat": {
-            "user": record[0][14],
-            "ideal": record[0][15],
-            "healthiness_score": record[0][16],
-            "attractiveness_score": record[0][17]
+            "user": record[16],
+            "ideal": record[17],
+            "healthiness_score": record[18],
+            "attractiveness_score": record[19]
         },
         "body_image_analysis": {
-            "url_body_input": record[0][2],
-            "url_output": record[0][18],
+            "body_input_url": record[3],
+            "body_input_url_resized": json.loads(record[4]),
+            "body_output_url": record[20],
+            "body_output_url_resized": json.loads(record[21]),
             "user": {
-                "height": record[0][3],
-                "weight": record[0][4],
-                "shoulder_width": record[0][19],
-                "shoulder_ratio": record[0][20],
-                "hip_width": record[0][21],
-                "hip_ratio": record[0][22],
-                "nose_to_shoulder_center": record[0][23],
-                "shoulder_center_to_hip_center": record[0][24],
-                "hip_center_to_ankle_center": record[0][25],
-                "shoulder_center_to_ankle_center": record[0][26],
-                "whole_body_length": record[0][27]
+                "height": record[5],
+                "weight": record[6],
+                "shoulder_width": record[22],
+                "shoulder_ratio": record[23],
+                "hip_width": record[24],
+                "hip_ratio": record[25],
+                "nose_to_shoulder_center": record[26],
+                "shoulder_center_to_hip_center": record[27],
+                "hip_center_to_ankle_center": record[28],
+                "shoulder_center_to_ankle_center": record[29],
+                "whole_body_length": record[30]
             },
             "compare": BODY_IMAGE_ANALYSIS_CRITERIA[gender]
         }
