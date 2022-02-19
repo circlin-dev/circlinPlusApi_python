@@ -636,6 +636,7 @@ def read_user_bodylab(user_id):
                  files ff
             INNER JOIN
                 (SELECT 
+                    f.id,
                     f.pathname 
                 FROM 
                     files f 
@@ -885,6 +886,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
                  files ff
             INNER JOIN
                 (SELECT 
+                    f.id,                
                     f.pathname 
                 FROM 
                     files f 
