@@ -1,16 +1,17 @@
 import datetime
-from global_things.constants import API_ROOT, AMAZON_URL, BUCKET_NAME, BUCKET_BODY_IMAGE_INPUT_PATH, BODY_IMAGE_INPUT_PATH, BUCKET_ATFLEE_IMAGE_PATH, ATFLEE_IMAGE_INPUT_PATH, ATTRACTIVENESS_SCORE_CRITERIA, BODY_IMAGE_ANALYSIS_CRITERIA
+from global_things.constants import API_ROOT, AMAZON_URL, BUCKET_NAME, BUCKET_IMAGE_PATH_BODY_INPUT, BUCKET_IMAGE_PATH_BODY_OUTPUT, BUCKET_IMAGE_PATH_ATFLEE_INPUT, LOCAL_SAVE_PATH_BODY_INPUT, LOCAL_SAVE_PATH_ATFLEE_INPUT, ATTRACTIVENESS_SCORE_CRITERIA, BODY_IMAGE_ANALYSIS_CRITERIA
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
-from global_things.functions.bodylab import analyze_body_images, anaylze_atflee_images, upload_image_to_s3, standard_healthiness_value, healthiness_score, attractiveness_score
+from global_things.functions.bodylab import analyze_body_images, analyze_atflee_images, generate_resized_image, get_image_information, upload_image_to_s3, standard_healthiness_value, healthiness_score, attractiveness_score
 from . import api
 import cv2
 from datetime import datetime
 from flask import url_for, request
 import json
+import mimetypes
 import numpy as np
 import os
-from pypika import MySQLQuery as Query, Criterion, Table, Order
+from pypika import MySQLQuery as Query, Criterion, Table, Order, functions as fn
 import shutil
 from werkzeug.utils import secure_filename
 """2개의 이미지 전송
@@ -27,8 +28,8 @@ def weekly_bodylab():
     # token = request.headers['Authorization']
     data = request.form.to_dict()  # {'body': ~~~~~.png, 'atflee': ~~~~~.png}
     user_id = int(data['user_id'])
-    height = float(data['height'])
-    weight = float(data['weight'])
+    user_height = float(data['height'])
+    user_weight = float(data['weight'])
     bmi = float(data['bmi'])
     muscle_mass = float(data['muscle_mass'])
     fat_mass = float(data['fat_mass'])
@@ -47,16 +48,17 @@ def weekly_bodylab():
         bodylab_analyze_bodies = Table('bodylab_analyze_bodies')  # bodylab_body_images = Table('bodylab_body_images')
         # bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
         user_questions = Table('user_questions')
+        files = Table('files')
 
         # Verify if mandatory information is not null.
-        if not(user_id or height or weight or bmi or muscle_mass or fat_mass or body_image):
+        if not(user_id or user_height or user_weight or bmi or muscle_mass or fat_mass or body_image):
             result = {
                 'result': False,
                 'error': f'Missing data in request.',
                 'values': {
                     'user_id': user_id,
-                    'height': height,
-                    'weight': weight,
+                    'height': user_height,
+                    'weight': user_weight,
                     'bmi': bmi,
                     'muscle_mass': muscle_mass,
                     'fat_mass': fat_mass,
@@ -66,34 +68,73 @@ def weekly_bodylab():
             return json.dumps(result, ensure_ascii=False), 400
 
         now = datetime.now().strftime('%Y%m%d%H%M%S')
-        # year = period.split('-W')[0]
-        # week_number_of_year = period.split('-W')[1]
-        # firstdate_of_week, lastdate_of_week = get_date_range_from_week(year, week_number_of_year)
-        if str(user_id) not in os.listdir(f"{BODY_IMAGE_INPUT_PATH}"):
-            os.makedirs(f"{BODY_IMAGE_INPUT_PATH}/{user_id}")
+        # S3 업로드 - 바디랩 이미지 1: 신체 사진(눈바디)
+        if str(user_id) not in os.listdir(f"{LOCAL_SAVE_PATH_BODY_INPUT}"):
+            os.makedirs(f"{LOCAL_SAVE_PATH_BODY_INPUT}/{user_id}")
         secure_file = secure_filename(body_image.filename)
         extension = secure_file.split('.')[-1]
-        file_name = f'{user_id}_{now}.{extension}'
+        file_name = f'bodylab_body_input_{user_id}_{now}.{extension}'
+        category = file_name.split('_')[1]
 
-        local_image_path = f'{BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}'
+        local_image_path = f'{LOCAL_SAVE_PATH_BODY_INPUT}/{user_id}/{file_name}'
         body_image.save(secure_file)
         if os.path.exists(secure_file):
-            shutil.move(secure_file, f'{BODY_IMAGE_INPUT_PATH}/{user_id}')
-            os.rename(f'{BODY_IMAGE_INPUT_PATH}/{user_id}/{secure_file}', local_image_path)
+            shutil.move(secure_file, f'{LOCAL_SAVE_PATH_BODY_INPUT}/{user_id}')
+            os.rename(f'{LOCAL_SAVE_PATH_BODY_INPUT}/{user_id}/{secure_file}', local_image_path)
 
-        object_name = f"{BUCKET_BODY_IMAGE_INPUT_PATH}/{user_id}/{file_name}"
+        body_image_height, body_image_width, body_image_channel = cv2.imread(local_image_path, cv2.IMREAD_COLOR).shape
+
+        object_name = f"{BUCKET_IMAGE_PATH_BODY_INPUT}/{user_id}/{file_name}"
         upload_result = upload_image_to_s3(local_image_path, BUCKET_NAME, object_name)
-        if upload_result is True:
-            pass
-        else:
+        if upload_result is False:
             result_dict = {
                 'message': f'Failed to upload body image into S3({upload_result})',
                 'result': False
             }
-            return json.dumps(result_dict), 500
+            return json.dumps(result_dict, ensure_ascii=False), 500
         s3_path_body_input = f"{AMAZON_URL}/{object_name}"
+        body_input_image_dict = {
+            'pathname': s3_path_body_input,
+            'original_name': file_name,
+            'mime_type': get_image_information(local_image_path)['mime_type'],
+            'size': get_image_information(local_image_path)['size'],
+            'width': body_image_width,
+            'height': body_image_height,
+            # For Server
+            'file_name': file_name,
+            'local_path': local_image_path,
+            'object_name': object_name,
+        }
         if os.path.exists(local_image_path):
             os.remove(local_image_path)
+
+        resized_body_images_list = generate_resized_image(LOCAL_SAVE_PATH_BODY_INPUT, user_id, category, now, extension, local_image_path)
+        for resized_image in resized_body_images_list:
+            upload_result = upload_image_to_s3(resized_image['local_path'], BUCKET_NAME, resized_image['object_name'])
+            if upload_result is False:
+                result_dict = {
+                    'message': f'Failed to upload body image into S3({upload_result})',
+                    'result': False
+                }
+                return json.dumps(result_dict), 500
+            if os.path.exists(resized_image['local_path']):
+                os.remove(resized_image['local_path'])
+
+        # S3 업로드 - 바디랩 이미지 2: 앳플리 사진
+        # if str(user_id) not in os.listdir(f"{LOCAL_SAVE_PATH_ATFLEE_INPUT}"):
+        #     os.makedirs(f"{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}")
+        # secure_file = secure_filename(atflee_image.filename)
+        # extension = secure_file.split('.')[-1]
+        # file_name = f'bodylab_atflee_input_{user_id}_{now}.{extension}'
+        # category = file_name.split('_')[1]
+        #
+        # local_image_path = f'{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}/{file_name}'
+        # body_image.save(secure_file)
+        # if os.path.exists(secure_file):
+        #     shutil.move(secure_file, f'{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}')
+        #     os.rename(f'{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}/{secure_file}', local_image_path)
+        # """input 가로 리사이징 후 저장"""
+        # """DB에 각 이미지 크기별 파일 크기, 가로, 세로 길이 추가 저장"""
 
         try:
             connection = login_to_db()
@@ -137,6 +178,7 @@ def weekly_bodylab():
                             start_date=(SELECT ADDDATE(CURDATE(), - WEEKDAY(CURDATE())))
             )"""
         cursor.execute(sql)
+        connection.commit()
 
         sql = f"""
             SELECT 
@@ -150,51 +192,105 @@ def weekly_bodylab():
         cursor.execute(sql)
         user_week_id = cursor.fetchall()[0][0]
 
-        # user_question 데이터 불러오기
-        sql = Query.from_(
-            user_questions
-        ).select(
-            user_questions.data
-        ).where(
-            Criterion.all([
-                user_questions.user_id == user_id
-            ])
-        ).orderby(
-            user_questions.id, order=Order.desc
-        ).limit(1).get_sql()
-        cursor.execute(sql)
-        data = cursor.fetchall()
-        # 검증 1: 사전설문 응답값 테이블에 전달받은 user id, id값에 해당하는 데이터가 있는지 여부
-        if query_result_is_none(data) is True:
-            connection.close()
-            result = {
-                'result': False,
-                'message': 'Failed to create 1 week free trial(Cannot find user or user_question data).'
-            }
-            return json.dumps(result, ensure_ascii=False), 400
-        answer = json.loads(data[0][0].replace("\\", "\\\\"), strict=False)
-        gender = answer['gender']
-        age_group = answer['age_group']
-
-        ideal_fat_mass, ideal_muscle_mass, bmi_status, ideal_bmi = standard_healthiness_value(str(age_group), str(gender), float(weight), float(height), float(bmi))
-
-        # 건강점수
-        bmi_healthiness_score = healthiness_score(ideal_bmi, bmi)
-        muscle_mass_healthiness_score = healthiness_score(ideal_muscle_mass, muscle_mass)
-        fat_mass_healthiness_score = healthiness_score(ideal_fat_mass, fat_mass)
-
-        # 매력점수
-        bmi_attractiveness_score = attractiveness_score(ATTRACTIVENESS_SCORE_CRITERIA[gender]['bmi'], bmi)
-        muscle_mass_attractiveness_score = attractiveness_score(ATTRACTIVENESS_SCORE_CRITERIA[gender]['muscle_mass'], muscle_mass)
-        fat_mass_attractiveness_score = attractiveness_score(ATTRACTIVENESS_SCORE_CRITERIA[gender]['fat_mass'], fat_mass)
-
+        # DB 저장 1 - files에 바디랩 body input 원본 데이터 저장
         try:
+            sql = Query.into(
+                files
+            ).columns(
+                files.create_at,
+                files.updated_at,
+                files.pathname,
+                files.original_name,
+                files.mimetype,
+                files.size,
+                files.width,
+                files.height
+            ).insert(
+                fn.Now(),
+                fn.Now(),
+                body_input_image_dict['pathname'],
+                body_input_image_dict['original_name'],
+                body_input_image_dict['mime_type'],
+                body_input_image_dict['size'],
+                body_input_image_dict['width'],
+                body_input_image_dict['height']
+            ).get_sql()
+            cursor.execute(sql)
+            connection.commit()
+            file_id_body_input_image = cursor.lastrowid
+
+            # DB 저장 1 - files에 바디랩 body input resized 데이터 저장
+            for data in resized_body_images_list:
+                sql = Query.into(
+                    files
+                ).columns(
+                    files.create_at,
+                    files.updated_at,
+                    files.pathname,
+                    files.original_name,
+                    files.mimetype,
+                    files.size,
+                    files.width,
+                    files.height,
+                    files.original_file_id
+                ).insert(
+                    fn.Now(),
+                    fn.Now(),
+                    data['pathname'],
+                    data['original_name'],
+                    data['mime_type'],
+                    data['size'],
+                    data['width'],
+                    data['height'],
+                    int(file_id_body_input_image)
+                ).get_sql()
+                cursor.execute(sql)
+            connection.commit()
+
+            # user_question 데이터 불러오기
+            sql = Query.from_(
+                user_questions
+            ).select(
+                user_questions.data
+            ).where(
+                Criterion.all([
+                    user_questions.user_id == user_id
+                ])
+            ).orderby(
+                user_questions.id, order=Order.desc
+            ).limit(1).get_sql()
+            cursor.execute(sql)
+            data = cursor.fetchall()
+            # 검증 1: 사전설문 응답값 테이블에 전달받은 user id, id값에 해당하는 데이터가 있는지 여부
+            if query_result_is_none(data) is True:
+                connection.close()
+                result = {
+                    'result': False,
+                    'message': 'Failed to create 1 week free trial(Cannot find user or user_question data).'
+                }
+                return json.dumps(result, ensure_ascii=False), 400
+            answer = json.loads(data[0][0].replace("\\", "\\\\"), strict=False)
+            gender = answer['gender']
+            age_group = answer['age_group']
+
+            ideal_fat_mass, ideal_muscle_mass, bmi_status, ideal_bmi = standard_healthiness_value(str(age_group), str(gender), float(user_weight), float(user_height), float(bmi))
+
+            # 건강점수
+            bmi_healthiness_score = healthiness_score(ideal_bmi, bmi)
+            muscle_mass_healthiness_score = healthiness_score(ideal_muscle_mass, muscle_mass)
+            fat_mass_healthiness_score = healthiness_score(ideal_fat_mass, fat_mass)
+
+            # 매력점수
+            bmi_attractiveness_score = attractiveness_score(ATTRACTIVENESS_SCORE_CRITERIA[gender]['bmi'], bmi)
+            muscle_mass_attractiveness_score = attractiveness_score(ATTRACTIVENESS_SCORE_CRITERIA[gender]['muscle_mass'], muscle_mass)
+            fat_mass_attractiveness_score = attractiveness_score(ATTRACTIVENESS_SCORE_CRITERIA[gender]['fat_mass'], fat_mass)
+
             sql = Query.into(
                 bodylabs
             ).columns(
                 bodylabs.user_id,
                 bodylabs.user_week_id,
-                bodylabs.url_body_image,
+                bodylabs.file_id_body_input,
                 bodylabs.height,
                 bodylabs.weight,
                 bodylabs.bmi,
@@ -213,9 +309,9 @@ def weekly_bodylab():
             ).insert(
                 user_id,
                 user_week_id,
-                s3_path_body_input,
-                height,
-                weight,
+                file_id_body_input_image,
+                user_height,
+                user_weight,
                 bmi,
                 ideal_bmi,
                 bmi_status,
@@ -232,109 +328,157 @@ def weekly_bodylab():
             ).get_sql()
             cursor.execute(sql)
             connection.commit()
-        except Exception as e:
-            connection.rollback()
-            connection.close()
-            error = str(e)
-            result = {
-                'result': False,
-                'error': f'Server Error while executing INSERT query(bodylabs): {error}'
-            }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
-            return json.dumps(result, ensure_ascii=False), 500
 
-        # Get users latest bodylab data = User's data inserted just before.
-        sql = Query.from_(
-            bodylabs
-        ).select(
-            bodylabs.id
-        ).where(
-            bodylabs.user_id == user_id
-        ).orderby(
-            bodylabs.id, order=Order.desc
-        ).limit(1).get_sql()
-        cursor.execute(sql)
-        latest_bodylab_id_tuple = cursor.fetchall()
+            # Get users latest bodylab data = User's data inserted just before.
+            sql = Query.from_(
+                bodylabs
+            ).select(
+                bodylabs.id
+            ).where(
+                bodylabs.user_id == user_id
+            ).orderby(
+                bodylabs.id, order=Order.desc
+            ).limit(1).get_sql()
+            cursor.execute(sql)
+            latest_bodylab_id_tuple = cursor.fetchall()
 
-        if query_result_is_none(latest_bodylab_id_tuple) is True:
-            connection.rollback()
-            connection.close()
-            result = {
-                'result': False,
-                'error': f'Cannot find requested bodylab data of user(id: {user_id})(bodylab)'
-            }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
-            return json.dumps(result, ensure_ascii=False), 400
-        else:
-            latest_bodylab_id = latest_bodylab_id_tuple[0][0]
-
-        # Analyze user's image and store the result.
-        body_analysis = json.loads(analyze_body_images(user_id, s3_path_body_input))
-        result_code = body_analysis['status_code']
-        if result_code == 200:
-            analyze_result = body_analysis['result']
-            sql = Query.into(
-                bodylab_analyze_bodies
-            ).columns(
-                bodylab_analyze_bodies.bodylab_id,
-                bodylab_analyze_bodies.url_output,
-                bodylab_analyze_bodies.shoulder_width,
-                bodylab_analyze_bodies.shoulder_ratio,
-                bodylab_analyze_bodies.hip_width,
-                bodylab_analyze_bodies.hip_ratio,
-                bodylab_analyze_bodies.nose_to_shoulder_center,
-                bodylab_analyze_bodies.shoulder_center_to_hip_center,
-                bodylab_analyze_bodies.hip_center_to_ankle_center,
-                bodylab_analyze_bodies.shoulder_center_to_ankle_center,
-                bodylab_analyze_bodies.whole_body_length
-            ).insert(
-                latest_bodylab_id,
-                analyze_result['output_url'],
-                analyze_result['shoulder_width'],
-                analyze_result['shoulder_ratio'],
-                analyze_result['hip_width'],
-                analyze_result['hip_ratio'],
-                analyze_result['nose_to_shoulder_center'],
-                analyze_result['shoulder_center_to_hip_center'],
-                analyze_result['hip_center_to_ankle_center'],
-                analyze_result['shoulder_center_to_ankle_center'],
-                analyze_result['whole_body_length']
-            ).get_sql()
-            try:
-                cursor.execute(sql)
-            except Exception as e:
+            if query_result_is_none(latest_bodylab_id_tuple) is True:
                 connection.rollback()
                 connection.close()
-                error = str(e)
                 result = {
                     'result': False,
-                    'error': f'Server error while executing INSERT query(bodylab_image): {error}'
+                    'error': f'Cannot find requested bodylab data of user(id: {user_id})(bodylab)'
                 }
                 slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
                 return json.dumps(result, ensure_ascii=False), 400
+            else:
+                latest_bodylab_id = latest_bodylab_id_tuple[0][0]
 
-            connection.commit()
-            connection.close()
-            result = {'result': True}
-            return json.dumps(result, ensure_ascii=False), 201
-        elif result_code == 400:
-            connection.rollback()
-            connection.close()
-            result = {
-                'result': False,
-                'error': f"Failed to analysis requested image({user_id}, {s3_path_body_input}): {body_analysis['error']}"
-            }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
-            return json.dumps(result, ensure_ascii=False), 400
-        elif result_code == 500:
-            connection.rollback()
-            connection.close()
-            result = {
-                'result': False,
-                'error': f"Failed to analysis requested image({body_image}): {body_analysis['error']}"
-            }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
-            return json.dumps(result, ensure_ascii=False), 500
+            # Analyze user's image and store the result.
+            body_analysis = json.loads(analyze_body_images(user_id, s3_path_body_input))
+            result_code = body_analysis['status_code']
+            if result_code == 200:
+                analyze_result = body_analysis['result']
+                body_output_image_dict = analyze_result['body_output_image_dict']
+                resized_body_output_image_list = analyze_result['resized_body_output_image_list']
+
+                sql = Query.into(
+                    files
+                ).columns(
+                    files.create_at,
+                    files.updated_at,
+                    files.pathname,
+                    files.original_name,
+                    files.mimetype,
+                    files.size,
+                    files.width,
+                    files.height
+                ).insert(
+                    fn.Now(),
+                    fn.Now(),
+                    body_output_image_dict['pathname'],
+                    body_output_image_dict['original_name'],
+                    body_output_image_dict['mime_type'],
+                    body_output_image_dict['size'],
+                    body_output_image_dict['width'],
+                    body_output_image_dict['height']
+                ).get_sql()
+                cursor.execute(sql)
+                connection.commit()
+                file_id_body_output_image = cursor.lastrowid
+
+                # DB 저장 1 - files에 바디랩 body input resized 데이터 저장
+                for data in resized_body_output_image_list:
+                    sql = Query.into(
+                        files
+                    ).columns(
+                        files.create_at,
+                        files.updated_at,
+                        files.pathname,
+                        files.original_name,
+                        files.mimetype,
+                        files.size,
+                        files.width,
+                        files.height,
+                        files.original_file_id
+                    ).insert(
+                        fn.Now(),
+                        fn.Now(),
+                        data['pathname'],
+                        data['original_name'],
+                        data['mime_type'],
+                        data['size'],
+                        data['width'],
+                        data['height'],
+                        int(file_id_body_output_image)
+                    ).get_sql()
+                    cursor.execute(sql)
+                connection.commit()
+
+                sql = Query.into(
+                    bodylab_analyze_bodies
+                ).columns(
+                    bodylab_analyze_bodies.bodylab_id,
+                    bodylab_analyze_bodies.file_id_body_output,
+                    bodylab_analyze_bodies.shoulder_width,
+                    bodylab_analyze_bodies.shoulder_ratio,
+                    bodylab_analyze_bodies.hip_width,
+                    bodylab_analyze_bodies.hip_ratio,
+                    bodylab_analyze_bodies.nose_to_shoulder_center,
+                    bodylab_analyze_bodies.shoulder_center_to_hip_center,
+                    bodylab_analyze_bodies.hip_center_to_ankle_center,
+                    bodylab_analyze_bodies.shoulder_center_to_ankle_center,
+                    bodylab_analyze_bodies.whole_body_length
+                ).insert(
+                    latest_bodylab_id,
+                    file_id_body_output_image,
+                    analyze_result['shoulder_width'],
+                    analyze_result['shoulder_ratio'],
+                    analyze_result['hip_width'],
+                    analyze_result['hip_ratio'],
+                    analyze_result['nose_to_shoulder_center'],
+                    analyze_result['shoulder_center_to_hip_center'],
+                    analyze_result['hip_center_to_ankle_center'],
+                    analyze_result['shoulder_center_to_ankle_center'],
+                    analyze_result['whole_body_length']
+                ).get_sql()
+                try:
+                    cursor.execute(sql)
+                except Exception as e:
+                    connection.rollback()
+                    connection.close()
+                    error = str(e)
+                    result = {
+                        'result': False,
+                        'error': f'Server error while executing INSERT query(bodylab_image): {error}'
+                    }
+                    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
+                    return json.dumps(result, ensure_ascii=False), 400
+
+                connection.commit()
+                connection.close()
+                result = {'result': True}
+                return json.dumps(result, ensure_ascii=False), 201
+            elif result_code == 400:
+                connection.rollback()
+                connection.close()
+                result = {
+                    'result': False,
+                    'error': f"Failed to analysis requested image({user_id}, {s3_path_body_input}): {body_analysis['error']}"
+                }
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
+                return json.dumps(result, ensure_ascii=False), 400
+            elif result_code == 500:
+                connection.rollback()
+                connection.close()
+                result = {
+                    'result': False,
+                    'error': f"Failed to analysis requested image({body_image}): {body_analysis['error']}"
+                }
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
+                return json.dumps(result, ensure_ascii=False), 500
+        except Exception as e:
+            pass
     else:
         result = {
             'result': False,
@@ -342,7 +486,6 @@ def weekly_bodylab():
         }
         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 403
-
 
 
 @api.route('/user/<user_id>/bodylab', methods=['GET'])
@@ -356,6 +499,7 @@ def read_user_bodylab(user_id):
     bodylab_analyze_bodies = Table('bodylab_analyze_bodies')  # bodylab_body_images = Table('bodylab_body_images')
     user_questions = Table('user_questions')
     # bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
+    files = Table('files')
 
     try:
         connection = login_to_db()
@@ -421,52 +565,44 @@ def read_user_bodylab(user_id):
                "hip_center_to_ankle_center",
                "shoulder_center_to_ankle_center",
                "whole_body_length"]
-    sql = Query.from_(
-        bodylabs
-    ).select(
-        bodylabs.id,
-        bodylabs.created_at,
-        bodylabs.url_body_image,
-        bodylabs.height,
-        bodylabs.weight,
-        bodylabs.bmi,
-        bodylabs.ideal_bmi,
-        bodylabs.bmi_healthiness_score,
-        bodylabs.bmi_attractiveness_score,
-        bodylabs.bmi_status,
-        bodylabs.muscle_mass,
-        bodylabs.ideal_muscle_mass,
-        bodylabs.muscle_mass_healthiness_score,
-        bodylabs.muscle_mass_attractiveness_score,
-        bodylabs.fat_mass,
-        bodylabs.ideal_fat_mass,
-        bodylabs.fat_mass_healthiness_score,
-        bodylabs.fat_mass_attractiveness_score,
-        bodylab_analyze_bodies.url_output,
-        bodylab_analyze_bodies.shoulder_width,
-        bodylab_analyze_bodies.shoulder_ratio,
-        bodylab_analyze_bodies.hip_width,
-        bodylab_analyze_bodies.hip_ratio,
-        bodylab_analyze_bodies.nose_to_shoulder_center,
-        bodylab_analyze_bodies.shoulder_center_to_hip_center,
-        bodylab_analyze_bodies.hip_center_to_ankle_center,
-        bodylab_analyze_bodies.shoulder_center_to_ankle_center,
-        bodylab_analyze_bodies.whole_body_length
-        # bodylabs.url_atflee_image,
-        # bodylab_analyze_atflees.~~~~~
-    ).join(
-        bodylab_analyze_bodies
-    ).on(
-        bodylab_analyze_bodies.bodylab_id == bodylabs.id
-        # ).join(
-        #     bodylab_analyze_atflees
-        # ).on(
-        #     bodylab_analyze_atflees.bodylab_id == bodylabs.id
-    ).where(
-        Criterion.all([
-            bodylabs.user_id == user_id
-        ])
-    ).get_sql()
+    sql = f"""
+        SELECT
+            b.id,
+            b.created_at,
+            (SELECT f.pathname FROM files f INNER JOIN bodylabs ON f.id = bodylabs.file_id_body_input WHERE bodylabs.id = b.id) AS input_url,
+            b.height,
+            b.weight,
+            b.bmi,
+            b.ideal_bmi,
+            b.bmi_healthiness_score,
+            b.bmi_attractiveness_score,
+            b.bmi_status,
+            b.muscle_mass,
+            b.ideal_muscle_mass,
+            b.muscle_mass_healthiness_score,
+            b.muscle_mass_attractiveness_score,
+            b.fat_mass,
+            b.ideal_muscle_mass,
+            b.muscle_mass_healthiness_score,
+            b.muscle_mass_attractiveness_score,
+            (SELECT f.pathname FROM files f INNER JOIN bodylab_analyze_bodies ON f.id = bodylab_analyze_bodies.file_id_body_output WHERE bodylab_analyze_bodies.id = bab.id) output_url,
+            bab.shoulder_width,
+            bab.shoulder_ratio,
+            bab.hip_width,
+            bab.hip_ratio,
+            bab.nose_to_shoulder_center,
+            bab.shoulder_center_to_hip_center,
+            bab.hip_center_to_ankle_center,
+            bab.shoulder_center_to_ankle_center,
+            bab.whole_body_length
+        FROM
+             bodylabs b
+        INNER JOIN
+            bodylab_analyze_bodies bab
+        ON
+            bab.bodylab_id = b.id
+        WHERE
+            b.user_id = {user_id}"""
     cursor.execute(sql)
     records = cursor.fetchall()
     connection.close()
@@ -620,53 +756,46 @@ def read_user_bodylab_single(user_id, bodylab_id):
                "hip_center_to_ankle_center",
                "shoulder_center_to_ankle_center",
                "whole_body_length"]
-    sql = Query.from_(
-        bodylabs
-    ).select(
-        bodylabs.id,
-        bodylabs.created_at,
-        bodylabs.url_body_image,
-        bodylabs.height,
-        bodylabs.weight,
-        bodylabs.bmi,
-        bodylabs.ideal_bmi,
-        bodylabs.bmi_healthiness_score,
-        bodylabs.bmi_attractiveness_score,
-        bodylabs.bmi_status,
-        bodylabs.muscle_mass,
-        bodylabs.ideal_muscle_mass,
-        bodylabs.muscle_mass_healthiness_score,
-        bodylabs.muscle_mass_attractiveness_score,
-        bodylabs.fat_mass,
-        bodylabs.ideal_fat_mass,
-        bodylabs.fat_mass_healthiness_score,
-        bodylabs.fat_mass_attractiveness_score,
-        bodylab_analyze_bodies.url_output,
-        bodylab_analyze_bodies.shoulder_width,
-        bodylab_analyze_bodies.shoulder_ratio,
-        bodylab_analyze_bodies.hip_width,
-        bodylab_analyze_bodies.hip_ratio,
-        bodylab_analyze_bodies.nose_to_shoulder_center,
-        bodylab_analyze_bodies.shoulder_center_to_hip_center,
-        bodylab_analyze_bodies.hip_center_to_ankle_center,
-        bodylab_analyze_bodies.shoulder_center_to_ankle_center,
-        bodylab_analyze_bodies.whole_body_length
-        # bodylabs.url_atflee_image,
-        # bodylab_analyze_atflees.~~~~~
-    ).join(
-        bodylab_analyze_bodies
-    ).on(
-        bodylab_analyze_bodies.bodylab_id == bodylabs.id
-        # ).join(
-        #     bodylab_analyze_atflees
-        # ).on(
-        #     bodylab_analyze_atflees.bodylab_id == bodylabs.id
-    ).where(
-        Criterion.all([
-            bodylabs.user_id == user_id,
-            bodylabs.id == bodylab_id
-        ])
-    ).get_sql()
+    sql = f"""
+        SELECT
+            b.id,
+            b.created_at,
+            (SELECT f.pathname FROM files f INNER JOIN bodylabs ON f.id = bodylabs.file_id_body_input WHERE bodylabs.id = b.id) AS input_url,
+            b.height,
+            b.weight,
+            b.bmi,
+            b.ideal_bmi,
+            b.bmi_healthiness_score,
+            b.bmi_attractiveness_score,
+            b.bmi_status,
+            b.muscle_mass,
+            b.ideal_muscle_mass,
+            b.muscle_mass_healthiness_score,
+            b.muscle_mass_attractiveness_score,
+            b.fat_mass,
+            b.ideal_muscle_mass,
+            b.muscle_mass_healthiness_score,
+            b.muscle_mass_attractiveness_score,
+            (SELECT f.pathname FROM files f INNER JOIN bodylab_analyze_bodies ON f.id = bodylab_analyze_bodies.file_id_body_output WHERE bodylab_analyze_bodies.id = bab.id) output_url,
+            bab.shoulder_width,
+            bab.shoulder_ratio,
+            bab.hip_width,
+            bab.hip_ratio,
+            bab.nose_to_shoulder_center,
+            bab.shoulder_center_to_hip_center,
+            bab.hip_center_to_ankle_center,
+            bab.shoulder_center_to_ankle_center,
+            bab.whole_body_length
+        FROM
+             bodylabs b
+        INNER JOIN
+            bodylab_analyze_bodies bab
+        ON
+            bab.bodylab_id = b.id
+        WHERE
+            b.user_id = {user_id}
+        AND
+            b.id = {bodylab_id}"""
 
     cursor.execute(sql)
     record = cursor.fetchall()

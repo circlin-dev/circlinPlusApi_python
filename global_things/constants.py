@@ -5,12 +5,12 @@ API_ROOT = "web-api-python.circlin.co.kr"
 AMAZON_URL = "https://circlin-plus.s3.ap-northeast-2.amazonaws.com"
 IMAGE_ANALYSYS_SERVER = "3.35.12.179"
 BUCKET_NAME = "circlin-plus"
-BUCKET_BODY_IMAGE_INPUT_PATH = "bodylab/body/input"
-BUCKET_BODY_IMAGE_OUTPUT_PATH = "bodylab/body/output"
-BUCKET_ATFLEE_IMAGE_PATH = "bodylab/atflee/input"
+BUCKET_IMAGE_PATH_BODY_INPUT = "bodylab/body/input"
+BUCKET_IMAGE_PATH_BODY_OUTPUT = "bodylab/body/output"
+BUCKET_IMAGE_PATH_ATFLEE_INPUT = "bodylab/atflee/input"
 
-BODY_IMAGE_INPUT_PATH = f"/home/ubuntu/circlinMembersApi_python/circlinMembersApi_flask/{BUCKET_BODY_IMAGE_INPUT_PATH}"
-ATFLEE_IMAGE_INPUT_PATH = f"/home/ubuntu/circlinMembersApi_python/circlinMembersApi_flask/{BUCKET_ATFLEE_IMAGE_PATH}"
+LOCAL_SAVE_PATH_BODY_INPUT = f"/home/ubuntu/circlinMembersApi_python/circlinMembersApi_flask/{BUCKET_IMAGE_PATH_BODY_INPUT}"
+LOCAL_SAVE_PATH_ATFLEE_INPUT = f"/home/ubuntu/circlinMembersApi_python/circlinMembersApi_flask/{BUCKET_IMAGE_PATH_ATFLEE_INPUT}"
 #endregion
 
 # region Slack error notification
