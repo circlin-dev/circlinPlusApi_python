@@ -195,7 +195,7 @@ def weekly_bodylab():
             sql = Query.into(
                 files
             ).columns(
-                files.create_at,
+                files.created_at,
                 files.updated_at,
                 files.pathname,
                 files.original_name,
@@ -222,7 +222,7 @@ def weekly_bodylab():
                 sql = Query.into(
                     files
                 ).columns(
-                    files.create_at,
+                    files.created_at,
                     files.updated_at,
                     files.pathname,
                     files.original_name,
@@ -363,7 +363,7 @@ def weekly_bodylab():
                 sql = Query.into(
                     files
                 ).columns(
-                    files.create_at,
+                    files.created_at,
                     files.updated_at,
                     files.pathname,
                     files.original_name,
@@ -390,7 +390,7 @@ def weekly_bodylab():
                     sql = Query.into(
                         files
                     ).columns(
-                        files.create_at,
+                        files.created_at,
                         files.updated_at,
                         files.pathname,
                         files.original_name,
