@@ -411,7 +411,7 @@ def weekly_bodylab():
                         int(file_id_body_output_image)
                     ).get_sql()
                     cursor.execute(sql)
-                connection.commit()
+                    connection.commit()
 
                 sql = Query.into(
                     bodylab_analyze_bodies
@@ -442,6 +442,7 @@ def weekly_bodylab():
                 ).get_sql()
                 try:
                     cursor.execute(sql)
+                    connection.commit()
                 except Exception as e:
                     connection.rollback()
                     connection.close()
@@ -453,7 +454,6 @@ def weekly_bodylab():
                     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
                     return json.dumps(result, ensure_ascii=False), 400
 
-                connection.commit()
                 connection.close()
                 result = {'result': True}
                 return json.dumps(result, ensure_ascii=False), 201
@@ -476,7 +476,16 @@ def weekly_bodylab():
                 slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
                 return json.dumps(result, ensure_ascii=False), 500
         except Exception as e:
-            pass
+            connection.rollback()
+            connection.close()
+            error = str(e)
+            result = {
+                'result': False,
+                'error': f"Failed to execute POST request: {error}"
+            }
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'],
+                                     method=request.method)
+            return json.dumps(result, ensure_ascii=False), 500
     else:
         result = {
             'result': False,
