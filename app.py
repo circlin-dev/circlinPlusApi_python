@@ -1,5 +1,5 @@
 from api import api
-from global_things.constants import APP_ROOT, BODY_IMAGE_INPUT_PATH, ATFLEE_IMAGE_INPUT_PATH
+from global_things.constants import APP_ROOT
 from global_things.error_handler import InvalidAPIUsage
 from global_things.functions.slack import slack_error_notification
 from flask import abort, Flask, jsonify, render_template, request
