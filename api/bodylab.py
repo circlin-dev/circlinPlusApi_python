@@ -917,7 +917,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
             b.user_id = {user_id}"""
 
     cursor.execute(sql)
-    record = cursor.fetchall()
+    record = cursor.fetchall()[0]
 
     if query_result_is_none(record) is True:
         connection.rollback()
