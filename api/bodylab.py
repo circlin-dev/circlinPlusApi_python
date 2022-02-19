@@ -8,8 +8,6 @@ import cv2
 from datetime import datetime
 from flask import url_for, request
 import json
-import mimetypes
-import numpy as np
 import os
 from pypika import MySQLQuery as Query, Criterion, Table, Order, functions as fn
 import shutil
@@ -105,8 +103,6 @@ def weekly_bodylab():
             'local_path': local_image_path,
             'object_name': object_name,
         }
-        if os.path.exists(local_image_path):
-            os.remove(local_image_path)
 
         resized_body_images_list = generate_resized_image(LOCAL_SAVE_PATH_BODY_INPUT, user_id, category, now, extension, local_image_path)
         for resized_image in resized_body_images_list:
@@ -119,6 +115,8 @@ def weekly_bodylab():
                 return json.dumps(result_dict), 500
             if os.path.exists(resized_image['local_path']):
                 os.remove(resized_image['local_path'])
+        if os.path.exists(local_image_path):
+            os.remove(local_image_path)
 
         # S3 업로드 - 바디랩 이미지 2: 앳플리 사진
         # if str(user_id) not in os.listdir(f"{LOCAL_SAVE_PATH_ATFLEE_INPUT}"):
