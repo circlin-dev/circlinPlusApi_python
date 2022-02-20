@@ -27,8 +27,6 @@ app.register_blueprint(api, url_prefix="/api")
 @app.route('/testing')
 def hello_world():
     ip = request.headers["X-Forwarded-For"]
-    raise HandleException(ip, 11, '최건우', '/testing', '커스텀 에러 핸들러 테스트',
-                          'No query', 'GET', 500, None, False)
 
     query_parameter_dict = request.args.to_dict()
     values = ''
@@ -49,30 +47,30 @@ def handling_exception(e):
 
 @app.errorhandler(400)
 def handle_400_error(e):
-    raise handle_exception(error_message=str(e), status_code=400)
+    raise HandleException(error_message=str(e), status_code=400)
 
 
 @app.errorhandler(405)
 def handle_405_error(e):
-    raise handle_exception(error_message=str(e), status_code=405)
+    raise HandleException(error_message=str(e), status_code=405)
 
 
 
 @app.errorhandler(500)
 def handle_500_error(e):
-    raise handle_exception(error_message=f'aadadadasdadasdasdaada //// {str(e)}', status_code=500)
+    raise HandleException(error_message=f'aadadadasdadasdasdaada //// {str(e)}', status_code=500)
 
 
-@app.errorhandler(Exception)
-def handle_exception(e):
-    # pass through HTTP errors
-    if isinstance(e, HTTPException):
-        slack_error_notification(error_message=str(e))
-        return str(e), 500
-
-    # now you're handling non-HTTP exceptions only
-    slack_error_notification(error_message=str(e))
-    return str(e), 500
+# @app.errorhandler(Exception)
+# def handle_exception(e):
+#     # pass through HTTP errors
+#     if isinstance(e, HTTPException):
+#         slack_error_notification(error_message=str(e))
+#         return str(e), 500
+#
+#     # now you're handling non-HTTP exceptions only
+#     slack_error_notification(error_message=str(e))
+#     return str(e), 500
 
 
 if __name__ == '__main__':

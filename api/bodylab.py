@@ -935,13 +935,12 @@ def read_user_bodylab_single(user_id, start_date):
             'result': False,
             'error': f'No data for start_date({start_date})'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql,
-                                 method=request.method)
         return json.dumps(result, ensure_ascii=False), 200
 
     connection.close()
     record = record[0]
     result_dict = {
+        "result": True,
         "id": record[0],
         "created_at": record[1].strftime('%Y-%m-%d %H:%M:%S'),
         "user_week_id": record[2],
