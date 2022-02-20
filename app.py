@@ -65,11 +65,12 @@ def handle_exception(e):
     # pass through HTTP errors
     if isinstance(e, HTTPException):
         slack_error_notification(error_message=str(e))
-        return str(e), e.code
+        # return str(e), e.code
+        return str(e.get_response()), e.code
 
     # now you're handling non-HTTP exceptions only
-    slack_error_notification(error_message=str(e))
-    return str(e), e.code
+    # slack_error_notification(error_message=str(e))
+    # return str(e), e.code
 
 
 if __name__ == '__main__':
