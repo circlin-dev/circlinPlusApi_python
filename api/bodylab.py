@@ -775,7 +775,6 @@ def read_user_bodylab(user_id):
         # each_dict['body_image_compare'] = BODY_IMAGE_ANALYSIS_CRITERIA[gender]
         result_list.append(result_dict)
 
-    connection.close()
     result_dict = {
         'result': True,
         'bodylab_data': result_list
