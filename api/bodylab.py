@@ -5,6 +5,7 @@ from global_things.functions.general import login_to_db, check_session, query_re
 from global_things.error_handler import HandleException
 from global_things.functions.bodylab import analyze_body_images, analyze_atflee_images, generate_resized_image, get_image_information, upload_image_to_s3, standard_healthiness_value, healthiness_score, attractiveness_score, return_dict_when_nothing_to_return
 from . import api
+import base64
 import cv2
 from datetime import datetime
 from flask import url_for, request
@@ -1155,7 +1156,7 @@ def atflee_image():
                 {
                     "image": {
                         "source": {
-                            "content": cv2.imread(local_image_path, cv2.IMREAD_COLOR)
+                            "content": base64.b64encode(cv2.imencode('.jpg', cv2.imread(local_image_path, cv2.IMREAD_COLOR))[1]).decode('utf-8')
                         }
                     },
                     "features": [
@@ -1169,182 +1170,3 @@ def atflee_image():
         }).json()
     response['uri'] = s3_path_atflee_input
     return json.dumps(response, ensure_ascii=False), 200
-
-# @api.route('/bodylab/<user_id>/<week>', methods=['GET'])    #check_token 추가하기!!!!!
-# def read_weekly_score(user_id, period):
-#   endpoint = API_ROOT + url_for('api.read_weekly_score', user_id=user_id, period=period)
-#   ip = request.headers["X-Forwarded-For"]  # Both public & private.
-#   token = request.headers['Authorization']
-#   user_id = request.args.get(user_id)
-#   period = request.args.get(period)
-#
-#   try:
-#     connection = login_to_db()
-#   except Exception as e:
-#     error = str(e)
-#     result = {
-#       'result': False,
-#       'error': f'Server Error while connecting to DB:{error}'
-#     }
-#     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
-#     return json.dumps(result, ensure_ascii=False), 500
-#
-#   cursor = connection.cursor()
-#
-# # Verify user is valid or not.
-# is_valid_user = check_token(cursor, user_id, token)
-# if is_valid_user['result'] is False:
-#   connection.close()
-#   result = {
-#     'result': False,
-#     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
-#   }
-#   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
-#   return json.dumps(result, ensure_ascii=False), 401
-# elif is_valid_user['result'] is True:
-#   pass
-
-#   query = f'''
-#     SELECT * FROM bodylab
-#             (user_id,
-#             height,
-#             weight,
-#             bmi,
-#             muscle_mass,
-#             fat_mass)
-#       WHERE
-#             user_id = {user_id}
-#         AND
-#             created_at = {period}'''
-#   try:
-#     cursor.execute(query)
-#   except Exception as e:
-#     connection.close()
-#     error = str(e)
-#     result = {
-#       'result': False,
-#       'error': f'Server Error while executing SELECT query: {error}'
-#     }
-#     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=query, , method=request.method)
-#     return json.dumps(result), 500
-#
-#   return ''
-#
-# def calculate_body_score(score_type: str, my_bmi: float, my_fat: float, my_muscle: float):
-#   # 신체 점수
-#   """
-#   반환값 정의
-#   :
-#   :param score_type:
-#   :param my_bmi:
-#   :param my_fat:
-#   :param my_muscle:
-#   :return:
-#   """
-#
-#   if score_type == 'bmi':
-#     pass
-#   elif score_type == 'fat':
-#     pass
-#   elif score_type == 'muscle':
-#     pass
-#
-# def get_comment():
-#   # 수치에 따른 상단 한줄 코멘트
-#   return ''
-#
-# def get_my_amount():
-#   # 나의 BMI, 체지방, 근육량 DB에서 조회하기
-#   return ''
-#
-# def get_preferred_amount():
-#   return ''
-#
-# def calculate_gap():
-#   # 권장 수치와 내 수치의 차이
-#
-#   # 이성 선호, 동성 선호와 내 수치의 차이
-#   return ''
-#
-# def get_recommended_amount(target: str = '', height: float = 0.0, age: int = 0, weight: float = 0.0, sex: str = ''):
-#   # 권장 수치
-#   if target == 'bmi':
-#     recommended_bmi = '18.5 ~ 22.9'
-#   elif target == 'fat':
-#     if sex == 'male':
-#       if age < 18:
-#         percent = 9.4
-#       elif age < 21:
-#         percent = 10.5
-#       elif age < 26:
-#         percent = 11.6
-#       elif age < 31:
-#         percent = (12.7 + 14.6) / 2
-#       elif age < 36:
-#         percent = (13.7 + 15.7) / 2
-#       elif age < 41:
-#         percent = 16.8
-#       elif age < 46:
-#         percent = 17.8
-#       elif age < 51:
-#         percent = (18.9 + 20.7) / 2
-#       elif age < 56:
-#         percent = (20.0 + 21.8) / 2
-#       else:
-#         percent = 22.8
-#     else:
-#       if age < 18:
-#         percent = 19.7
-#       elif age < 21:
-#         percent = (19.7 + 21.5) / 2
-#       elif age < 26:
-#         percent = 22.1
-#       elif age < 31:
-#         percent = 22.7
-#       elif age < 36:
-#         percent = (23.4 + 25.1) / 2
-#       elif age < 41:
-#         percent = (24.0 + 25.7) / 2
-#       elif age < 46:
-#         percent = (24.6 + 26.3) / 2
-#       elif age < 51:
-#         percent = 26.9
-#       elif age < 56:
-#         percent = 27.6
-#       else:
-#         percent = (28.2 + 29.8) / 2
-#     recommended_fat_mass = (weight * percent) / 100
-#   elif target == 'muscle':
-#     if sex == 'male':
-#       recommended_muscle_mass = weight * 0.4
-#     else:
-#       recommended_muscle_mass = weight * 0.34
-#
-#   return recommended_bmi, recommended_fat_mass, recommended_muscle_mass
-#
-# def calculate_attractiveness_score(score_type: str):
-#   if score_type == 'bmi':
-#     pass
-#   elif score_type == 'fat':
-#     pass
-#   elif score_type == 'muscle':
-#     pass
-#
-# def history_data():
-#   # 최근 1주일의 날짜 & 일자별 내 점수
-#   return ''
-#
-# def get_image_analysis(user_id: int):
-#   # (7) 사진 분석값
-#   return ''
-#
-# def calculate_total_attractiveness_score():
-#   # (3) 매력 점수: 총점, (전체 동성 유저 중)순위
-#   # total_score
-#   # ranking
-#   return ''
-#
-# def calculate_total_body_score():
-#   # (2) 신체 점수: 총점, (전체 동성 유저 중)순위
-#   return ''
-# endregion
