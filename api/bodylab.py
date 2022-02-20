@@ -1167,6 +1167,7 @@ def atflee_image():
                 }
             ]
         }).json()
+    response['uri'] = s3_path_atflee_input
     return json.dumps(response, ensure_ascii=False), 200
 
 # @api.route('/bodylab/<user_id>/<week>', methods=['GET'])    #check_token 추가하기!!!!!
