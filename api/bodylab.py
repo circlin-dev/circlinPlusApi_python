@@ -1155,9 +1155,7 @@ def atflee_image():
             "requests": [
                 {
                     "image": {
-                        "source": {
-                            "content": base64.b64encode(cv2.imencode('.jpg', cv2.imread(local_image_path, cv2.IMREAD_COLOR))[1]).decode('utf-8')
-                        }
+                        "content": base64.b64encode(cv2.imencode('.jpg', cv2.imread(local_image_path, cv2.IMREAD_COLOR))[1]).decode('utf-8')
                     },
                     "features": [
                         {
