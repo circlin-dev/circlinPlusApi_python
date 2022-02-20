@@ -1,6 +1,7 @@
 from global_things.constants import SLACK_NOTIFICATION_WEBHOOK, AMAZON_URL, IMAGE_ANALYSYS_SERVER, BUCKET_IMAGE_PATH_BODY_INPUT, BUCKET_IMAGE_PATH_BODY_OUTPUT, BUCKET_IMAGE_PATH_ATFLEE_INPUT
 from global_things.functions.slack import slack_error_notification
 from datetime import datetime
+import base64
 import boto3
 import cv2
 import json
@@ -120,7 +121,26 @@ def analyze_body_images(user_id, url):
         return json.dumps({'error': response.json()['message'], 'status_code': 500}, ensure_ascii=False)
 
 
-def analyze_atflee_images(user_id, url):
+def analyze_atflee_images(path):
+    response = requests.post(
+        "https://vision.googleapis.com/v1/images:annotate?key=AIzaSyC55mGMIcRGYMFvK2y0m1GYXXlSiDpmpNE",
+        json={
+            "requests": [
+                {
+                    "image": {
+                        "content": base64.b64encode(cv2.imencode('.jpg', cv2.imread(path, cv2.IMREAD_COLOR))[1]).decode('utf-8')
+                    },
+                    "features": [
+                        {
+                            "type": "DOCUMENT_TEXT_DETECTION",
+                            "maxResults": 30
+                        }
+                    ]
+                }
+            ]
+        }).json()
+    text_list = response['responses']['textAnnotations'][0]['description'].split('\n')
+
     return ''
 
 
