@@ -926,7 +926,7 @@ def read_user_bodylab_single(user_id, start_date):
                                     start_date = (SELECT ADDDATE(%s, - WEEKDAY(%s))))"""
     values = (start_date, start_date)
     cursor.execute(sql, values)
-    record = cursor.fetchall()[0]
+    record = cursor.fetchall()
 
     if query_result_is_none(record) is True:
         connection.rollback()
@@ -940,6 +940,7 @@ def read_user_bodylab_single(user_id, start_date):
         return json.dumps(result, ensure_ascii=False), 200
 
     connection.close()
+    record = record[0]
     result_dict = {
         "id": record[0],
         "created_at": record[1].strftime('%Y-%m-%d %H:%M:%S'),
