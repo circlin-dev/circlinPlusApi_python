@@ -27,6 +27,8 @@ app.register_blueprint(api, url_prefix="/api")
 @app.route('/testing')
 def hello_world():
     ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+    raise InvalidAPIUsage(ip, 11, '최건우', '/testing', '커스텀 에러 핸들러 테스트',
+                          'No query', 'GET', 500, None, False)
 
     query_parameter_dict = request.args.to_dict()
     values = ''
