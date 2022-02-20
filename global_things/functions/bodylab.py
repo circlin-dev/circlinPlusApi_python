@@ -5,6 +5,7 @@ import base64
 import boto3
 import cv2
 import json
+import math
 import mimetypes
 import os
 import requests
@@ -121,96 +122,56 @@ def analyze_body_images(user_id, url):
         return json.dumps({'error': response.json()['message'], 'status_code': 500}, ensure_ascii=False)
 
 
-def analyze_atflee_images(path):
-    response = requests.post(
-        "https://vision.googleapis.com/v1/images:annotate?key=AIzaSyC55mGMIcRGYMFvK2y0m1GYXXlSiDpmpNE",
-        json={
-            "requests": [
-                {
-                    "image": {
-                        "content": base64.b64encode(cv2.imencode('.jpg', cv2.imread(path, cv2.IMREAD_COLOR))[1]).decode('utf-8')
-                    },
-                    "features": [
-                        {
-                            "type": "DOCUMENT_TEXT_DETECTION",
-                            "maxResults": 30
-                        }
-                    ]
-                }
-            ]
-        }).json()
-    text_list = response['responses']['textAnnotations'][0]['description'].split('\n')
+# def analyze_atflee_images(path):
+#     response = requests.post(
+#         "https://vision.googleapis.com/v1/images:annotate?key=AIzaSyC55mGMIcRGYMFvK2y0m1GYXXlSiDpmpNE",
+#         json={
+#             "requests": [
+#                 {
+#                     "image": {
+#                         "content": base64.b64encode(cv2.imencode('.jpg', cv2.imread(path, cv2.IMREAD_COLOR))[1]).decode('utf-8')
+#                     },
+#                     "features": [
+#                         {
+#                             "type": "DOCUMENT_TEXT_DETECTION",
+#                             "maxResults": 30
+#                         }
+#                     ]
+#                 }
+#             ]
+#         }).json()
+#     text_list = response['responses']['textAnnotations'][0]['description'].split('\n')
+#     company_name = 'Guangdong ICOMON Technology Co., Ltd.'
+#     if len(text_list) == 55 \
+#         and company_name in text_list \
+#         and '체중' in text_list and 'BMI' in text_list \
+#         and '체지방량' in text_list \
+#         and ('근육량' in text_list) or '근육량(클릭필수)' in text_list:
+#
+#         weight_index = text_list.index('체중')
+#         weight = float(text_list[weight_index+1].split('kg').strip())
+#         bmi_index = text_list.index('BMI')
+#         bmi = float(text_list[bmi_index+1])
+#         height = round(math.sqrt((weight / bmi)), 1) * 100  # 키 => 소수점 첫 번째 자리까지 나오도록 반올림
+#
+#         result_dict = {
+#             'weight': {
+#
+#             },
+#             'height': {
+#
+#             },
+#             'bmi': {
+#
+#             },
+#             'fat': {
+#
+#             },
+#             'muscle': {
+#
+#             }
+#         }
 
-    return ''
-
-
-# def get_date_range_from_week(year: str, week_number: str):
-#     """
-#     Reference: http://mvsourcecode.com/python-how-to-get-date-range-from-week-number-mvsourcecode/
-#
-#     getDateRangeFromWeek(2022, 2) ==> input<'week'> 기준 (2022, 1) (1.3 ~ 1.9)
-#     getDateRangeFromWeek(2022, 53) ==> input<'week'> 기준 (2022, 52) (12.26 ~ 1.1)
-#
-#     getDateRangeFromWeek(2023, 2) ==> input<'week'> 기준 (2023, 1) (1.2 ~ 1.8)
-#     getDateRangeFromWeek(2023, 53) ==> input<'week'> 기준 (2023, 52) (12.25 ~ 12.31)
-#
-#     getDateRangeFromWeek(2024, 2) ==> input<'week'> 기준 (2024, 1) (1.1 ~ 1.7)       *** getDateRangeFromWeek(2024, 1) == getDateRangeFromWeek(2024, 2)
-#     getDateRangeFromWeek(2024, 53) ==> input<'week'> 기준 (2024, 52) (12.23 ~ 12.29)
-#     ################################################################################### 이상 input_week + 1 == selected week
-#     getDateRangeFromWeek(2025, 1) ==> input<'week'> 기준 (2025, 1) (12.30 ~ 1.5)
-#     getDateRangeFromWeek(2025, 52) ==> input<'week'> 기준 (2025, 52) (12.22 ~ 12.28)
-#
-#     getDateRangeFromWeek(2026, 1) ==> input<'week'> 기준 (2026, 1) (12.29 ~ 1.4)
-#     getDateRangeFromWeek(2026, 53) ==> input<'week'> 기준 (2026, 53) (12.28 ~ 1.3)
-#     ################################################################################### 이상 input_week == selected week
-#     getDateRangeFromWeek(2027, 2) ==> input<'week'> 기준 (2027, 1) (1.4 ~ 1.10)
-#     getDateRangeFromWeek(2027, 53) ==> input<'week'> 기준 (2027, 52) (12.27 ~ 1.2)
-#
-#     getDateRangeFromWeek(2028, 2) ==> input<'week'> 기준 (2028, 1) (1.3 ~ 1.9)
-#     getDateRangeFromWeek(2028, 53) ==> input<'week'> 기준 (2028, 52) (12.25 ~ 12.31)
-#
-#     getDateRangeFromWeek(2029, 2) ==> input<'week'> 기준 (2029, 1) (1.1 ~ 1.7)       *** getDateRangeFromWeek(2029, 1) == getDateRangeFromWeek(2029, 2)
-#     getDateRangeFromWeek(2029, 53) ==> input<'week'> 기준 (2029, 52) (12.24 ~ 12.30)
-#     ################################################################################### input_week + 1 == selected week
-#     getDateRangeFromWeek(2030, 1) ==> input<'week'> 기준 (2030, 1) (12.31 ~ 1.6)
-#     getDateRangeFromWeek(2030, 52) ==> input<'week'> 기준 (2030, 52) (12.23 ~ 12.29)
-#
-#     getDateRangeFromWeek(2031, 1) ==> input<'week'> 기준 (2031, 1) (12.30 ~ 1.5)
-#     getDateRangeFromWeek(2031, 52) ==> input<'week'> 기준 (2031, 52) (12.22 ~ 12.28)
-#
-#     getDateRangeFromWeek(2032, 1) ==> input<'week'> 기준 (2032, 1) (12.29 ~ 1.4)
-#     getDateRangeFromWeek(2032, 53) ==> input<'week'> 기준 (2032, 53) (12.27 ~ 1.2)
-#     ################################################################################### 이상 input_week == selected week
-#     getDateRangeFromWeek(2033, 2) ==> input<'week'> 기준 (2033, 1) (1.3 ~ 1.9)
-#     getDateRangeFromWeek(2033, 53) ==> input<'week'> 기준 (2033, 52) (12.26 ~ 1.1)
-#
-#     getDateRangeFromWeek(2034, 2) ==> input<'week'> 기준 (2034, 1) (1.2 ~ 1.8)
-#     getDateRangeFromWeek(2034, 53) ==> input<'week'> 기준 (2034, 52) (12.25 ~ 12.31)
-#
-#     getDateRangeFromWeek(2035, 2) ==> input<'week'> 기준 (2035, 1) (1.1 ~ 1.7)      *** getDateRangeFromWeek(2035, 1) == getDateRangeFromWeek(2035, 2)
-#     getDateRangeFromWeek(2035, 53) ==> input<'week'> 기준 (2035, 52) (12.24 ~ 12.30)
-#     ################################################################################### input_week + 1 == selected week
-#     getDateRangeFromWeek(2036, 1) ==> input<'week'> 기준 (2036, 1) (12.31 ~ 1.6)
-#     getDateRangeFromWeek(2036, 52) ==> input<'week'> 기준 (2036, 52) (12.22 ~ 12.28)
-#
-#     :param year: year(YYYY)
-#     :param week_number: month(mm)
-#     # Either (String, String) or (int, int) is OK.
-#     # But month format is 'ww', so if value 01~09 and
-#     # you want to set parameter type as int, you must convert string 'ww' to int 'w'.
-#     :return:
-#     """
-#     if year in ['2022', '2023', '2024', '2027', '2028', '2029', '2033', '2034', '2035']:
-#         corrected_week_number = int(week_number) + 1  # int("01" ~ "09) => 1 ~ 9
-#
-#         firstdate_of_week = datetime.datetime.strptime(f'{year}-W{int(corrected_week_number)-1}-1', "%Y-W%W-%w").date()
-#         lastdate_of_week = firstdate_of_week + datetime.timedelta(days=6.9)
-#         return str(firstdate_of_week), str(lastdate_of_week)
-#     elif year in ['2025', '2026', '2030', '2031', '2032', '2036']:
-#         firstdate_of_week = datetime.datetime.strptime(f'{year}-W{int(week_number)-1}-1', "%Y-W%W-%w").date()
-#         lastdate_of_week = firstdate_of_week + datetime.timedelta(days=6.9)
-#         return str(firstdate_of_week), str(lastdate_of_week)
-# endregion
 
 def generate_resized_image(local_save_path, user_id, category, now, extension, original_image_path):
     # file_name = user_id + now + extension
