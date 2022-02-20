@@ -489,6 +489,7 @@ def weekly_bodylab():
                 result = {'result': True}
                 return json.dumps(result, ensure_ascii=False), 201
             elif result_code == 400:
+                connection.close()
                 raise HandleException(user_ip=ip,
                                       user_id=user_id,
                                       api=endpoint,
@@ -707,7 +708,6 @@ def read_user_bodylab(user_id):
     connection.close()
 
     if query_result_is_none(records) is True:
-        connection.rollback()
         connection.close()
         result = {
             'result': False,
@@ -775,6 +775,7 @@ def read_user_bodylab(user_id):
         # each_dict['body_image_compare'] = BODY_IMAGE_ANALYSIS_CRITERIA[gender]
         result_list.append(result_dict)
 
+    connection.close()
     result_dict = {
         'result': True,
         'bodylab_data': result_list
@@ -954,13 +955,13 @@ def read_user_bodylab_single(user_id, start_date):
                                 WHERE 
                                     uw.user_id=b.user_id 
                                 AND 
-                                    start_date = (SELECT ADDDATE(%s, - WEEKDAY(%s))))"""
+                                    start_date = (SELECT ADDDATE(%s, - WEEKDAY(%s))))
+        ORDER BY b.id DESC LIMIT 1"""
     values = (start_date, start_date)
     cursor.execute(sql, values)
     record = cursor.fetchall()
 
     if query_result_is_none(record) is True:
-        connection.rollback()
         connection.close()
         result = {
             'result': False,
