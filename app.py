@@ -56,11 +56,17 @@ def handle_400_error(e):
 
 
 @app.errorhandler(405)
-def handle_400_error(e):
+def handle_405_error(e):
     result_dict = {'result': False, 'error': str(e)}
     slack_error_notification(error_log=str(e))
     return json.dumps(result_dict, ensure_ascii=False), 405
 
+
+@app.errorhandler(500)
+def handle_500_error(e):
+    result_dict = {'result': False, 'error': str(e)}
+    slack_error_notification(error_log=str(e))
+    return json.dumps(result_dict, ensure_ascii=False), 500
 
 # @app.errorhandler(Exception)
 # def handle_exception(e):
