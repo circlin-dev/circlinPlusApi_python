@@ -1159,7 +1159,7 @@ def atflee_image():
                     },
                     "features": [
                         {
-                            "type": "LABEL_DETECTION",
+                            "type": "DOCUMENT_TEXT_DETECTION",
                             "maxResults": 30
                         }
                     ]
