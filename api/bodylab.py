@@ -573,6 +573,7 @@ def read_user_bodylab(user_id):
                "hip_center_to_ankle_center",
                "shoulder_center_to_ankle_center",
                "whole_body_length"]
+
     sql = f"""
         SELECT
             b.id,
@@ -746,10 +747,10 @@ def read_user_bodylab(user_id):
     return json.dumps(result_dict, ensure_ascii=False), 200
 
 
-@api.route('/user/<user_id>/bodylab/<bodylab_id>', methods=['GET'])
-def read_user_bodylab_single(user_id, bodylab_id):
+@api.route('/user/<user_id>/bodylab/<start_date>', methods=['GET'])
+def read_user_bodylab_single(user_id, start_date):
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
-    endpoint = API_ROOT + url_for('api.read_user_bodylab_single', user_id=user_id, bodylab_id=bodylab_id)
+    endpoint = API_ROOT + url_for('api.read_user_bodylab_single', user_id=user_id, start_date=start_date)
     # token = request.headers['Authorization']
 
     """Define tables required to execute SQL."""
@@ -914,9 +915,17 @@ def read_user_bodylab_single(user_id, bodylab_id):
         ON
             bab.bodylab_id = b.id
         WHERE
-            b.user_id = {user_id}"""
-
-    cursor.execute(sql)
+            b.user_id = {user_id}
+        AND b.user_week_id = (SELECT 
+                                    uw.id 
+                                FROM 
+                                    user_weeks uw 
+                                WHERE 
+                                    uw.user_id=b.user_id 
+                                AND 
+                                    start_date = (SELECT ADDDATE(%s, - WEEKDAY(%s))))"""
+    values = (start_date, start_date)
+    cursor.execute(sql, values)
     record = cursor.fetchall()[0]
 
     if query_result_is_none(record) is True:
@@ -924,7 +933,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
         connection.close()
         result = {
             'result': False,
-            'error': f'No data for bodylab_id({bodylab_id})'
+            'error': f'No data for start_date({start_date})'
         }
         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql,
                                  method=request.method)
