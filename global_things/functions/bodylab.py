@@ -122,55 +122,53 @@ def analyze_body_images(user_id, url):
         return json.dumps({'error': response.json()['message'], 'status_code': 500}, ensure_ascii=False)
 
 
-# def analyze_atflee_images(path):
-#     response = requests.post(
-#         "https://vision.googleapis.com/v1/images:annotate?key=AIzaSyC55mGMIcRGYMFvK2y0m1GYXXlSiDpmpNE",
-#         json={
-#             "requests": [
-#                 {
-#                     "image": {
-#                         "content": base64.b64encode(cv2.imencode('.jpg', cv2.imread(path, cv2.IMREAD_COLOR))[1]).decode('utf-8')
-#                     },
-#                     "features": [
-#                         {
-#                             "type": "DOCUMENT_TEXT_DETECTION",
-#                             "maxResults": 30
-#                         }
-#                     ]
-#                 }
-#             ]
-#         }).json()
-#     text_list = response['responses']['textAnnotations'][0]['description'].split('\n')
-#     company_name = 'Guangdong ICOMON Technology Co., Ltd.'
-#     if len(text_list) == 55 \
-#         and company_name in text_list \
-#         and '체중' in text_list and 'BMI' in text_list \
-#         and '체지방량' in text_list \
-#         and ('근육량' in text_list) or '근육량(클릭필수)' in text_list:
-#
-#         weight_index = text_list.index('체중')
-#         weight = float(text_list[weight_index+1].split('kg').strip())
-#         bmi_index = text_list.index('BMI')
-#         bmi = float(text_list[bmi_index+1])
-#         height = round(math.sqrt((weight / bmi)), 1) * 100  # 키 => 소수점 첫 번째 자리까지 나오도록 반올림
-#
-#         result_dict = {
-#             'weight': {
-#
-#             },
-#             'height': {
-#
-#             },
-#             'bmi': {
-#
-#             },
-#             'fat': {
-#
-#             },
-#             'muscle': {
-#
-#             }
-#         }
+def analyze_atflee_images(path):
+    response = requests.post(
+        "https://vision.googleapis.com/v1/images:annotate?key=AIzaSyC55mGMIcRGYMFvK2y0m1GYXXlSiDpmpNE",
+        json={
+            "requests": [
+                {
+                    "image": {
+                        "content": base64.b64encode(cv2.imencode('.jpg', cv2.imread(path, cv2.IMREAD_COLOR))[1]).decode('utf-8')
+                    },
+                    "features": [
+                        {
+                            "type": "DOCUMENT_TEXT_DETECTION",
+                            "maxResults": 30
+                        }
+                    ]
+                }
+            ]
+        }).json()
+    text_list = response['responses']['textAnnotations'][0]['description'].split('\n')
+    company_name = 'Guangdong ICOMON Technology Co., Ltd.'
+    if len(text_list) == 55 \
+        and company_name in text_list \
+        and '체중' in text_list and 'BMI' in text_list \
+        and '체지방량' in text_list \
+        and '근육량(클릭필수)' in text_list:
+
+        weight_index = text_list.index('체중')
+        bmi_index = text_list.index('BMI')
+        fat_index = text_list.index('체지방량')
+        muscle_index = text_list.index('근육량(클릭필수)')
+
+        weight = float(text_list[weight_index + 1].split('kg').strip())
+        bmi = float(text_list[bmi_index+1])
+        fat = float(text_list[fat_index+1].split('kg').strip())
+        muscle = float(text_list[muscle_index+1].split('kg').strip())
+        height = round(math.sqrt((weight / bmi)), 1) * 100  # 키 => 소수점 첫 번째 자리까지 나오도록 반올림
+
+        result_dict = {
+            'weight': weight_index,
+            'height': height,
+            'bmi': bmi,
+            'fat': fat,
+            'muscle': muscle
+        }
+        return result_dict
+    else:  # Missing data
+        return False
 
 
 def generate_resized_image(local_save_path, user_id, category, now, extension, original_image_path):

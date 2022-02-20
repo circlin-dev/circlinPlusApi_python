@@ -37,7 +37,7 @@ def weekly_bodylab():
         muscle_mass = float(data['muscle_mass'])
         fat_mass = float(data['fat_mass'])
         body_image = request.files.to_dict()['body_image']
-        # atflee_image = request.files.to_dict()['atflee_image']
+        # atflee_image = request.files.to_dict()['atflee_image'] => 키, 몸무게, BMI, 근육량, 지방량 모두 대체 가능
     except Exception as e:
         raise HandleException(user_ip=ip,
                               api=endpoint,
@@ -90,11 +90,14 @@ def weekly_bodylab():
         object_name = f"{BUCKET_IMAGE_PATH_BODY_INPUT}/{user_id}/{file_name}"
         upload_result = upload_image_to_s3(local_image_path, BUCKET_NAME, object_name)
         if upload_result is False:
-            result_dict = {
-                'message': f'Failed to upload body image into S3({upload_result})',
-                'result': False
-            }
-            return json.dumps(result_dict, ensure_ascii=False), 500
+            raise HandleException(user_ip=ip,
+                                  user_id=user_id,
+                                  api=endpoint,
+                                  error_message=f'Failed to upload body image into S3({upload_result}).',
+                                  method=request.method,
+                                  status_code=500,
+                                  payload=json.dumps(data, ensure_ascii=False),
+                                  result=False)
         s3_path_body_input = f"{AMAZON_URL}/{object_name}"
         body_input_image_dict = {
             'pathname': s3_path_body_input,
@@ -113,11 +116,14 @@ def weekly_bodylab():
         for resized_image in resized_body_images_list:
             upload_result = upload_image_to_s3(resized_image['local_path'], BUCKET_NAME, resized_image['object_name'])
             if upload_result is False:
-                result_dict = {
-                    'message': f'Failed to upload body image into S3({upload_result})',
-                    'result': False
-                }
-                return json.dumps(result_dict), 500
+                raise HandleException(user_ip=ip,
+                                      user_id=user_id,
+                                      api=endpoint,
+                                      error_message=f'Failed to upload body image into S3({upload_result}).',
+                                      method=request.method,
+                                      status_code=500,
+                                      payload=json.dumps(data, ensure_ascii=False),
+                                      result=False)
             if os.path.exists(resized_image['local_path']):
                 os.remove(resized_image['local_path'])
         if os.path.exists(local_image_path):
@@ -142,13 +148,14 @@ def weekly_bodylab():
         try:
             connection = login_to_db()
         except Exception as e:
-            error = str(e)
-            result = {
-                'result': False,
-                'error': f'Server Error while connecting to DB: {error}'
-            }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
-            return json.dumps(result, ensure_ascii=False), 500
+            raise HandleException(user_ip=ip,
+                                  user_id=user_id,
+                                  api=endpoint,
+                                  error_message=str(e),
+                                  method=request.method,
+                                  status_code=500,
+                                  payload=None,
+                                  result=False)
 
         cursor = connection.cursor()
 
@@ -166,34 +173,44 @@ def weekly_bodylab():
         #   pass
 
         # user_week_id 없으면 생성하고, 이후 SELECT
-        sql = f"""
-            INSERT INTO
-                    user_weeks(created_at, updated_at, user_id, start_date)
-                SELECT (SELECT NOW()), (SELECT NOW()), {user_id}, (SELECT ADDDATE(CURDATE(), - WEEKDAY(CURDATE()))) FROM dual
-            WHERE NOT EXISTS(
-                        SELECT 
-                            id 
-                        FROM 
-                            user_weeks 
-                        WHERE 
-                            user_id={user_id} 
-                        AND 
-                            start_date=(SELECT ADDDATE(CURDATE(), - WEEKDAY(CURDATE())))
-            )"""
-        cursor.execute(sql)
-        connection.commit()
+        try:
+            sql = f"""
+                INSERT INTO
+                        user_weeks(created_at, updated_at, user_id, start_date)
+                    SELECT (SELECT NOW()), (SELECT NOW()), {user_id}, (SELECT ADDDATE(CURDATE(), - WEEKDAY(CURDATE()))) FROM dual
+                WHERE NOT EXISTS(
+                            SELECT 
+                                id 
+                            FROM 
+                                user_weeks 
+                            WHERE 
+                                user_id={user_id} 
+                            AND 
+                                start_date=(SELECT ADDDATE(CURDATE(), - WEEKDAY(CURDATE())))
+                )"""
+            cursor.execute(sql)
+            connection.commit()
 
-        sql = f"""
-            SELECT 
-                id 
-            FROM 
-                user_weeks 
-            WHERE 
-                user_id={user_id} 
-            AND 
-                start_date=(SELECT ADDDATE(CURDATE(), - WEEKDAY(CURDATE())))"""
-        cursor.execute(sql)
-        user_week_id = cursor.fetchall()[0][0]
+            sql = f"""
+                SELECT 
+                    id 
+                FROM 
+                    user_weeks 
+                WHERE 
+                    user_id={user_id} 
+                AND 
+                    start_date=(SELECT ADDDATE(CURDATE(), - WEEKDAY(CURDATE())))"""
+            cursor.execute(sql)
+            user_week_id = cursor.fetchall()[0][0]
+        except Exception as e:
+            raise HandleException(user_ip=ip,
+                                  user_id=user_id,
+                                  api=endpoint,
+                                  error_message=str(e),
+                                  method=request.method,
+                                  status_code=500,
+                                  payload=None,
+                                  result=False)
 
         # DB 저장 1 - files에 바디랩 body input 원본 데이터 저장
         try:
@@ -1127,6 +1144,10 @@ def read_user_bodylab_single(user_id, start_date):
 #     #     'local_path': local_image_path,
 #     #     'object_name': object_name,
 #     # }
+#       if analyze_atflee_images(local_image_path) is False:
+#           connection.close()
+#           result = {'result': False, 'error': 'Missing data on atflee'}
+#           return json.dumps(result, ensure_ascii=False), 400
 #     #
 #     # resized_atflee_images_list = generate_resized_image(BUCKET_IMAGE_PATH_ATFLEE_INPUT, user_id, category, now, extension,
 #     #                                                   local_image_path)
@@ -1142,22 +1163,4 @@ def read_user_bodylab_single(user_id, start_date):
 #     #         os.remove(resized_image['local_path'])
 #     # if os.path.exists(local_image_path):
 #     #     os.remove(local_image_path)
-#     response = requests.post(
-#         "https://vision.googleapis.com/v1/images:annotate?key=AIzaSyC55mGMIcRGYMFvK2y0m1GYXXlSiDpmpNE",
-#         json={
-#             "requests": [
-#                 {
-#                     "image": {
-#                         "content": base64.b64encode(cv2.imencode('.jpg', cv2.imread(local_image_path, cv2.IMREAD_COLOR))[1]).decode('utf-8')
-#                     },
-#                     "features": [
-#                         {
-#                             "type": "TEXT_DETECTION", # DOCUMENT_TEXT_DETECTION
-#                             "maxResults": 5
-#                         }
-#                     ]
-#                 }
-#             ]
-#         }).json()
-#     response['uri'] = s3_path_atflee_input
 #     return json.dumps(response, ensure_ascii=False), 200
