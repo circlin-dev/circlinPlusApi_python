@@ -13,7 +13,7 @@ from pypika import MySQLQuery as Query, Criterion, Interval, Table, Field, Order
 
 @api.route('/products', methods=['GET'])
 def read_products():
-    ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+    ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.read_products')
     # session_id = request.headers['Authorization']
     # check_session(session_id)
@@ -30,7 +30,7 @@ def read_products():
             'result': False,
             'error': f'Server Error while connecting to DB: {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=0, api=endpoint, error_log=result['error'], method=request.method)
+        slack_error_notification(user_ip=ip, user_id=0, api=endpoint, error_message=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
 
     query_parameter = request.args.to_dict()  # type: equipment(기구), starterkit(스타터키트), item(상품)
@@ -172,7 +172,7 @@ def read_products():
 
 @api.route('/products/<product_id>', methods=['GET'])
 def read_a_product(product_id: int):
-    ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+    ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.read_a_product', product_id=product_id)
     # session_id = request.headers['Authorization']
     # check_session(session_id)
@@ -189,7 +189,7 @@ def read_a_product(product_id: int):
             'result': False,
             'error': f'Server Error while connecting to DB: {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=0, api=endpoint, error_log=result['error'], method=request.method)
+        slack_error_notification(user_ip=ip, user_id=0, api=endpoint, error_message=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
 
     cursor = connection.cursor()

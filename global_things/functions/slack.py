@@ -1,12 +1,12 @@
-from global_things.constants import SLACK_NOTIFICATION_WEBHOOK
+from global_things.constants import API_ROOT, SLACK_NOTIFICATION_WEBHOOK
 import json
 from pypika import MySQLQuery as Query, Table
 import requests
 
 
 # Slack notification: error
-def slack_error_notification(user_ip: str = '', user_id: int = 0, nickname: str = '', api: str = '',
-                             error_log: str = '', query: str = '', method: str = ''):
+def slack_error_notification(user_ip: str = '', nickname: str = '', user_id: int = 0, api: str = '', method: str = '',
+                             status_code: int = 0, query: str = '', error_message: str = ''):
   if user_ip == '' or user_id == '':
     user_ip = "Server error"
     user_id = "Server error"
@@ -20,10 +20,11 @@ def slack_error_notification(user_ip: str = '', user_id: int = 0, nickname: str 
       "text": f"*써클인 플러스(python)에서 오류가 발생했습니다.* \n \
 사용자 IP: `{user_ip}` \n \
 닉네임 (ID): `{nickname}({user_id})`\n \
-API URL: `{api}` \n \
+API URL: `{API_ROOT}{api}` \n \
 HTTP method: `{method}` \n \
+Status code: `{status_code}` \n \
 ```query: {query}``` \n \
-```error: {error_log}```",
+```error: {error_message}```",
       "icon_url": "https://www.circlin.co.kr/new/assets/favicon/apple-icon-180x180.png"
     }, ensure_ascii=False).encode('utf-8')
   )

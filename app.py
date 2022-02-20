@@ -1,6 +1,6 @@
 from api import api
 from global_things.constants import APP_ROOT
-from global_things.error_handler import InvalidAPIUsage
+from global_things.error_handler import HandleException
 from global_things.functions.slack import slack_error_notification
 from flask import abort, Flask, jsonify, render_template, request
 from flask_cors import CORS
@@ -26,8 +26,8 @@ app.register_blueprint(api, url_prefix="/api")
 
 @app.route('/testing')
 def hello_world():
-    ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
-    raise InvalidAPIUsage(ip, 11, '최건우', '/testing', '커스텀 에러 핸들러 테스트',
+    ip = request.headers["X-Forwarded-For"]
+    raise HandleException(ip, 11, '최건우', '/testing', '커스텀 에러 핸들러 테스트',
                           'No query', 'GET', 500, None, False)
 
     query_parameter_dict = request.args.to_dict()
@@ -42,42 +42,37 @@ def bodylab_form():
     return render_template('bodylab_form.html')
 
 
-@app.errorhandler(InvalidAPIUsage)
-def invalid_api_usage(e):
-    return jsonify(e.to_dict())
+@app.errorhandler(HandleException)
+def handling_exception(e):
+    return jsonify(e.to_dict()), e.to_dict()['status_code']
 
 
 @app.errorhandler(400)
 def handle_400_error(e):
-    result_dict = {'result': False, 'error': str(e)}
-    slack_error_notification(error_log=str(e))
-    # return jsonify(error=str(e)), 400
-    return json.dumps(result_dict, ensure_ascii=False), 400
+    raise handle_exception(error_message=str(e), status_code=400)
 
 
 @app.errorhandler(405)
 def handle_405_error(e):
-    result_dict = {'result': False, 'error': str(e)}
-    slack_error_notification(error_log=str(e))
-    return json.dumps(result_dict, ensure_ascii=False), 405
+    raise handle_exception(error_message=str(e), status_code=405)
+
 
 
 @app.errorhandler(500)
 def handle_500_error(e):
-    result_dict = {'result': False, 'error': str(e)}
-    slack_error_notification(error_log=str(e))
-    return json.dumps(result_dict, ensure_ascii=False), 500
+    raise handle_exception(error_message=f'aadadadasdadasdasdaada //// {str(e)}', status_code=500)
 
-# @app.errorhandler(Exception)
-# def handle_exception(e):
-#     # pass through HTTP errors
-#     if isinstance(e, HTTPException):
-#         slack_error_notification(error_log=str(e))
-#         return str(e), 500
-#
-#     # now you're handling non-HTTP exceptions only
-#     slack_error_notification(error_log=str(e))
-#     return str(e), 500
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # pass through HTTP errors
+    if isinstance(e, HTTPException):
+        slack_error_notification(error_message=str(e))
+        return str(e), 500
+
+    # now you're handling non-HTTP exceptions only
+    slack_error_notification(error_message=str(e))
+    return str(e), 500
 
 
 if __name__ == '__main__':
@@ -85,4 +80,4 @@ if __name__ == '__main__':
         app.run(host='0.0.0.0', debug=True)  # 0.0.0.0 for production or 127.0.0.1 for local development
     except Exception as e:
         error = str(e)
-        slack_error_notification(error_log=error)
+        slack_error_notification(error_message=error)

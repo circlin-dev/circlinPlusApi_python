@@ -142,7 +142,7 @@ def weekly_bodylab():
                 'result': False,
                 'error': f'Server Error while connecting to DB: {error}'
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
             return json.dumps(result, ensure_ascii=False), 500
 
         cursor = connection.cursor()
@@ -155,7 +155,7 @@ def weekly_bodylab():
         #     'result': False,
         #     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
         #   }
-        #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
+        #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
         #   return json.dumps(result, ensure_ascii=False), 401
         # elif is_valid_user['result'] is True:
         #   pass
@@ -347,7 +347,7 @@ def weekly_bodylab():
                     'result': False,
                     'error': f'Cannot find requested bodylab data of user(id: {user_id})(bodylab)'
                 }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
                 return json.dumps(result, ensure_ascii=False), 400
             else:
                 latest_bodylab_id = latest_bodylab_id_tuple[0][0]
@@ -451,7 +451,7 @@ def weekly_bodylab():
                         'result': False,
                         'error': f'Server error while executing INSERT query(bodylab_image): {error}'
                     }
-                    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
+                    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
                     return json.dumps(result, ensure_ascii=False), 400
 
                 connection.close()
@@ -464,7 +464,7 @@ def weekly_bodylab():
                     'result': False,
                     'error': f"Failed to analysis requested image({user_id}, {s3_path_body_input}): {body_analysis['error']}"
                 }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
                 return json.dumps(result, ensure_ascii=False), 400
             elif result_code == 500:
                 connection.rollback()
@@ -473,7 +473,7 @@ def weekly_bodylab():
                     'result': False,
                     'error': f"Failed to analysis requested image({body_image}): {body_analysis['error']}"
                 }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
+                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
                 return json.dumps(result, ensure_ascii=False), 500
         except Exception as e:
             connection.rollback()
@@ -483,14 +483,14 @@ def weekly_bodylab():
                 'result': False,
                 'error': f"Failed to execute POST request: {error}"
             }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method, query=sql)
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method, query=sql)
             return json.dumps(result, ensure_ascii=False), 500
     else:
         result = {
             'result': False,
             'error': 'Method Not Allowed'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 403
 
 
@@ -515,7 +515,7 @@ def read_user_bodylab(user_id):
             'result': False,
             'error': f'Server Error while connecting to DB: {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
     cursor = connection.cursor()
 
@@ -676,7 +676,7 @@ def read_user_bodylab(user_id):
             'result': False,
             'error': f'No bodylab data for user(id: {user_id})'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql,
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql,
                                  method=request.method)
         return json.dumps(result, ensure_ascii=False), 200
 
@@ -766,7 +766,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
             'result': False,
             'error': f'Server Error while connecting to DB: {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
     cursor = connection.cursor()
     sql = Query.from_(
@@ -926,7 +926,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
             'result': False,
             'error': f'No data for bodylab_id({bodylab_id})'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql,
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql,
                                  method=request.method)
         return json.dumps(result, ensure_ascii=False), 200
 
@@ -1046,7 +1046,6 @@ def read_user_bodylab_single(user_id, bodylab_id):
 # @api.route('/bodylab/<user_id>/<week>', methods=['GET'])    #check_token 추가하기!!!!!
 # def read_weekly_score(user_id, period):
 #   endpoint = API_ROOT + url_for('api.read_weekly_score', user_id=user_id, period=period)
-#   ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
 #   ip = request.headers["X-Forwarded-For"]  # Both public & private.
 #   token = request.headers['Authorization']
 #   user_id = request.args.get(user_id)
@@ -1060,7 +1059,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
 #       'result': False,
 #       'error': f'Server Error while connecting to DB:{error}'
 #     }
-#     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
+#     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
 #     return json.dumps(result, ensure_ascii=False), 500
 #
 #   cursor = connection.cursor()
@@ -1073,7 +1072,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
 #     'result': False,
 #     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
 #   }
-#   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
+#   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
 #   return json.dumps(result, ensure_ascii=False), 401
 # elif is_valid_user['result'] is True:
 #   pass
@@ -1099,7 +1098,7 @@ def read_user_bodylab_single(user_id, bodylab_id):
 #       'result': False,
 #       'error': f'Server Error while executing SELECT query: {error}'
 #     }
-#     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=query, , method=request.method)
+#     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=query, , method=request.method)
 #     return json.dumps(result), 500
 #
 #   return ''

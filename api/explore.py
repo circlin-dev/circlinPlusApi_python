@@ -1,5 +1,5 @@
 from global_things.constants import API_ROOT
-from global_things.functions.slack import slack_error_notification
+from global_things.error_handler import HandleException
 from global_things.functions.explore import make_explore_query, filter_dataframe, make_query_to_find_related_terms, make_query_get_every_titles
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
 from . import api
@@ -16,30 +16,40 @@ def explore():
     header: Authorization
     body: filter{exercises, purposes, equipments}, sort_by, word,
     """
-    ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+    ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.explore')
     # token = request.headers['Authorization']
-    parameters = json.loads(request.get_data(), encoding='utf-8')
     """Define tables required to execute SQL."""
     search_logs = Table('search_logs')
 
-    user_id = parameters['user_id']
-    filter_list_exercises = parameters['filter']['exercise']  # default: Everything
-    filter_list_purposes = parameters['filter']['purposes']  # default: everything
-    filter_list_equipments = parameters['filter']['equipments']
-    sort_by = parameters["sort_by"]
-    word_for_search = parameters["word"].strip()
+    try:
+        parameters = json.loads(request.get_data(), encoding='utf-8')
+        user_id = parameters['user_id']
+        filter_list_exercises = parameters['filter']['exercise']  # default: Everything
+        filter_list_purposes = parameters['filter']['purposes']  # default: everything
+        filter_list_equipments = parameters['filter']['equipments']
+        sort_by = parameters["sort_by"]
+        word_for_search = parameters["word"].strip()
+    except Exception as e:
+        raise HandleException(user_ip=ip,
+                              api=endpoint,
+                              error_message=str(e),
+                              method=request.method,
+                              status_code=400,
+                              payload=None,
+                              result=False)
 
     try:
         connection = login_to_db()
     except Exception as e:
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while connecting to DB: {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
-        return json.dumps(result, ensure_ascii=False), 500
+        raise HandleException(user_ip=ip,
+                              user_id=user_id,
+                              api=endpoint,
+                              error_message=str(e),
+                              method=request.method,
+                              status_code=500,
+                              payload=None,
+                              result=False)
 
     cursor = connection.cursor()
     result_list = []
@@ -84,11 +94,15 @@ def explore():
         except Exception as e:
             connection.rollback()
             connection.close()
-            error = str(e)
-            result = {
-                'result': False,
-                'error': f'Server Error while executing INSERT query(explore): {error}'
-            }
+            raise HandleException(user_ip=ip,
+                                  user_id=user_id,
+                                  api=endpoint,
+                                  error_message=str(e),
+                                  query=f'{query_program} | {query_coach} | {query_exercise}  | {query_equipment}',
+                                  method=request.method,
+                                  status_code=500,
+                                  payload=None,
+                                  result=False)
 
     # Store search logs.
     ids = []
@@ -112,13 +126,15 @@ def explore():
     except Exception as e:
         connection.rollback()
         connection.close()
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while executing INSERT query(explore): {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
-        return json.dumps(result, ensure_ascii=False), 500
+        raise HandleException(user_ip=ip,
+                              user_id=user_id,
+                              api=endpoint,
+                              error_message=str(e),
+                              query=sql,
+                              method=request.method,
+                              status_code=500,
+                              payload=None,
+                              result=False)
 
     connection.close()
     result_dict = {
@@ -131,7 +147,7 @@ def explore():
 
 @api.route('/explore/related', methods=['GET'])
 def get_related_terms_list():
-    ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+    ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.get_related_terms_list')
     # session_id = request.headers['Authorization']
     # check_session(session_id)
@@ -139,13 +155,14 @@ def get_related_terms_list():
     try:
         connection = login_to_db()
     except Exception as e:
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while connecting to DB: {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=0, api=endpoint, error_log=result['error'], method=request.method)
-        return json.dumps(result, ensure_ascii=False), 500
+        raise HandleException(user_ip=ip,
+                              api=endpoint,
+                              error_message=f'Server Error while connecting to DB: {str(e)}',
+                              query='',
+                              method=request.method,
+                              status_code=500,
+                              payload=None,
+                              result=False)
 
     query_parameter = request.args.to_dict()
     word = ''
@@ -244,7 +261,7 @@ def get_related_terms_list():
 
 @api.route('/explore/log/<user_id>', methods=['DELETE', 'GET'])
 def explore_log(user_id: int):
-    ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+    ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.explore_log', user_id=user_id)
     # session_id = request.headers['Authorization']
     # check_session(session_id)
@@ -254,13 +271,14 @@ def explore_log(user_id: int):
     try:
         connection = login_to_db()
     except Exception as e:
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'DB connection error: {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], method=request.method)
-        return json.dumps(result, ensure_ascii=False), 500
+        raise HandleException(user_ip=ip,
+                              user_id=user_id,
+                              api=endpoint,
+                              error_message=str(e),
+                              method=request.method,
+                              status_code=500,
+                              payload=None,
+                              result=False)
     cursor = connection.cursor()
 
     if request.method == 'GET':  # 검색 기록 조회
@@ -285,13 +303,15 @@ def explore_log(user_id: int):
         except Exception as e:
             connection.rollback()
             connection.close()
-            error = str(e)
-            result = {
-                'result': False,
-                'error': f'Cannot delete the requested search record: {error}'
-            }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
-            return json.dumps(result, ensure_ascii=False), 400
+            raise HandleException(user_ip=ip,
+                                  user_id=user_id,
+                                  api=endpoint,
+                                  error_message=f'Cannot find requested search record: {str(e)}',
+                                  query=sql,
+                                  method=request.method,
+                                  status_code=400,
+                                  payload=None,
+                                  result=False)
 
         if query_result_is_none(search_records) is True:
             connection.close()
@@ -342,13 +362,15 @@ def explore_log(user_id: int):
             except Exception as e:
                 connection.rollback()
                 connection.close()
-                error = str(e)
-                result = {
-                    'result': False,
-                    'error': f'Cannot delete the requested search term: {error}'
-                }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
-                return json.dumps(result, ensure_ascii=False), 400
+                raise HandleException(user_ip=ip,
+                                      user_id=user_id,
+                                      api=endpoint,
+                                      error_message=f'Cannot delete the requested search term: {str(e)}',
+                                      query=sql,
+                                      method=request.method,
+                                      status_code=400,
+                                      payload=None,
+                                      result=False)
 
             connection.close()
             result_dict = {
@@ -378,13 +400,15 @@ def explore_log(user_id: int):
             except Exception as e:
                 connection.rollback()
                 connection.close()
-                error = str(e)
-                result = {
-                    'result': False,
-                    'error': f'Cannot delete the requested whole search record: {error}'
-                }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_log=result['error'], query=sql, method=request.method)
-                return json.dumps(result, ensure_ascii=False), 400
+                raise HandleException(user_ip=ip,
+                                      user_id=user_id,
+                                      api=endpoint,
+                                      error_message=f'Cannot delete the requested whole search record: {str(e)}',
+                                      query=sql,
+                                      method=request.method,
+                                      status_code=400,
+                                      payload=None,
+                                      result=False)
 
             connection.close()
             result_dict = {
@@ -392,6 +416,3 @@ def explore_log(user_id: int):
                 'message': f"Successfully deleted the requested whole search record({word_to_delete})."
             }
             return json.dumps(result_dict, ensure_ascii=False), 200
-    else:
-        result_dict = {'result': False, 'error': 'Method not allowed'}
-        return json.dumps(result_dict, ensure_ascii=False), 405
