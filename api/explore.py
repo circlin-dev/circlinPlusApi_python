@@ -33,7 +33,7 @@ def explore():
     except Exception as e:
         raise HandleException(user_ip=ip,
                               api=endpoint,
-                              error_message=str(e),
+                              error_message=f'KeyError: {str(e)}',
                               method=request.method,
                               status_code=400,
                               payload=None,
