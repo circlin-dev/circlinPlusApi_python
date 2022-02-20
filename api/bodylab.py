@@ -1149,7 +1149,7 @@ def atflee_image():
     # if os.path.exists(local_image_path):
     #     os.remove(local_image_path)
     response = requests.post(
-        "https://api.iamport.kr/users/getToken",
+        "https://vision.googleapis.com/v1/images:annotate?key=AIzaSyC55mGMIcRGYMFvK2y0m1GYXXlSiDpmpNE",
         json={
             "requests": [
                 {
