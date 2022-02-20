@@ -1155,7 +1155,7 @@ def atflee_image():
                 {
                     "image": {
                         "source": {
-                            "imageUri": local_image_path
+                            "content": cv2.imread(local_image_path, cv2.IMREAD_COLOR)
                         }
                     },
                     "features": [
@@ -1167,7 +1167,7 @@ def atflee_image():
                 }
             ]
         }).json()
-    response['uri'] = local_image_path
+    response['uri'] = s3_path_atflee_input
     return json.dumps(response, ensure_ascii=False), 200
 
 # @api.route('/bodylab/<user_id>/<week>', methods=['GET'])    #check_token 추가하기!!!!!
