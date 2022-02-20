@@ -55,7 +55,6 @@ def handle_405_error(e):
     raise HandleException(error_message=str(e), status_code=405)
 
 
-
 @app.errorhandler(500)
 def handle_500_error(e):
     raise HandleException(error_message=f'aadadadasdadasdasdaada //// {str(e)}', status_code=500)
