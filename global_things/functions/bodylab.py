@@ -269,3 +269,52 @@ def attractiveness_score(best_person, mine):
     if score < 0:
         score = 0
     return score
+
+
+def return_dict_when_nothing_to_return():
+    result_dict = {
+        "result": False,
+        "id": None,
+        "created_at": None,
+        "user_week_id": None,
+        "bmi": {
+            "user": None,
+            "ideal": None,
+            "healthiness_score": None,
+            "attractiveness_score": None,
+            "bmi_status": None,
+        },
+        "muscle": {
+            "user": None,
+            "ideal": None,
+            "healthiness_score": None,
+            "attractiveness_score": None,
+        },
+        "fat": {
+            "user": None,
+            "ideal": None,
+            "healthiness_score": None,
+            "attractiveness_score": None,
+        },
+        "body_image_analysis": {
+            "body_input_url": None,
+            "body_input_url_resized": None,
+            "body_output_url": None,
+            "body_output_url_resized": None,
+            "user": {
+                "height": None,
+                "weight": None,
+                "shoulder_width": None,
+                "shoulder_ratio": None,
+                "hip_width": None,
+                "hip_ratio": None,
+                "nose_to_shoulder_center": None,
+                "shoulder_center_to_hip_center": None,
+                "hip_center_to_ankle_center": None,
+                "shoulder_center_to_ankle_center": None,
+                "whole_body_length": None,
+            },
+            "compare": None
+        }
+    }
+    return result_dict

@@ -3,7 +3,7 @@ from global_things.constants import API_ROOT, AMAZON_URL, BUCKET_NAME, BUCKET_IM
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
 from global_things.error_handler import HandleException
-from global_things.functions.bodylab import analyze_body_images, analyze_atflee_images, generate_resized_image, get_image_information, upload_image_to_s3, standard_healthiness_value, healthiness_score, attractiveness_score
+from global_things.functions.bodylab import analyze_body_images, analyze_atflee_images, generate_resized_image, get_image_information, upload_image_to_s3, standard_healthiness_value, healthiness_score, attractiveness_score, return_dict_when_nothing_to_return
 from . import api
 import cv2
 from datetime import datetime
@@ -11,6 +11,7 @@ from flask import url_for, request
 import json
 import os
 from pypika import MySQLQuery as Query, Criterion, Table, Order, functions as fn
+import requests
 import shutil
 from werkzeug.utils import secure_filename
 """2개의 이미지 전송
@@ -823,9 +824,10 @@ def read_user_bodylab_single(user_id, start_date):
         connection.close()
         result = {
             'result': False,
-            'message': 'Failed to create 1 week free trial(Cannot find user or user_question data).'
+            'message': 'Cannot find user or user_question data.'
         }
-        return json.dumps(result, ensure_ascii=False), 400
+        # return json.dumps(result, ensure_ascii=False), 400
+        return json.dumps(return_dict_when_nothing_to_return(), ensure_ascii=False), 400
     answer = json.loads(data[0][0].replace("\\", "\\\\"), strict=False)
     gender = answer['gender']
 
@@ -970,7 +972,8 @@ def read_user_bodylab_single(user_id, start_date):
             'result': False,
             'error': f'No data for start_date({start_date})'
         }
-        return json.dumps(result, ensure_ascii=False), 200
+        # return json.dumps(result, ensure_ascii=False), 200
+        return json.dumps(return_dict_when_nothing_to_return(), ensure_ascii=False), 200
 
     connection.close()
     record = record[0]
@@ -1086,6 +1089,85 @@ def read_user_bodylab_single(user_id, start_date):
   }
   ##########################################################
 '''
+
+@api.route('/atflee', methods=['POST'])
+def atflee_image():
+    atflee_image = request.files.to_dict()['atflee_image']
+    user_id = request.form.to_dict()['user_id']
+
+    now = datetime.now().strftime('%Y%m%d%H%M%S')
+    # S3 업로드 - 바디랩 이미지 1: 신체 사진(눈바디)
+    if str(user_id) not in os.listdir(f"{LOCAL_SAVE_PATH_ATFLEE_INPUT}"):
+        os.makedirs(f"{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}")
+    secure_file = secure_filename(atflee_image.filename)
+    extension = secure_file.split('.')[-1]
+    file_name = f'bodylab_atflee_input_{user_id}_{now}.{extension}'
+    category = file_name.split('_')[1]
+
+    local_image_path = f'{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}/{file_name}'
+    atflee_image.save(secure_file)
+    if os.path.exists(secure_file):
+        shutil.move(secure_file, f'{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}')
+        os.rename(f'{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}/{secure_file}', local_image_path)
+
+    atflee_image_height, atflee_image_width, atflee_image_channel = cv2.imread(local_image_path, cv2.IMREAD_COLOR).shape
+
+    object_name = f"{BUCKET_IMAGE_PATH_ATFLEE_INPUT}/{user_id}/{file_name}"
+    upload_result = upload_image_to_s3(local_image_path, BUCKET_NAME, object_name)
+    if upload_result is False:
+        result_dict = {
+            'message': f'Failed to upload body image into S3({upload_result})',
+            'result': False
+        }
+        return json.dumps(result_dict, ensure_ascii=False), 500
+    s3_path_atflee_input = f"{AMAZON_URL}/{object_name}"
+    # atflee_input_image_dict = {
+    #     'pathname': s3_path_atflee_input,
+    #     'original_name': file_name,
+    #     'mime_type': get_image_information(local_image_path)['mime_type'],
+    #     'size': get_image_information(local_image_path)['size'],
+    #     'width': atflee_image_height,
+    #     'height': atflee_image_width,
+    #     # For Server
+    #     'file_name': file_name,
+    #     'local_path': local_image_path,
+    #     'object_name': object_name,
+    # }
+    #
+    # resized_atflee_images_list = generate_resized_image(BUCKET_IMAGE_PATH_ATFLEE_INPUT, user_id, category, now, extension,
+    #                                                   local_image_path)
+    # for resized_image in resized_atflee_images_list:
+    #     upload_result = upload_image_to_s3(resized_image['local_path'], BUCKET_NAME, resized_image['object_name'])
+    #     if upload_result is False:
+    #         result_dict = {
+    #             'message': f'Failed to upload body image into S3({upload_result})',
+    #             'result': False
+    #         }
+    #         return json.dumps(result_dict), 500
+    #     if os.path.exists(resized_image['local_path']):
+    #         os.remove(resized_image['local_path'])
+    # if os.path.exists(local_image_path):
+    #     os.remove(local_image_path)
+    response = requests.post(
+        "https://api.iamport.kr/users/getToken",
+        json={
+            "requests": [
+                {
+                    "image": {
+                        "source": {
+                            "imageUri": s3_path_atflee_input
+                        }
+                    },
+                    "features": [
+                        {
+                            "type": "LABEL_DETECTION",
+                            "maxResults": 30
+                        }
+                    ]
+                }
+            ]
+        }).json()
+    return json.dumps(response, ensure_ascii=False), 200
 
 # @api.route('/bodylab/<user_id>/<week>', methods=['GET'])    #check_token 추가하기!!!!!
 # def read_weekly_score(user_id, period):
