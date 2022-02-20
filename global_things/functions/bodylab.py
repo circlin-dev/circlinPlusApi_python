@@ -259,9 +259,13 @@ def upload_image_to_s3(file_name, bucket_name, object_name):
 
 def healthiness_score(recommended, mine):
     score = (1 - (abs(recommended - mine) / mine)) * 100
+    if score < 0:
+        score = 0
     return score
 
 
 def attractiveness_score(best_person, mine):
     score = (1 - (abs(best_person - mine) / mine)) * 100
+    if score < 0:
+        score = 0
     return score

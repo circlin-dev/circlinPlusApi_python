@@ -22,8 +22,8 @@ def explore():
     """Define tables required to execute SQL."""
     search_logs = Table('search_logs')
 
+    parameters = json.loads(request.get_data(), encoding='utf-8')
     try:
-        parameters = json.loads(request.get_data(), encoding='utf-8')
         user_id = parameters['user_id']
         filter_list_exercises = parameters['filter']['exercise']  # default: Everything
         filter_list_purposes = parameters['filter']['purposes']  # default: everything
@@ -36,7 +36,7 @@ def explore():
                               error_message=f'KeyError: {str(e)}',
                               method=request.method,
                               status_code=400,
-                              payload=None,
+                              payload=json.dumps(parameters, ensure_ascii=False),
                               result=False)
 
     try:

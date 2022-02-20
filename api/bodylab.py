@@ -2,6 +2,7 @@ import datetime
 from global_things.constants import API_ROOT, AMAZON_URL, BUCKET_NAME, BUCKET_IMAGE_PATH_BODY_INPUT, BUCKET_IMAGE_PATH_BODY_OUTPUT, BUCKET_IMAGE_PATH_ATFLEE_INPUT, LOCAL_SAVE_PATH_BODY_INPUT, LOCAL_SAVE_PATH_ATFLEE_INPUT, ATTRACTIVENESS_SCORE_CRITERIA, BODY_IMAGE_ANALYSIS_CRITERIA
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
+from global_things.error_handler import HandleException
 from global_things.functions.bodylab import analyze_body_images, analyze_atflee_images, generate_resized_image, get_image_information, upload_image_to_s3, standard_healthiness_value, healthiness_score, attractiveness_score
 from . import api
 import cv2
@@ -24,22 +25,30 @@ def weekly_bodylab():
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.weekly_bodylab')
     # token = request.headers['Authorization']
-    data = request.form.to_dict()  # {'body': ~~~~~.png, 'atflee': ~~~~~.png}
-    user_id = int(data['user_id'])
-    user_height = float(data['height'])
-    user_weight = float(data['weight'])
-    bmi = float(data['bmi'])
-    muscle_mass = float(data['muscle_mass'])
-    fat_mass = float(data['fat_mass'])
-    body_image = request.files.to_dict()['body_image']
-    # atflee_image = request.files.to_dict()['atflee_image']
 
+    data = request.form.to_dict()  # {'body': ~~~~~.png, 'atflee': ~~~~~.png}
+    try:
+        user_id = int(data['user_id'])
+        user_height = float(data['height'])
+        user_weight = float(data['weight'])
+        bmi = float(data['bmi'])
+        muscle_mass = float(data['muscle_mass'])
+        fat_mass = float(data['fat_mass'])
+        body_image = request.files.to_dict()['body_image']
+        # atflee_image = request.files.to_dict()['atflee_image']
+    except Exception as e:
+        raise HandleException(user_ip=ip,
+                              api=endpoint,
+                              error_message=f'KeyError: {str(e)}',
+                              method=request.method,
+                              status_code=400,
+                              payload=json.dumps(data, ensure_ascii=False),
+                              result=False)
     if request.method == 'POST':
         """
         이미지 서버 임시 저장 & 업로드 코드 추가 필요
           - 눈바디 이미지, 앳플리 이미지 S3 업로드 후 URL 가져오는 코드 추가해야 함!
         """
-        # period = request.form.get('period')  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
 
         """Define tables required to execute SQL."""
         bodylabs = Table('bodylabs')
@@ -50,20 +59,14 @@ def weekly_bodylab():
 
         # Verify if mandatory information is not null.
         if not(user_id or user_height or user_weight or bmi or muscle_mass or fat_mass or body_image):
-            result = {
-                'result': False,
-                'error': f'Missing data in request.',
-                'values': {
-                    'user_id': user_id,
-                    'height': user_height,
-                    'weight': user_weight,
-                    'bmi': bmi,
-                    'muscle_mass': muscle_mass,
-                    'fat_mass': fat_mass,
-                    'body_image': body_image
-                }
-            }
-            return json.dumps(result, ensure_ascii=False), 400
+            raise HandleException(user_ip=ip,
+                                  user_id=user_id,
+                                  api=endpoint,
+                                  error_message=f'Missing data in payload.',
+                                  method=request.method,
+                                  status_code=400,
+                                  payload=json.dumps(data, ensure_ascii=False),
+                                  result=False)
 
         now = datetime.now().strftime('%Y%m%d%H%M%S')
         # S3 업로드 - 바디랩 이미지 1: 신체 사진(눈바디)
@@ -341,14 +344,16 @@ def weekly_bodylab():
             latest_bodylab_id_tuple = cursor.fetchall()
 
             if query_result_is_none(latest_bodylab_id_tuple) is True:
-                connection.rollback()
                 connection.close()
-                result = {
-                    'result': False,
-                    'error': f'Cannot find requested bodylab data of user(id: {user_id})(bodylab)'
-                }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
-                return json.dumps(result, ensure_ascii=False), 400
+                raise HandleException(user_ip=ip,
+                                      user_id=user_id,
+                                      api=endpoint,
+                                      error_message=f'Cannot find requested bodylab data of user(id: {user_id})(bodylab)',
+                                      query=sql,
+                                      method=request.method,
+                                      status_code=200,
+                                      payload=json.dumps(data, ensure_ascii=False),
+                                      result=False)
             else:
                 latest_bodylab_id = latest_bodylab_id_tuple[0][0]
 
@@ -356,37 +361,11 @@ def weekly_bodylab():
             body_analysis = json.loads(analyze_body_images(user_id, s3_path_body_input))
             result_code = body_analysis['status_code']
             if result_code == 200:
-                analyze_result = body_analysis['result']
-                body_output_image_dict = analyze_result['body_output_image_dict']
-                resized_body_output_image_list = analyze_result['resized_body_output_image_list']
+                try:
+                    analyze_result = body_analysis['result']
+                    body_output_image_dict = analyze_result['body_output_image_dict']
+                    resized_body_output_image_list = analyze_result['resized_body_output_image_list']
 
-                sql = Query.into(
-                    files
-                ).columns(
-                    files.created_at,
-                    files.updated_at,
-                    files.pathname,
-                    files.original_name,
-                    files.mime_type,
-                    files.size,
-                    files.width,
-                    files.height
-                ).insert(
-                    fn.Now(),
-                    fn.Now(),
-                    body_output_image_dict['pathname'],
-                    body_output_image_dict['original_name'],
-                    body_output_image_dict['mime_type'],
-                    body_output_image_dict['size'],
-                    body_output_image_dict['width'],
-                    body_output_image_dict['height']
-                ).get_sql()
-                cursor.execute(sql)
-                connection.commit()
-                file_id_body_output_image = cursor.lastrowid
-
-                # DB 저장 1 - files에 바디랩 body input resized 데이터 저장
-                for data in resized_body_output_image_list:
                     sql = Query.into(
                         files
                     ).columns(
@@ -397,101 +376,157 @@ def weekly_bodylab():
                         files.mime_type,
                         files.size,
                         files.width,
-                        files.height,
-                        files.original_file_id
+                        files.height
                     ).insert(
                         fn.Now(),
                         fn.Now(),
-                        data['pathname'],
-                        data['original_name'],
-                        data['mime_type'],
-                        data['size'],
-                        data['width'],
-                        data['height'],
-                        int(file_id_body_output_image)
+                        body_output_image_dict['pathname'],
+                        body_output_image_dict['original_name'],
+                        body_output_image_dict['mime_type'],
+                        body_output_image_dict['size'],
+                        body_output_image_dict['width'],
+                        body_output_image_dict['height']
                     ).get_sql()
                     cursor.execute(sql)
                     connection.commit()
+                    file_id_body_output_image = cursor.lastrowid
+                except Exception as e:
+                    connection.close()
+                    raise HandleException(user_ip=ip,
+                                          user_id=user_id,
+                                          api=endpoint,
+                                          error_message=str(e),
+                                          query=sql,
+                                          method=request.method,
+                                          status_code=500,
+                                          payload=json.dumps(data, ensure_ascii=False),
+                                          result=False)
 
-                sql = Query.into(
-                    bodylab_analyze_bodies
-                ).columns(
-                    bodylab_analyze_bodies.bodylab_id,
-                    bodylab_analyze_bodies.file_id_body_output,
-                    bodylab_analyze_bodies.shoulder_width,
-                    bodylab_analyze_bodies.shoulder_ratio,
-                    bodylab_analyze_bodies.hip_width,
-                    bodylab_analyze_bodies.hip_ratio,
-                    bodylab_analyze_bodies.nose_to_shoulder_center,
-                    bodylab_analyze_bodies.shoulder_center_to_hip_center,
-                    bodylab_analyze_bodies.hip_center_to_ankle_center,
-                    bodylab_analyze_bodies.shoulder_center_to_ankle_center,
-                    bodylab_analyze_bodies.whole_body_length
-                ).insert(
-                    latest_bodylab_id,
-                    file_id_body_output_image,
-                    analyze_result['shoulder_width'],
-                    analyze_result['shoulder_ratio'],
-                    analyze_result['hip_width'],
-                    analyze_result['hip_ratio'],
-                    analyze_result['nose_to_shoulder_center'],
-                    analyze_result['shoulder_center_to_hip_center'],
-                    analyze_result['hip_center_to_ankle_center'],
-                    analyze_result['shoulder_center_to_ankle_center'],
-                    analyze_result['whole_body_length']
-                ).get_sql()
+                # DB 저장 1 - files에 바디랩 body input resized 데이터 저장
                 try:
+                    for data in resized_body_output_image_list:
+                        sql = Query.into(
+                            files
+                        ).columns(
+                            files.created_at,
+                            files.updated_at,
+                            files.pathname,
+                            files.original_name,
+                            files.mime_type,
+                            files.size,
+                            files.width,
+                            files.height,
+                            files.original_file_id
+                        ).insert(
+                            fn.Now(),
+                            fn.Now(),
+                            data['pathname'],
+                            data['original_name'],
+                            data['mime_type'],
+                            data['size'],
+                            data['width'],
+                            data['height'],
+                            int(file_id_body_output_image)
+                        ).get_sql()
+                        cursor.execute(sql)
+                        connection.commit()
+                except Exception as e:
+                    connection.close()
+                    raise HandleException(user_ip=ip,
+                                          user_id=user_id,
+                                          api=endpoint,
+                                          error_message=str(e),
+                                          query=sql,
+                                          method=request.method,
+                                          status_code=400,
+                                          payload=json.dumps(data, ensure_ascii=False),
+                                          result=False)
+                try:
+                    sql = Query.into(
+                        bodylab_analyze_bodies
+                    ).columns(
+                        bodylab_analyze_bodies.bodylab_id,
+                        bodylab_analyze_bodies.file_id_body_output,
+                        bodylab_analyze_bodies.shoulder_width,
+                        bodylab_analyze_bodies.shoulder_ratio,
+                        bodylab_analyze_bodies.hip_width,
+                        bodylab_analyze_bodies.hip_ratio,
+                        bodylab_analyze_bodies.nose_to_shoulder_center,
+                        bodylab_analyze_bodies.shoulder_center_to_hip_center,
+                        bodylab_analyze_bodies.hip_center_to_ankle_center,
+                        bodylab_analyze_bodies.shoulder_center_to_ankle_center,
+                        bodylab_analyze_bodies.whole_body_length
+                    ).insert(
+                        latest_bodylab_id,
+                        file_id_body_output_image,
+                        analyze_result['shoulder_width'],
+                        analyze_result['shoulder_ratio'],
+                        analyze_result['hip_width'],
+                        analyze_result['hip_ratio'],
+                        analyze_result['nose_to_shoulder_center'],
+                        analyze_result['shoulder_center_to_hip_center'],
+                        analyze_result['hip_center_to_ankle_center'],
+                        analyze_result['shoulder_center_to_ankle_center'],
+                        analyze_result['whole_body_length']
+                    ).get_sql()
                     cursor.execute(sql)
                     connection.commit()
                 except Exception as e:
-                    connection.rollback()
                     connection.close()
-                    error = str(e)
-                    result = {
-                        'result': False,
-                        'error': f'Server error while executing INSERT query(bodylab_image): {error}'
-                    }
-                    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
-                    return json.dumps(result, ensure_ascii=False), 400
+                    raise HandleException(user_ip=ip,
+                                          user_id=user_id,
+                                          api=endpoint,
+                                          error_message=str(e),
+                                          query=sql,
+                                          method=request.method,
+                                          status_code=400,
+                                          payload=json.dumps(data, ensure_ascii=False),
+                                          result=False)
 
                 connection.close()
                 result = {'result': True}
                 return json.dumps(result, ensure_ascii=False), 201
             elif result_code == 400:
-                connection.rollback()
-                connection.close()
-                result = {
-                    'result': False,
-                    'error': f"Failed to analysis requested image({user_id}, {s3_path_body_input}): {body_analysis['error']}"
-                }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
-                return json.dumps(result, ensure_ascii=False), 400
+                raise HandleException(user_ip=ip,
+                                      user_id=user_id,
+                                      api=endpoint,
+                                      error_message=f"Failed to analysis requested image({user_id}, {s3_path_body_input}): {body_analysis['error']}",
+                                      query=sql,
+                                      method=request.method,
+                                      status_code=400,
+                                      payload=json.dumps(data, ensure_ascii=False),
+                                      result=False)
             elif result_code == 500:
-                connection.rollback()
                 connection.close()
-                result = {
-                    'result': False,
-                    'error': f"Failed to analysis requested image({body_image}): {body_analysis['error']}"
-                }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
-                return json.dumps(result, ensure_ascii=False), 500
+                raise HandleException(user_ip=ip,
+                                      user_id=user_id,
+                                      api=endpoint,
+                                      error_message=f"Failed to analysis requested image({body_image}): {body_analysis['error']}",
+                                      query=sql,
+                                      method=request.method,
+                                      status_code=500,
+                                      payload=json.dumps(data, ensure_ascii=False),
+                                      result=False)
         except Exception as e:
-            connection.rollback()
             connection.close()
-            error = str(e)
-            result = {
-                'result': False,
-                'error': f"Failed to execute POST request: {error}"
-            }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method, query=sql)
-            return json.dumps(result, ensure_ascii=False), 500
+            raise HandleException(user_ip=ip,
+                                  user_id=user_id,
+                                  api=endpoint,
+                                  error_message=f"Failed to execute POST request: {str(e)}",
+                                  query=sql,
+                                  method=request.method,
+                                  status_code=500,
+                                  payload=json.dumps(data, ensure_ascii=False),
+                                  result=False)
     else:
-        result = {
-            'result': False,
-            'error': 'Method Not Allowed'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
-        return json.dumps(result, ensure_ascii=False), 403
+        raise HandleException(user_ip=ip,
+                              user_id=user_id,
+                              api=endpoint,
+                              error_message=f'Method Not Allowed',
+                              method=request.method,
+                              status_code=405,
+                              payload=json.dumps(data, ensure_ascii=False),
+                              result=False)
 
 
 @api.route('/user/<user_id>/bodylab', methods=['GET'])

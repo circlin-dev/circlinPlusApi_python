@@ -35,9 +35,9 @@ def hello_world():
     return f'Hello, {ip} ! || {values}'
 
 
-@app.route('/bodylab_form')
-def bodylab_form():
-    return render_template('bodylab_form.html')
+# @app.route('/bodylab_form')
+# def bodylab_form():
+#     return render_template('bodylab_form.html')
 
 
 @app.errorhandler(HandleException)
@@ -45,32 +45,32 @@ def handling_exception(e):
     return jsonify(e.to_dict()), e.to_dict()['status_code']
 
 
-@app.errorhandler(400)
-def handle_400_error(e):
-    raise HandleException(error_message=str(e), status_code=400)
-
-
-@app.errorhandler(405)
-def handle_405_error(e):
-    raise HandleException(error_message=str(e), status_code=405)
-
-
-@app.errorhandler(500)
-def handle_500_error(e):
-    raise HandleException(error_message=f'aadadadasdadasdasdaada //// {str(e)}', status_code=500)
-
-
-@app.errorhandler(Exception)
-def handle_exception(e):
-    # pass through HTTP errors
-    if isinstance(e, HTTPException):
-        slack_error_notification(error_message=str(e))
-        # return str(e), e.code
-        return str(e.get_response()), e.code
-
-    # now you're handling non-HTTP exceptions only
-    # slack_error_notification(error_message=str(e))
-    # return str(e), e.code
+# @app.errorhandler(400)
+# def handle_400_error(e):
+#     raise HandleException(error_message=str(e), status_code=400)
+#
+#
+# @app.errorhandler(405)
+# def handle_405_error(e):
+#     raise HandleException(error_message=str(e), status_code=405)
+#
+#
+# @app.errorhandler(500)
+# def handle_500_error(e):
+#     raise HandleException(error_message=str(e), status_code=500)
+#
+#
+# @app.errorhandler(Exception)
+# def handle_exception(e):
+#     # pass through HTTP errors
+#     if isinstance(e, HTTPException):
+#         slack_error_notification(error_message=str(e))
+#         # return str(e), e.code
+#         return str(e), e.code
+#
+#     # now you're handling non-HTTP exceptions only
+#     slack_error_notification(error_message=str(e))
+#     return str(e), e.code
 
 
 if __name__ == '__main__':
