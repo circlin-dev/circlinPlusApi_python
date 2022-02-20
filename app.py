@@ -60,16 +60,16 @@ def handle_500_error(e):
     raise HandleException(error_message=f'aadadadasdadasdasdaada //// {str(e)}', status_code=500)
 
 
-# @app.errorhandler(Exception)
-# def handle_exception(e):
-#     # pass through HTTP errors
-#     if isinstance(e, HTTPException):
-#         slack_error_notification(error_message=str(e))
-#         return str(e), 500
-#
-#     # now you're handling non-HTTP exceptions only
-#     slack_error_notification(error_message=str(e))
-#     return str(e), 500
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # pass through HTTP errors
+    if isinstance(e, HTTPException):
+        slack_error_notification(error_message=str(e))
+        return str(e), 500
+
+    # now you're handling non-HTTP exceptions only
+    slack_error_notification(error_message=str(e))
+    return str(e), 500
 
 
 if __name__ == '__main__':
