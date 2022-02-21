@@ -5,7 +5,7 @@ import boto3
 import cv2
 import json
 import math
-import mimetypes
+import filetype
 import os
 from PIL import Image
 import pyheif
@@ -247,7 +247,7 @@ def generate_resized_image(local_save_path, user_id, category, now, extension, o
 
 def get_image_information(path):
     result = {
-        'mime_type': mimetypes.guess_type(path)[0],
+        'mime_type': filetype.guess(path),
         'size': int(os.path.getsize(path))
     }
     return result
