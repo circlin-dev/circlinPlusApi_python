@@ -292,7 +292,8 @@ def validate_and_save_to_s3(category: str, file, user_id: int, now):
     if str(user_id) not in os.listdir(local_directory):
         os.makedirs(f"{local_directory}/{user_id}")
 
-    # shutil.move(secure_file, save_path)
+    if os.path.exists(secure_file):
+        shutil.move(secure_file, save_path)
 
     mime = get_image_information(request_file_path)['mime_type']
     if mime[0] != 'image':

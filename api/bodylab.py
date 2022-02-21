@@ -72,7 +72,7 @@ def weekly_bodylab():
 
         now = datetime.now().strftime('%Y%m%d%H%M%S')
         # S3 업로드 - 바디랩 이미지 1: 신체 사진(눈바디)
-        body_analysis =validate_and_save_to_s3('body', body_image, user_id, now)
+        body_analysis = validate_and_save_to_s3('body', body_image, user_id, now)
         # atflee_input_image_dict, resized_atflee_images_list = validate_and_save_to_s3('atflee', atlfee_image, user_id, now)
         if body_analysis['result'] is False:
             result = {
@@ -80,6 +80,8 @@ def weekly_bodylab():
                 'message': body_analysis['result']['error']
             }
             return json.dumps(result, ensure_ascii=False), 400
+        body_input_image_dict = body_analysis['input_image_dict']
+        resized_body_images_list = body_analysis['resized_images_list']
 
         # secure_file = secure_filename(body_image.filename)
         # body_image.save(secure_file)
