@@ -77,7 +77,7 @@ def weekly_bodylab():
         if body_analysis['result'] is False:
             result = {
                 'result': False,
-                'message': body_analysis['result']['error']
+                'message': body_analysis['error']
             }
             return json.dumps(result, ensure_ascii=False), 400
         body_input_image_dict = body_analysis['input_image_dict']
