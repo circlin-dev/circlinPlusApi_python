@@ -247,7 +247,7 @@ def generate_resized_image(local_save_path, user_id, category, now, extension, o
 
 def get_image_information(path):
     result = {
-        'mime_type': filetype.guess(path),
+        'mime_type': filetype.guess(path).mime,
         'size': int(os.path.getsize(path))
     }
     return result
