@@ -304,10 +304,10 @@ def validate_and_save_to_s3(category: str, file, user_id: int, now):
         return json.dumps(result, ensure_ascii=False)
 
     if mime[1] in invalid_mimes:
-        request_file_path, extension = heic_to_jpg(request_file_path)
+        new_file_path, extension = heic_to_jpg(request_file_path)
         file_name = f"bodylab_{category}_input_{user_id}_{now}.{extension}"
         local_image_path = f"{local_directory}/{user_id}/{file_name}"
-        os.rename(request_file_path, local_image_path)
+        os.rename(new_file_path, local_image_path)
     else:
         extension = filetype.guess(request_file_path).extension
         file_name = f"bodylab_{category}_input_{user_id}_{now}.{extension}"
