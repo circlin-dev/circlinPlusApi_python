@@ -140,7 +140,7 @@ def analyze_atflee_images(path):
                 }
             ]
         }).json()
-    locale = response['responses']['textAnnotations'][0]
+    locale = response['responses']['textAnnotations'][0]['locale']
 
     if locale == 'ko':
         text_list = response['responses']['textAnnotations'][0]['description'].split('\n')
