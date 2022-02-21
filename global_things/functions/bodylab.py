@@ -277,7 +277,6 @@ def heic_to_jpg(path):
 
 def validate_and_save_to_s3(category: str, file, user_id: int, now):
     invalid_mimes = ['heic', 'HEIC', 'heif', 'HEIF']
-    # mime = get_image_information(secure_file_path)['mime_type'].split('/')[-1]
     if category == 'body':
         local_directory = LOCAL_SAVE_PATH_BODY_INPUT
         bucket_directory_input = BUCKET_IMAGE_PATH_BODY_INPUT
@@ -295,7 +294,7 @@ def validate_and_save_to_s3(category: str, file, user_id: int, now):
 
     shutil.move(secure_file, save_path)
 
-    mime = get_image_information(save_path)['mime_type']
+    mime = get_image_information(request_file_path)['mime_type']
     if mime[0] != 'image':
         result = {
             'result': False,
