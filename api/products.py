@@ -240,6 +240,7 @@ def read_a_product(product_id: int):
 
     result = cursor.fetchall()
     if query_result_is_none(result) is True:
+        connection.close()
         result_dict = {}
         return json.dumps(result_dict, ensure_ascii=False), 200
 
