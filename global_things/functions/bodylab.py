@@ -307,6 +307,8 @@ def validate_and_save_to_s3(category: str, file, user_id: int, now):
         file_name = f"bodylab_{category}_input_{user_id}_{now}.{extension}"
         local_image_path = f"{local_directory}/{user_id}/{file_name}"
         os.rename(new_file_path, local_image_path)
+        if os.path.exists(request_file_path):
+            os.remove(request_file_path)
     else:
         extension = filetype.guess(request_file_path).extension
         file_name = f"bodylab_{category}_input_{user_id}_{now}.{extension}"
@@ -351,9 +353,13 @@ def validate_and_save_to_s3(category: str, file, user_id: int, now):
             os.remove(resized_image['local_path'])
     if os.path.exists(local_image_path):
         os.remove(local_image_path)
-    if os.path.exists(request_file_path):
-        os.remove(request_file_path)
-    return input_image_dict, resized_images_list
+
+    result_dict = {
+        "result": True,
+        "input_image_dict": input_image_dict,
+        "resized_images_list": resized_images_list
+    }
+    return result_dict
 
 
 def upload_image_to_s3(file_name, bucket_name, object_name):
