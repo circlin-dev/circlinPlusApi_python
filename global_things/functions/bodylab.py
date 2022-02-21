@@ -157,10 +157,10 @@ def analyze_atflee_images(path):
         fat_index = text_list.index('체지방량')
         muscle_index = text_list.index('근육량(클릭필수)')
 
-        weight = float(text_list[weight_index + 1].split('kg').strip())
+        weight = float(text_list[weight_index + 1].split('kg')[0].strip())
         bmi = float(text_list[bmi_index+1])
-        fat = float(text_list[fat_index+1].split('kg').strip())
-        muscle = float(text_list[muscle_index+1].split('kg').strip())
+        fat = float(text_list[fat_index+1].split('kg')[0].strip())
+        muscle = float(text_list[muscle_index+1].split('kg')[0].strip())
         height = round(math.sqrt((weight / bmi)), 1) * 100  # 키 => 소수점 첫 번째 자리까지 나오도록 반올림
 
         result_dict = {
