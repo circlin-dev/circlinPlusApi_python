@@ -1,18 +1,21 @@
-from global_things.constants import SLACK_NOTIFICATION_WEBHOOK, AMAZON_URL, IMAGE_ANALYSYS_SERVER, BUCKET_IMAGE_PATH_BODY_INPUT, BUCKET_IMAGE_PATH_BODY_OUTPUT, BUCKET_IMAGE_PATH_ATFLEE_INPUT
+from global_things.constants import AMAZON_URL, IMAGE_ANALYSYS_SERVER, BUCKET_NAME,\
+                                                BUCKET_IMAGE_PATH_BODY_INPUT, BUCKET_IMAGE_PATH_ATFLEE_INPUT, \
+                                                LOCAL_SAVE_PATH_BODY_INPUT, LOCAL_SAVE_PATH_ATFLEE_INPUT
 from global_things.functions.slack import slack_error_notification
 import base64
 import boto3
 import cv2
+import filetype
 import json
 import math
-import filetype
 import os
 from PIL import Image
 import pyheif
 import requests
+import shutil
+from werkzeug.utils import secure_filename
 
 
-# region bodylab.py
 def standard_healthiness_value(age_group: str, gender: str, weight: float, height: float, bmi: float):
     # 남녀 평균 BMI(ideal_bmi) 근거: https://www.kjfp.or.kr/journal/download_pdf.php?doi=10.21215/kjfp.2021.11.1.81 연구자료 82p 결과.2.비만도에 따른 성별별 분포
     if age_group is None or gender is None or weight is None or height is None or bmi is None:
@@ -266,18 +269,100 @@ def heic_to_jpg(path):
 
     new_path = f"{path.split('.')[0]}.jpg"
     new_image.save(new_path, "JPEG")
+    if os.path.exists(path):
+        os.remove(path)
 
-    return new_path
+    return new_path, 'jpg'
+
+
+def validate_and_save_to_s3(category: str, file, user_id: int, now):
+    invalid_mimes = ['heic', 'HEIC', 'heif', 'HEIF']
+    # mime = get_image_information(secure_file_path)['mime_type'].split('/')[-1]
+    if category == 'body':
+        local_directory = LOCAL_SAVE_PATH_BODY_INPUT
+        bucket_directory_input = BUCKET_IMAGE_PATH_BODY_INPUT
+    else:
+        local_directory = LOCAL_SAVE_PATH_ATFLEE_INPUT
+        bucket_directory_input = BUCKET_IMAGE_PATH_ATFLEE_INPUT
+
+    secure_file = secure_filename(file.filename)
+    file.save(secure_file)
+
+    save_path = f'{local_directory}/{user_id}'
+    request_file_path = f"{save_path}/{secure_file}"
+    if str(user_id) not in os.listdir(local_directory):
+        os.makedirs(f"{local_directory}/{user_id}")
+
+    shutil.move(secure_file, save_path)
+
+    mime = get_image_information(save_path)['mime_type']
+    if mime[0] != 'image':
+        result = {
+            'result': False,
+            'error': 'Invalid file type(Requested file is not an image).'
+        }
+        return json.dumps(result, ensure_ascii=False)
+
+    if mime[1] in invalid_mimes:
+        request_file_path, extension = heic_to_jpg(request_file_path)
+        file_name = f"bodylab_{category}_input_{user_id}_{now}.{extension}"
+        local_image_path = f"{local_directory}/{user_id}/{file_name}"
+        os.rename(request_file_path, local_image_path)
+    else:
+        extension = filetype.guess(request_file_path).extension
+        file_name = f"bodylab_{category}_input_{user_id}_{now}.{extension}"
+        local_image_path = f"{local_directory}/{user_id}/{file_name}"
+        os.rename(request_file_path, local_image_path)
+
+    image_height, image_width, image_channel = cv2.imread(local_image_path, cv2.IMREAD_COLOR).shape
+    object_name = f"{bucket_directory_input}/{user_id}/{file_name}"
+    upload_result = upload_image_to_s3(local_image_path, BUCKET_NAME, object_name)
+    if upload_result is False:
+        result = {
+            'result': False,
+            'error': 'Failed to upload body image into S3({upload_result}).'
+        }
+        return result
+
+    s3_path_input = f"{AMAZON_URL}/{object_name}"
+
+    input_image_dict = {
+        'pathname': s3_path_input,
+        'original_name': file_name,
+        'mime_type': get_image_information(local_image_path)['mime_type'],
+        'size': get_image_information(local_image_path)['size'],
+        'width': image_width,
+        'height': image_height,
+        # For Server
+        'file_name': file_name,
+        'local_path': local_image_path,
+        'object_name': object_name,
+    }
+
+    resized_images_list = generate_resized_image(local_directory, user_id, category, now, extension, local_image_path)
+    for resized_image in resized_images_list:
+        upload_result = upload_image_to_s3(resized_image['local_path'], BUCKET_NAME, resized_image['object_name'])
+        if upload_result is False:
+            result = {
+                'result': False,
+                'error': 'Failed to upload body image into S3({upload_result}).'
+            }
+            return result
+        if os.path.exists(resized_image['local_path']):
+            os.remove(resized_image['local_path'])
+    if os.path.exists(local_image_path):
+        os.remove(local_image_path)
+    if os.path.exists(request_file_path):
+        os.remove(request_file_path)
+    return input_image_dict, resized_images_list
 
 
 def upload_image_to_s3(file_name, bucket_name, object_name):
     s3_client = boto3.client('s3')
-
     try:
         s3_client.upload_file(file_name, bucket_name, object_name)
     except Exception as e:
-        return str(e)
-
+        return False
     return True
 
 

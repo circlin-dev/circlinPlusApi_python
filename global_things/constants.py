@@ -6,7 +6,6 @@ AMAZON_URL = "https://circlin-plus.s3.ap-northeast-2.amazonaws.com"
 IMAGE_ANALYSYS_SERVER = "3.35.12.179"
 BUCKET_NAME = "circlin-plus"
 BUCKET_IMAGE_PATH_BODY_INPUT = "bodylab/body/input"
-BUCKET_IMAGE_PATH_BODY_OUTPUT = "bodylab/body/output"
 BUCKET_IMAGE_PATH_ATFLEE_INPUT = "bodylab/atflee/input"
 
 LOCAL_SAVE_PATH_BODY_INPUT = f"/home/ubuntu/circlinMembersApi_python/circlinMembersApi_flask/{BUCKET_IMAGE_PATH_BODY_INPUT}"
