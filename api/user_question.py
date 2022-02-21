@@ -187,7 +187,7 @@ def read_user_question(user_id):
             'result': False,
             'error': f'Cannot find requested answer data of user(id: {user_id})(users)'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
+        # slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
         return json.dumps(result, ensure_ascii=False), 401
     else:
         connection.close()

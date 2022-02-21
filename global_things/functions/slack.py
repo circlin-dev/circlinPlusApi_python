@@ -20,7 +20,7 @@ def slack_error_notification(user_ip: str = '', nickname: str = '', user_id: int
       "text": f"*써클인 플러스(python)에서 오류가 발생했습니다.* \n \
 사용자 IP: `{user_ip}` \n \
 사용자 ID 번호: `{nickname}({user_id})`\n \
-API URL: `{API_ROOT}{api}` \n \
+API URL: `{api}` \n \
 HTTP method: `{method}` \n \
 Status code: `{status_code}` \n \
 ```query: {query}``` \n \
