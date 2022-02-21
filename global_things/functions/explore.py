@@ -299,7 +299,7 @@ def make_query_to_find_related_terms(word: str):
     programs = Table('programs')
     coaches = Table('coaches')
     exercises = Table('exercises')
-    equipments = Table('equipments')
+    products = Table('products')
 
     query_program = Query.from_(
         programs
@@ -329,13 +329,16 @@ def make_query_to_find_related_terms(word: str):
     ).orderby(fn.Length(exercises.title)).get_sql()
 
     query_equipment = Query.from_(
-        equipments
+        products
     ).select(
-        equipments.id,
-        equipments.name
+        products.id,
+        products.title
     ).where(
-        equipments.name.like(f'%{word}%')
-    ).orderby(fn.Length(equipments.name)).get_sql()
+        Criterion.all([
+            products.title.like(f'%{word}%'),
+            products.type == 'equipment'   # item?
+        ])
+    ).orderby(fn.Length(products.title)).get_sql()
 
     return query_program, query_coach, query_exercise, query_equipment
 
