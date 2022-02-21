@@ -127,9 +127,6 @@ def error_handle(app):
         return json.dumps({"error": f"형식에 맞는 값을 입력해주세요({dev_error_message})"}, ensure_ascii=False), 400
 
 
-
-
-
 if __name__ == '__main__':
     try:
         app.run(host='0.0.0.0', debug=True)  # 0.0.0.0 for production or 127.0.0.1 for local development
