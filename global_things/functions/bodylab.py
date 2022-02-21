@@ -174,7 +174,7 @@ def analyze_atflee_images(path):
         else:  # Missing data
             return False
     else:
-        text_list = response['responses']['textAnnotations'][0]['description'].split('\n')
+        text_list = response['responses'][0]['textAnnotations'][0]['description'].split('\n')
         result_dict = {'text_list': text_list}
         return result_dict
 
