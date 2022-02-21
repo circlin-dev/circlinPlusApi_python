@@ -300,7 +300,7 @@ def validate_and_save_to_s3(category: str, file, user_id: int, now):
             'result': False,
             'error': 'Invalid file type(Requested file is not an image).'
         }
-        return json.dumps(result, ensure_ascii=False)
+        return result
 
     if mime[1] in invalid_mimes:
         new_file_path, extension = heic_to_jpg(request_file_path)
@@ -321,7 +321,7 @@ def validate_and_save_to_s3(category: str, file, user_id: int, now):
     if upload_result is False:
         result = {
             'result': False,
-            'error': 'Failed to upload body image into S3({upload_result}).'
+            'error': f'Failed to upload body image into S3({upload_result}).'
         }
         return result
 
@@ -346,7 +346,7 @@ def validate_and_save_to_s3(category: str, file, user_id: int, now):
         if upload_result is False:
             result = {
                 'result': False,
-                'error': 'Failed to upload body image into S3({upload_result}).'
+                'error': f'Failed to upload body image into S3({upload_result}).'
             }
             return result
         if os.path.exists(resized_image['local_path']):
