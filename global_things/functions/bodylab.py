@@ -1,6 +1,5 @@
 from global_things.constants import SLACK_NOTIFICATION_WEBHOOK, AMAZON_URL, IMAGE_ANALYSYS_SERVER, BUCKET_IMAGE_PATH_BODY_INPUT, BUCKET_IMAGE_PATH_BODY_OUTPUT, BUCKET_IMAGE_PATH_ATFLEE_INPUT
 from global_things.functions.slack import slack_error_notification
-from datetime import datetime
 import base64
 import boto3
 import cv2
@@ -8,6 +7,8 @@ import json
 import math
 import mimetypes
 import os
+from PIL import Image
+import pyheif
 import requests
 
 
@@ -123,47 +124,65 @@ def analyze_body_images(user_id, url):
 
 
 def analyze_atflee_images(path):
-    response = requests.post(
-        "https://vision.googleapis.com/v1/images:annotate?key=AIzaSyC55mGMIcRGYMFvK2y0m1GYXXlSiDpmpNE",
-        json={
-            "requests": [
-                {
-                    "image": {
-                        "content": base64.b64encode(cv2.imencode('.jpg', cv2.imread(path, cv2.IMREAD_COLOR))[1]).decode('utf-8')
-                    },
-                    "features": [
-                        {
-                            "type": "DOCUMENT_TEXT_DETECTION",
-                            "maxResults": 30
-                        }
-                    ]
-                }
-            ]
-        }).json()
-    # return response
-    locale = response['responses'][0]['textAnnotations'][0]['locale']
+    try:
+        response = requests.post(
+            "https://vision.googleapis.com/v1/images:annotate?key=AIzaSyC55mGMIcRGYMFvK2y0m1GYXXlSiDpmpNE",
+            json={
+                "requests": [
+                    {
+                        "image": {
+                            "content": base64.b64encode(cv2.imencode('.jpg', cv2.imread(path, cv2.IMREAD_COLOR))[1]).decode('utf-8')
+                        },
+                        "features": [
+                            {
+                                "type": "DOCUMENT_TEXT_DETECTION",
+                                "maxResults": 30
+                            }
+                        ]
+                    }
+                ]
+            }).json()
+        # return response
+        annotations = response['responses'][0]['textAnnotations'][0]
+        locale = annotations['locale']
+    except Exception as e:
+        result = {
+            'result': False,
+            'status_code': 400,
+            'error': f'OCR server failed to process request image: {str(e)}'
+        }
+        return result
 
-    if locale == 'ko':
-        text_list = response['responses'][0]['textAnnotations'][0]['description'].split('\n')
-        company_name = 'Guangdong ICOMON Technology Co., Ltd.'
-        # if len(text_list) == 55 \
-        # and company_name in text_list \
-        # and '체중' in text_list and 'BMI' in text_list \
-        # and '체지방량' in text_list \
-        # and '근육량(클릭필수)' in text_list:
+    try:
+        if locale == 'ko':
+            text_list = annotations['description'].split('\n')
 
-        weight_index = text_list.index('체중')
-        bmi_index = text_list.index('BMI')
-        fat_index = text_list.index('체지방량')
-        muscle_index = text_list.index('근육량(클릭필수)')
+            weight_index = text_list.index('체중')
+            bmi_index = text_list.index('BMI')
+            fat_index = text_list.index('체지방량')
+            muscle_index = text_list.index('근육량(클릭필수)')
 
-        weight = float(text_list[weight_index + 1].split('kg')[0].strip())
-        bmi = float(text_list[bmi_index+1])
-        fat = float(text_list[fat_index+1].split('kg')[0].strip())
-        muscle = float(text_list[muscle_index+1].split('kg')[0].strip())
-        height = round(math.sqrt((weight / bmi)), 2) * 100  # 키 => 소수점 첫 번째 자리까지 나오도록 반올림
+            weight = float(text_list[weight_index + 1].split('kg')[0].strip())
+            bmi = float(text_list[bmi_index+1])
+            fat = float(text_list[fat_index+1].split('kg')[0].strip())
+            muscle = float(text_list[muscle_index+1].split('kg')[0].strip())
+            height = round(math.sqrt((weight / bmi)), 2) * 100  # 키 => 소수점 첫 번째 자리까지 나오도록 반올림
+        else:
+            text_list = annotations['description'].split('\n')
+
+            weight_index = text_list.index('Weight')
+            bmi_index = text_list.index('BMI')
+            fat_index = text_list.index('Body Fat')
+            muscle_index = text_list.index('Muscle mass')
+
+            weight = float(text_list[weight_index + 1].split('kg')[0].strip())
+            bmi = float(text_list[bmi_index+1])
+            fat = round(weight * float(text_list[fat_index+1].split('%')[0].strip()) / 100, 2)
+            muscle = float(text_list[muscle_index+1].split('kg')[0].strip())
+            height = round(math.sqrt(weight / bmi), 2) * 100  # 키 => 소수점 첫 번째 자리까지 나오도록 반올림
 
         result_dict = {
+            'result': True,
             'weight': weight,
             'height': height,
             'bmi': bmi,
@@ -171,30 +190,13 @@ def analyze_atflee_images(path):
             'muscle': muscle
         }
         return result_dict
-        # else:  # Missing data
-        #     return False
-    else:
-        text_list = response['responses'][0]['textAnnotations'][0]['description'].split('\n')
-
-        weight_index = text_list.index('Weight')
-        bmi_index = text_list.index('BMI')
-        fat_index = text_list.index('Body Fat')
-        muscle_index = text_list.index('Muscle mass')
-
-        weight = float(text_list[weight_index + 1].split('kg')[0].strip())
-        bmi = float(text_list[bmi_index+1])
-        fat = round(weight * float(text_list[fat_index+1].split('%')[0].strip()) / 100, 2)
-        muscle = float(text_list[muscle_index+1].split('kg')[0].strip())
-        height = round(math.sqrt(weight / bmi), 2) * 100  # 키 => 소수점 첫 번째 자리까지 나오도록 반올림
-
-        result_dict = {
-            'weight': weight,
-            'height': height,
-            'bmi': bmi,
-            'fat': fat,
-            'muscle': muscle
+    except Exception as e:
+        result = {
+            'result': False,
+            'status_code': 400,
+            'error': f'Cannot recognize necessary values from request file: {str(e)}'
         }
-        return result_dict
+        return result
 
 
 def generate_resized_image(local_save_path, user_id, category, now, extension, original_image_path):
@@ -249,6 +251,23 @@ def get_image_information(path):
         'size': int(os.path.getsize(path))
     }
     return result
+
+
+def heic_to_jpg(path):
+    heif_file = pyheif.read(path)
+    new_image = Image.frombytes(
+        heif_file.mode,
+        heif_file.size,
+        heif_file.data,
+        "raw",
+        heif_file.mode,
+        heif_file.stride,
+    )
+
+    new_path = f"{path.split('.')[0]}.jpg"
+    new_image.save(new_path, "JPEG")
+
+    return new_path
 
 
 def upload_image_to_s3(file_name, bucket_name, object_name):

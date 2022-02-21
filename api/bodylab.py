@@ -3,7 +3,7 @@ from global_things.constants import API_ROOT, AMAZON_URL, BUCKET_NAME, BUCKET_IM
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
 from global_things.error_handler import HandleException
-from global_things.functions.bodylab import analyze_body_images, generate_resized_image, get_image_information, upload_image_to_s3, standard_healthiness_value, healthiness_score, attractiveness_score, return_dict_when_nothing_to_return, analyze_atflee_images
+from global_things.functions.bodylab import analyze_body_images, generate_resized_image, get_image_information, heic_to_jpg, upload_image_to_s3, standard_healthiness_value, healthiness_score, attractiveness_score, return_dict_when_nothing_to_return, analyze_atflee_images
 from . import api
 import base64
 import cv2
@@ -84,6 +84,9 @@ def weekly_bodylab():
         if os.path.exists(secure_file):
             shutil.move(secure_file, f'{LOCAL_SAVE_PATH_BODY_INPUT}/{user_id}')
             os.rename(f'{LOCAL_SAVE_PATH_BODY_INPUT}/{user_id}/{secure_file}', local_image_path)
+
+        if get_image_information(local_image_path)['mime_type'].split('/')[-1] in ['heic', 'HEIC', 'heif', 'HEIF']:
+            local_image_path = heic_to_jpg(local_image_path)
 
         body_image_height, body_image_width, body_image_channel = cv2.imread(local_image_path, cv2.IMREAD_COLOR).shape
 
@@ -1144,13 +1147,14 @@ def atflee_image():
         'local_path': local_image_path,
         'object_name': object_name,
     }
-    result = analyze_atflee_images(local_image_path)
-    return json.dumps({'result': result}, ensure_ascii=False), 200
+    ocr_result = analyze_atflee_images(local_image_path)
+    return json.dumps({'result': ocr_result}, ensure_ascii=False), 200
 
-    # if analyze_atflee_images(local_image_path) is False:
+    # if ocr_result['result'] is False:
     #     connection.close()
-    #     result = {'result': False, 'error': 'Missing data on atflee'}
-    #     return json.dumps(result, ensure_ascii=False), 400
+    #     status_code = ocr_result['status_code']
+    #     del ocr_result['status_code']
+    #     return json.dumps(result, ensure_ascii=False), status_code
 
     # resized_atflee_images_list = generate_resized_image(BUCKET_IMAGE_PATH_ATFLEE_INPUT, user_id, category, now, extension,
     #                                                   local_image_path)
