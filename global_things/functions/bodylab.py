@@ -254,21 +254,20 @@ def get_image_information(path):
 
 
 def heic_to_jpg(path):
-    # heif_file = pyheif.read(path)
-    # new_image = Image.frombytes(
-    #     heif_file.mode,
-    #     heif_file.size,
-    #     heif_file.data,
-    #     "raw",
-    #     heif_file.mode,
-    #     heif_file.stride,
-    # )
-    #
-    # new_path = f"{path.split('.')[0]}.jpg"
-    # new_image.save(new_path, "JPEG")
-    #
-    # return new_path
-    return ''
+    heif_file = pyheif.read(path)
+    new_image = Image.frombytes(
+        heif_file.mode,
+        heif_file.size,
+        heif_file.data,
+        "raw",
+        heif_file.mode,
+        heif_file.stride,
+    )
+
+    new_path = f"{path.split('.')[0]}.jpg"
+    new_image.save(new_path, "JPEG")
+
+    return new_path
 
 
 def upload_image_to_s3(file_name, bucket_name, object_name):
