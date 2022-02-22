@@ -65,7 +65,8 @@ def read_products():
                         'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
                         'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id)
                     )
-                ) AS related_program
+                ) AS related_program,
+                 prod.status
             FROM
                 products prod
             INNER JOIN
