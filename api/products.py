@@ -82,19 +82,8 @@ def read_products():
                 ON p.id = pp.product_id
             LEFT OUTER JOIN
                     programs prog
-                ON prog.id = pp.program_id                               
---             FROM
---                 products p
---             INNER JOIN
---                 product_images pi
---             ON pi.product_id = p.id
---             INNER JOIN
---                 files f
---             ON f.id = pi.file_id
---             INNER JOIN
---                 brands b
---             ON p.brand_id = b.id
---            GROUP BY p.id"""
+                ON prog.id = pp.program_id       
+            GROUP BY prod.id"""
     else:
         # sql = f"""
         #     SELECT
