@@ -40,15 +40,15 @@ def read_products():
         """GET everything in 'products' table. => Don't use 'where' clause in sql."""
         sql = f"""
             SELECT
-               p.id,
-               p.type,
-               p.code,
-               p.title as name,
-               p.description,
+               prod.id,
+               prod.type,
+               prod.code,
+               prod.title as name,
+               prod.description,
                b.title as brand_name,
-               p.original_price as original_price,
-               p.price as price,
-               IFNULL(p.stocks, 0),
+               prod.original_price as original_price,
+               prod.price as price,
+               IFNULL(prod.stocks, 0),
                (SELECT
                        f2.pathname
                FROM
@@ -67,19 +67,19 @@ def read_products():
                     )
                 ) AS related_program
             FROM
-                products p
+                products prod
             INNER JOIN
                     brands b
-                ON b.id = p.brand_id
+                ON b.id = prod.brand_id
             LEFT OUTER JOIN
                     product_images pi
-                ON pi.product_id = p.id
+                ON pi.product_id = prod.id
             LEFT OUTER JOIN
                     files f
                 ON f.id = pi.file_id
             LEFT OUTER JOIN
                     program_products pp
-                ON p.id = pp.product_id
+                ON prod.id = pp.product_id
             LEFT OUTER JOIN
                     programs prog
                 ON prog.id = pp.program_id       
