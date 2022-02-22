@@ -49,6 +49,7 @@ def read_products():
                prod.original_price as original_price,
                prod.price as price,
                IFNULL(prod.stocks, 0),
+               prod.is_hidden,
                (SELECT
                        f2.pathname
                FROM
@@ -83,7 +84,8 @@ def read_products():
                 ON prod.id = pp.product_id
             LEFT OUTER JOIN
                     programs prog
-                ON prog.id = pp.program_id       
+                ON prog.id = pp.program_id
+            WHERE prod.is_hidden = 1  
             GROUP BY prod.id"""
     else:
         sql = f"""
@@ -132,6 +134,7 @@ def read_products():
                         programs prog
                     ON prog.id = pp.program_id
                 WHERE prod.type='{parameters[0]}'
+                AND prod.is_hidden = 1
                 GROUP BY prod.id"""
     cursor.execute(sql)
     result = cursor.fetchall()
@@ -279,6 +282,7 @@ def read_a_product(product_id: int):
                 programs prog
             ON prog.id = pp.program_id
         WHERE prod.id = {product_id}
+        AND prod.is_hidden = 1
         GROUP BY prod.id"""
     cursor.execute(sql)
 
