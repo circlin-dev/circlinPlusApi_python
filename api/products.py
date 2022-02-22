@@ -91,7 +91,7 @@ def read_products():
 --             INNER JOIN
 --                 brands b
 --             ON p.brand_id = b.id
-            GROUP BY p.id"""
+--            GROUP BY p.id"""
         pass
     else:
     # related_program이 복수이면 JSON_ARRAYAGG()로 합치고, GROUP BY에 prog.id 또는 pp.program_id 추가해야 할듯.
