@@ -17,9 +17,6 @@ def read_products():
     endpoint = API_ROOT + url_for('api.read_products')
     # session_id = request.headers['Authorization']
     # check_session(session_id)
-    programs = Table('programs')
-    products = Table('products')
-    program_products = Table('program_products')
     """페이징 필요!!!"""
 
     try:
@@ -92,7 +89,6 @@ def read_products():
 --                 brands b
 --             ON p.brand_id = b.id
 --            GROUP BY p.id"""
-        pass
     else:
         # sql = f"""
         #     SELECT
@@ -135,53 +131,53 @@ def read_products():
         #             programs prog
         #         ON prog.id = pp.program_id
         #     GROUP BY p.id"""
-        pass
-    sql = f"""
-            SELECT DISTINCT
-               prod.id,
-               prod.type,
-               prod.code,
-               prod.title as title,
-               prod.description,
-               b.title as brandTitle,
-               prod.original_price as original_price,
-               prod.price as price,
-               IFNULL(prod.stocks, 0),
-               (SELECT
-                       f2.pathname
-               FROM
-                    files f2
-                INNER JOIN product_images pi2
-               ON pi2.file_id = f2.id
-                WHERE pi2.type='thumbnail' AND pi2.product_id=prod.id) AS thumbnail,
-               JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details,
-               JSON_ARRAYAGG(
-                    JSON_OBJECT(
-                        'id', prog.id,
-                        'title', prog.title,
-                        'thumbnail', (SELECT pathname FROM files WHERE id = prog.thumbnail_id),
-                        'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
-                        'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id)
-                    )) AS related_program,
-                prod.status
-            FROM
-                products prod
-            INNER JOIN
-                    brands b
-                ON b.id = prod.brand_id
-            LEFT OUTER JOIN
-                    product_images pi
-                ON pi.product_id = prod.id
-            LEFT OUTER JOIN
-                    files f
-                ON f.id = pi.file_id
-            LEFT OUTER JOIN
-                    program_products pp
-                ON prod.id = pp.product_id
-            LEFT OUTER JOIN
-                    programs prog
-                ON prog.id = pp.program_id
-            GROUP BY prod.id"""
+        sql = f"""
+                SELECT DISTINCT
+                   prod.id,
+                   prod.type,
+                   prod.code,
+                   prod.title as title,
+                   prod.description,
+                   b.title as brandTitle,
+                   prod.original_price as original_price,
+                   prod.price as price,
+                   IFNULL(prod.stocks, 0),
+                   (SELECT
+                           f2.pathname
+                   FROM
+                        files f2
+                    INNER JOIN product_images pi2
+                   ON pi2.file_id = f2.id
+                    WHERE pi2.type='thumbnail' AND pi2.product_id=prod.id) AS thumbnail,
+                   JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details,
+                   JSON_ARRAYAGG(
+                        JSON_OBJECT(
+                            'id', prog.id,
+                            'title', prog.title,
+                            'thumbnail', (SELECT pathname FROM files WHERE id = prog.thumbnail_id),
+                            'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
+                            'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id)
+                        )) AS related_program,
+                    prod.status
+                FROM
+                    products prod
+                INNER JOIN
+                        brands b
+                    ON b.id = prod.brand_id
+                LEFT OUTER JOIN
+                        product_images pi
+                    ON pi.product_id = prod.id
+                LEFT OUTER JOIN
+                        files f
+                    ON f.id = pi.file_id
+                LEFT OUTER JOIN
+                        program_products pp
+                    ON prod.id = pp.product_id
+                LEFT OUTER JOIN
+                        programs prog
+                    ON prog.id = pp.program_id
+                WHERE prod.type = {parameters}
+                GROUP BY prod.id"""
     cursor.execute(sql)
     result = cursor.fetchall()
 
