@@ -135,7 +135,6 @@ def read_products():
             LEFT OUTER JOIN
                     programs prog
                 ON prog.id = pp.program_id
-            WHERE p.`type` = '{parameters[0]}'
             GROUP BY p.id"""
     cursor.execute(sql)
     result = cursor.fetchall()
@@ -164,7 +163,6 @@ def read_products():
         connection.close()
         result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
-
 
     connection.close()
     result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
