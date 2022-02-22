@@ -159,9 +159,23 @@ def read_products():
         products_df['related_program'] = products_df['related_program'].apply(lambda x: json.loads(x))
         products_df['related_program'] = products_df['related_program'].apply(lambda x: list({data['id']: data for data in x}.values()))
         products_df['related_program'] = products_df['related_program'].apply(lambda x: [] if x[0]['id'] is None else x)
+
+        products_df = products_df.sort_values(by=['stocks', 'price'], ascending=False)
+        sorter = ['on_sale', 'future', 'sold_out_temp', 'sold_out']
+        products_df.status = products_df.status.astype('category')
+        products_df.status.cat.set_categories(sorter, inplace=True)
+
     except:
         connection.close()
         result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
+
+        """정렬
+        (1) status == 'on_sale' and stocks > 0 : 잔여수량 순 -> 가격 높은 순
+        (2) status == 'future'
+        (3) stocks < 0
+        """
+        result_dict = sorted(result_dict, key=lambda x: (x['stocks'], x['price']), reverse=True)
+
         return json.dumps(result_dict, ensure_ascii=False), 200
 
     connection.close()
