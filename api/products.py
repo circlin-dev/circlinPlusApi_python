@@ -49,7 +49,13 @@ def read_products():
                p.original_price as original_price,
                p.price as price,
                IFNULL(p.stocks, 0),
-               p.thumbnail,
+               (SELECT
+                       f2.pathname
+               FROM
+                    files f2
+                INNER JOIN product_images pi2
+               ON pi2.file_id = f2.id
+                WHERE pi2.type='thumbnail' AND pi2.product_id=prod.id) AS thumbnail,
                JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details,
                JSON_ARRAYAGG(
                     JSON_OBJECT(
