@@ -94,48 +94,48 @@ def read_products():
 --            GROUP BY p.id"""
         pass
     else:
-    # related_program이 복수이면 JSON_ARRAYAGG()로 합치고, GROUP BY에 prog.id 또는 pp.program_id 추가해야 할듯.
-        #     sql = f"""
-        #         SELECT
-        #            p.id,
-        #            p.type,
-        #            p.code,
-        #            p.title as name,
-        #            p.description,
-        #            b.title as brand_name,
-        #            p.original_price as original_price,
-        #            p.price as price,
-        #            IFNULL(p.stocks, 0),
-        #            p.thumbnail,
-        #            JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details,
-        #             JSON_ARRAYAGG(
-        #                 JSON_OBJECT(
-        #                     'id', prog.id,
-        #                     'title', prog.title,
-        #                     'thumbnail', (SELECT pathname FROM files WHERE id = prog.thumbnail_id),
-        #                     'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
-        #                     'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id)
-        #                 )
-        #             ) AS related_program,
-        #             p.status
-        #         FROM
-        #             products p
-        #         INNER JOIN
-        #                 brands b
-        #             ON b.id = p.brand_id
-        #         LEFT OUTER JOIN
-        #                 product_images pi
-        #             ON pi.product_id = p.id
-        #         LEFT OUTER JOIN
-        #                 files f
-        #             ON f.id = pi.file_id
-        #         LEFT OUTER JOIN
-        #                 program_products pp
-        #             ON p.id = pp.product_id
-        #         LEFT OUTER JOIN
-        #                 programs prog
-        #             ON prog.id = pp.program_id
-        #         GROUP BY p.id"""
+        # sql = f"""
+        #     SELECT
+        #        p.id,
+        #        p.type,
+        #        p.code,
+        #        p.title as name,
+        #        p.description,
+        #        b.title as brand_name,
+        #        p.original_price as original_price,
+        #        p.price as price,
+        #        IFNULL(p.stocks, 0),
+        #        p.thumbnail,
+        #        JSON_ARRAYAGG(IFNULL(f.pathname, '')) AS details,
+        #         JSON_ARRAYAGG(
+        #             JSON_OBJECT(
+        #                 'id', prog.id,
+        #                 'title', prog.title,
+        #                 'thumbnail', (SELECT pathname FROM files WHERE id = prog.thumbnail_id),
+        #                 'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
+        #                 'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id)
+        #             )
+        #         ) AS related_program,
+        #         p.status
+        #     FROM
+        #         products p
+        #     INNER JOIN
+        #             brands b
+        #         ON b.id = p.brand_id
+        #     LEFT OUTER JOIN
+        #             product_images pi
+        #         ON pi.product_id = p.id
+        #     LEFT OUTER JOIN
+        #             files f
+        #         ON f.id = pi.file_id
+        #     LEFT OUTER JOIN
+        #             program_products pp
+        #         ON p.id = pp.product_id
+        #     LEFT OUTER JOIN
+        #             programs prog
+        #         ON prog.id = pp.program_id
+        #     GROUP BY p.id"""
+        pass
     sql = f"""
             SELECT DISTINCT
                prod.id,
