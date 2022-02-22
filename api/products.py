@@ -182,7 +182,6 @@ def read_products():
                 LEFT OUTER JOIN
                         programs prog
                     ON prog.id = pp.program_id
-                WHERE prod.type = '{parameters}'
                 GROUP BY prod.id"""
     cursor.execute(sql)
     result = cursor.fetchall()
