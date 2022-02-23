@@ -49,7 +49,6 @@ def read_products():
                prod.original_price as original_price,
                prod.price as price,
                IFNULL(prod.stocks, 0),
-               prod.is_hidden,
                (SELECT
                        f2.pathname
                FROM
@@ -67,7 +66,8 @@ def read_products():
                         'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id)
                     )
                 ) AS related_program,
-                 prod.status
+                 prod.status,
+                 prod.is_hidden                 
             FROM
                 products prod
             INNER JOIN
@@ -115,7 +115,8 @@ def read_products():
                             'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
                             'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id)
                         )) AS related_program,
-                    prod.status
+                    prod.status,
+                    prod.is_hidden
                 FROM
                     products prod
                 INNER JOIN
@@ -134,7 +135,7 @@ def read_products():
                         programs prog
                     ON prog.id = pp.program_id
                 WHERE prod.type='{parameters[0]}'
-                AND prod.is_hidden = 1
+--                 AND prod.is_hidden = 1
                 GROUP BY prod.id"""
     cursor.execute(sql)
     result = cursor.fetchall()
@@ -147,7 +148,7 @@ def read_products():
     products_df = pd.DataFrame(result, columns=['id', 'type', 'code',
                                                 'title', 'description', 'brandTitle',
                                                 'original_price', 'price', 'stocks',
-                                                'thumbnail', 'details', 'related_program', 'status'])
+                                                'thumbnail', 'details', 'related_program', 'status', 'is_hidden'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
         products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
@@ -278,7 +279,8 @@ def read_a_product(product_id: int):
                     'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
                     'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id)
                 )) AS related_program,
-            prod.status
+            prod.status,
+            prod.is_hidden
         FROM
             products prod
         INNER JOIN
@@ -297,7 +299,7 @@ def read_a_product(product_id: int):
                 programs prog
             ON prog.id = pp.program_id
         WHERE prod.id = {product_id}
-        AND prod.is_hidden = 1
+--         AND prod.is_hidden = 1
         GROUP BY prod.id"""
     cursor.execute(sql)
 
@@ -310,7 +312,7 @@ def read_a_product(product_id: int):
     products_df = pd.DataFrame(result, columns=['id', 'type', 'code',
                                                 'title', 'description', 'brandTitle',
                                                 'original_price', 'price', 'stocks',
-                                                'thumbnail', 'details', 'related_program', 'status'])
+                                                'thumbnail', 'details', 'related_program', 'status', 'is_hidden'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
         products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
