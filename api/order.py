@@ -409,6 +409,7 @@ def add_subscription_order():
     order_subscriptions = Table('order_subscriptions')
     subscriptions = Table('subscriptions')
     discounts = Table('discounts')
+    users = Table('users')
 
     parameters = json.loads(request.get_data(), encoding='utf-8')
     user_id = parameters['user_id']
@@ -656,6 +657,20 @@ def add_subscription_order():
                 VALUES({order_id}, {subscription_id}, {import_paid_amount}, {subscription_original_price - import_paid_amount})"""
         cursor.execute(sql)
         connection.commit()
+
+        sql = Query.from_(
+            users
+        ).select(
+            users.nickname,
+            users.phone,
+        ).where(
+            users.id == user_id
+        ).get_sql()
+        cursor.execute(sql)
+        user_infromation = cursor.fetchall()
+        user_nickname, user_phone = user_infromation[0]
+        slack_purchase_notification(cursor, user_id, user_nickname, user_phone, order_id)
+
         connection.close()
         result = {'result': True,
                   'message': 'Saved subscription payment data.',
