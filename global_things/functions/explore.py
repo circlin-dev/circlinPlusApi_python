@@ -34,7 +34,8 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
               (SELECT pathname FROM files WHERE id = p.thumbnail_id) AS thumbnail,
               JSON_ARRAYAGG(JSON_OBJECT('pathname', f.pathname)) AS thumbnails,
               (SELECT COUNT(*) FROM lectures WHERE program_id = p.id) AS num_lectures,
-               IFNULL(cl.num_completed_lectures, 0) AS num_completed_lectures
+               IFNULL(cl.num_completed_lectures, 0) AS num_completed_lectures,
+               p.type
           FROM
               programs p
                         LEFT JOIN
@@ -86,7 +87,8 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
             (SELECT pathname FROM files WHERE id = p.thumbnail_id) AS thumbnail,
             JSON_ARRAYAGG(JSON_OBJECT('pathname', f.pathname)) AS thumbnails,
             (SELECT COUNT(*) FROM lectures WHERE program_id = p.id) AS num_lectures,
-            IFNULL(cl.num_completed_lectures, 0) AS num_completed_lectures
+            IFNULL(cl.num_completed_lectures, 0) AS num_completed_lectures,
+            p.type            
         FROM
             programs p
                 LEFT JOIN
@@ -141,7 +143,8 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
               (SELECT pathname FROM files WHERE id = p.thumbnail_id) AS thumbnail,
               JSON_ARRAYAGG(JSON_OBJECT('pathname', f.pathname)) AS thumbnails,
               (SELECT COUNT(*) FROM lectures WHERE program_id = p.id) AS num_lectures,
-              IFNULL(cl.num_completed_lectures, 0) AS num_completed_lectures
+              IFNULL(cl.num_completed_lectures, 0) AS num_completed_lectures,
+              p.type
           FROM
               programs p
                         LEFT JOIN
@@ -195,7 +198,8 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
               (SELECT pathname FROM files WHERE id = p.thumbnail_id) AS thumbnail,
               JSON_ARRAYAGG(JSON_OBJECT('pathname', f.pathname)) AS thumbnails,
               (SELECT COUNT(*) FROM lectures WHERE program_id = p.id) AS num_lectures,
-              IFNULL(cl.num_completed_lectures, 0) AS num_completed_lectures
+              IFNULL(cl.num_completed_lectures, 0) AS num_completed_lectures,
+              p.type
           FROM
               programs p
                         LEFT JOIN
@@ -278,6 +282,7 @@ def filter_dataframe(filter_exercise: list, filter_purpose: list, filter_equipme
         thumbnails = sorted(thumbnails, key=lambda x: int(x.split('_')[1].split('w')[0]), reverse=True)  # Thumbnails needs be sorted from big size to small size(1080 -> ... 150).
         num_lectures = int(df_by_id['num_lectures'].unique()[0])
         num_completed_lectures = int(df_by_id['num_completed_lectures'].unique()[0])
+        show_type = df_by_id['type'].unique()[0]
         thumbnails_list = []
         for image in thumbnails:
             thumbnails_list.append(json.loads(image))
@@ -288,7 +293,8 @@ def filter_dataframe(filter_exercise: list, filter_purpose: list, filter_equipme
             "thumbnail": thumbnail,
             "thumbnails": thumbnails_list,
             "num_lectures": num_lectures,
-            "num_completed_lectures": num_completed_lectures
+            "num_completed_lectures": num_completed_lectures,
+            'type': show_type
         }
         result_list.append(result)
 
