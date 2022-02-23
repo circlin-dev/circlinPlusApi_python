@@ -49,12 +49,9 @@ def read_products():
                prod.original_price as original_price,
                prod.price as price,
                CASE
-                   WHEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0)) <= 0 
-                    THEN 0
-                   WHEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0)) > 0 
-                    THEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0))
-               END
-                AS stock,
+                   WHEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0)) <= 0 THEN 0
+                   WHEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0)) > 0 THEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0))
+               END AS stock,
                (SELECT
                        f2.pathname
                FROM
@@ -105,11 +102,9 @@ def read_products():
                    prod.original_price as original_price,
                    prod.price as price,
                    CASE
-                       WHEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0)) <= 0 
-                        THEN 0
-                       WHEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0)) > 0 
-                        THEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0))
-                   END
+                       WHEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0)) <= 0 THEN 0
+                       WHEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0)) > 0 THEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0))
+                   END AS stock,
                    (SELECT
                            f2.pathname
                    FROM
@@ -230,11 +225,9 @@ def read_a_product(product_id: int):
            prod.original_price as original_price,
            prod.price as price,
            CASE
-               WHEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0)) <= 0 
-                THEN 0
-               WHEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0)) > 0 
-                THEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0))
-           END
+               WHEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0)) <= 0 THEN 0
+               WHEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0)) > 0 THEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0))
+           END AS stock,
            (SELECT
                    f2.pathname
            FROM
