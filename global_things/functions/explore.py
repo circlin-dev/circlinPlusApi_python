@@ -34,47 +34,59 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
               (SELECT pathname FROM files WHERE id = p.thumbnail_id) AS thumbnail,
               JSON_ARRAYAGG(JSON_OBJECT('pathname', f.pathname)) AS thumbnails,
               (SELECT COUNT(*) FROM lectures WHERE program_id = p.id) AS num_lectures,
-               IFNULL(cl.num_completed_lectures, 0) AS num_completed_lectures,
-               p.type
-          FROM
+               IFNULL(cl.num_completed_lectures, 0) AS num_completed_lectures
+        FROM
               programs p
-                        LEFT JOIN
-                                (SELECT
-                                    completed_lectures.program_id,
-                                    COUNT(completed_lectures.program_id) AS num_completed_lectures
-                                FROM
-                                    (SELECT
-                                        DISTINCT ul.lecture_id,
-                                        l.program_id,
-                                        (SELECT COUNT(*) from lectures WHERE id=ul.lecture_id AND program_id = l.program_id) AS num_lectures
-                                    FROM
-                                        user_lectures ul
-                                    INNER JOIN lectures l on (l.id = ul.lecture_id)
-                                    WHERE ul.completed_at IS NOT NULL
-                                    AND ul.user_id={user_id}) completed_lectures
-                                GROUP BY completed_lectures.program_id) cl
-                            ON cl.program_id = p.id,
-              files f,
-              exercises ex,
-              program_exercises pex,
-              products prod,
-              program_products ppo,
-              purposes pur,
-              program_purposes ppu
-          WHERE
+        LEFT JOIN
+                (SELECT
+                    completed_lectures.program_id,
+                    COUNT(completed_lectures.program_id) AS num_completed_lectures
+                FROM
+                    (SELECT
+                        DISTINCT ul.lecture_id,
+                        l.program_id,
+                        (SELECT COUNT(*) from lectures WHERE id=ul.lecture_id AND program_id = l.program_id) AS num_lectures
+                    FROM
+                        user_lectures ul
+                    INNER JOIN lectures l on (l.id = ul.lecture_id)
+                    WHERE ul.completed_at IS NOT NULL
+                    AND ul.user_id={user_id}) completed_lectures
+                GROUP BY completed_lectures.program_id) cl
+        ON cl.program_id = p.id
+        LEFT JOIN
+            files f
+        ON
+            f.original_file_id = p.thumbnail_id
+        LEFT JOIN
+              program_exercises pex
+        ON
+            p.id = pex.program_id
+        LEFT JOIN
+              exercises ex
+        ON
+            ex.id = pex.exercise_id
+        LEFT JOIN
+            program_products ppo
+        ON
+            p.id = ppo.program_id
+        LEFT JOIN
+              products prod
+        ON
+            prod.id = ppo.product_id
+        LEFT JOIN
+            program_purposes ppu
+        ON
+            ppu.program_id = p.id
+        LEFT JOIN
+              purposes pur
+        ON
+            pur.id = ppu.purpose_id
+        WHERE
                p.title LIKE '%{word}%'
-            AND
-              f.original_file_id = p.thumbnail_id
-            AND
-              (ex.id = pex.exercise_id AND p.id = pex.program_id)
-            AND
-              (prod.id = ppo.product_id AND p.id = ppo.program_id)
-            AND
-              (pur.id = ppu.purpose_id AND ppu.program_id = p.id)
         GROUP BY
               p.id, ex.id, prod.id, pur.id
         ORDER BY
-              {sort_standard} DESC"""
+              {sort_standard} DESC;"""
 
     sql_coach = f"""
         SELECT
@@ -88,7 +100,7 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
             JSON_ARRAYAGG(JSON_OBJECT('pathname', f.pathname)) AS thumbnails,
             (SELECT COUNT(*) FROM lectures WHERE program_id = p.id) AS num_lectures,
             IFNULL(cl.num_completed_lectures, 0) AS num_completed_lectures,
-            p.type            
+            p.type
         FROM
             programs p
                 LEFT JOIN
@@ -106,31 +118,46 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
                             WHERE ul.completed_at IS NOT NULL
                             AND ul.user_id={user_id}) completed_lectures
                         GROUP BY completed_lectures.program_id) cl
-                ON cl.program_id = p.id,
-            files f,
-            coaches AS c,
-            exercises ex,
-            program_exercises pex,
-            products prod,
-            program_products ppo,
-            purposes pur,
-            program_purposes ppu
-        WHERE
-            c.name LIKE '%{word}%'
-        AND
-            p.coach_id = (SELECT id FROM coaches WHERE name=c.name)
-        AND
-            f.original_file_id = p.thumbnail_id
-        AND
-            (ex.id = pex.exercise_id AND p.id = pex.program_id)
-        AND
-            (prod.id = ppo.product_id AND p.id = ppo.program_id)
-        AND
-            (pur.id = ppu.purpose_id AND ppu.program_id = p.id)
-        GROUP BY
-            p.id, ex.id, prod.id, pur.id
-        ORDER BY
-            {sort_standard} DESC"""
+                ON cl.program_id = p.id
+            LEFT JOIN
+                files f
+            ON
+                f.original_file_id = p.thumbnail_id
+            LEFT JOIN
+                coaches c
+            ON
+                c.id = p.coach_id
+            LEFT JOIN
+                  program_exercises pex
+            ON
+                p.id = pex.program_id
+            LEFT JOIN
+                  exercises ex
+            ON
+                ex.id = pex.exercise_id
+            LEFT JOIN
+                program_products ppo
+            ON
+                p.id = ppo.program_id
+            LEFT JOIN
+                  products prod
+            ON
+                prod.id = ppo.product_id
+            LEFT JOIN
+                program_purposes ppu
+            ON
+                ppu.program_id = p.id
+            LEFT JOIN
+                  purposes pur
+            ON
+                pur.id = ppu.purpose_id
+            WHERE
+                   c.name LIKE '%{word}%'
+            AND p.coach_id = (SELECT id FROM coaches WHERE name=c.name)
+            GROUP BY
+                  p.id, ex.id, prod.id, pur.id
+            ORDER BY
+                  {sort_standard} DESC"""
 
     sql_exercise = f"""
         SELECT
@@ -147,41 +174,52 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
               p.type
           FROM
               programs p
-                        LEFT JOIN
+                    LEFT JOIN
+                            (SELECT
+                                completed_lectures.program_id,
+                                COUNT(completed_lectures.program_id) AS num_completed_lectures
+                            FROM
                                 (SELECT
-                                    completed_lectures.program_id,
-                                    COUNT(completed_lectures.program_id) AS num_completed_lectures
+                                    DISTINCT ul.lecture_id,
+                                    l.program_id,
+                                    (SELECT COUNT(*) from lectures WHERE id=ul.lecture_id AND program_id = l.program_id) AS num_lectures
                                 FROM
-                                    (SELECT
-                                        DISTINCT ul.lecture_id,
-                                        l.program_id,
-                                        (SELECT COUNT(*) from lectures WHERE id=ul.lecture_id AND program_id = l.program_id) AS num_lectures
-                                    FROM
-                                        user_lectures ul
-                                    INNER JOIN lectures l on (l.id = ul.lecture_id)
-                                    WHERE ul.completed_at IS NOT NULL
-                                    AND ul.user_id={user_id}) completed_lectures
-                                GROUP BY completed_lectures.program_id) cl
-                            ON cl.program_id = p.id,
-              files f,
-              exercises ex,
-              program_exercises pex,
-              products prod,
-              program_products ppo,
-              purposes pur,
-              program_purposes ppu
-          WHERE
-              ex.title LIKE '%{word}%'
-            AND
-              pex.exercise_id = (SELECT id FROM exercises WHERE title = ex.title)
-            AND
-              f.original_file_id = p.thumbnail_id
-            AND
-              (ex.id = pex.exercise_id AND p.id = pex.program_id)
-            AND
-              (prod.id = ppo.product_id AND p.id = ppo.program_id)
-            AND
-              (pur.id = ppu.purpose_id AND ppu.program_id = p.id)
+                                    user_lectures ul
+                                INNER JOIN lectures l on (l.id = ul.lecture_id)
+                                WHERE ul.completed_at IS NOT NULL
+                                AND ul.user_id={user_id}) completed_lectures
+                            GROUP BY completed_lectures.program_id) cl
+                    ON cl.program_id = p.id
+        LEFT JOIN                            
+            files f
+        ON
+            f.original_file_id = p.thumbnail_id
+        LEFT JOIN
+              program_exercises pex
+        ON
+            p.id = pex.program_id
+        LEFT JOIN
+            exercises ex
+        ON
+            ex.id = pex.exercise_id            
+        LEFT JOIN
+            program_products ppo
+        ON
+            p.id = ppo.program_id
+        LEFT JOIN
+            products prod
+        ON
+            prod.id = ppo.product_id
+        LEFT JOIN
+            program_purposes ppu
+        ON
+            ppu.program_id = p.id
+        LEFT JOIN
+              purposes pur
+        ON
+            pur.id = ppu.purpose_id
+        WHERE
+            ex.title LIKE '%{word}%'
         GROUP BY
               p.id, ex.id, prod.id, pur.id
         ORDER BY
@@ -202,45 +240,56 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
               p.type
           FROM
               programs p
-                        LEFT JOIN
+                    LEFT JOIN
+                            (SELECT
+                                completed_lectures.program_id,
+                                COUNT(completed_lectures.program_id) AS num_completed_lectures
+                            FROM
                                 (SELECT
-                                    completed_lectures.program_id,
-                                    COUNT(completed_lectures.program_id) AS num_completed_lectures
+                                    DISTINCT ul.lecture_id,
+                                    l.program_id,
+                                    (SELECT COUNT(*) from lectures WHERE id=ul.lecture_id AND program_id = l.program_id) AS num_lectures
                                 FROM
-                                    (SELECT
-                                        DISTINCT ul.lecture_id,
-                                        l.program_id,
-                                        (SELECT COUNT(*) from lectures WHERE id=ul.lecture_id AND program_id = l.program_id) AS num_lectures
-                                    FROM
-                                        user_lectures ul
-                                    INNER JOIN lectures l on (l.id = ul.lecture_id)
-                                    WHERE ul.completed_at IS NOT NULL
-                                    AND ul.user_id={user_id}) completed_lectures
-                                GROUP BY completed_lectures.program_id) cl
-                            ON cl.program_id = p.id,
-              files f,
-              exercises ex,
-              program_exercises pex,
-              products prod,
-              program_products ppo,
-              purposes pur,
-              program_purposes ppu
-          WHERE
-              prod.title LIKE '%{word}%'
-            AND
-              pex.exercise_id = (SELECT id FROM exercises WHERE title = ex.title)
-            AND
-              f.original_file_id = p.thumbnail_id
-            AND
-              (ex.id = pex.exercise_id AND p.id = pex.program_id)
-            AND
-              (prod.id = ppo.product_id AND p.id = ppo.program_id)
-            AND
-              (pur.id = ppu.purpose_id AND ppu.program_id = p.id)
+                                    user_lectures ul
+                                INNER JOIN lectures l on (l.id = ul.lecture_id)
+                                WHERE ul.completed_at IS NOT NULL
+                                AND ul.user_id={user_id}) completed_lectures
+                            GROUP BY completed_lectures.program_id) cl
+                        ON cl.program_id = p.id
+        LEFT JOIN
+            files f
+        ON
+            f.original_file_id = p.thumbnail_id
+        LEFT JOIN
+              program_exercises pex
+        ON
+            p.id = pex.program_id
+        LEFT JOIN
+              exercises ex
+        ON
+            ex.id = pex.exercise_id
+        LEFT JOIN
+            program_products ppo
+        ON
+            p.id = ppo.program_id
+        LEFT JOIN
+              products prod
+        ON
+            prod.id = ppo.product_id
+        LEFT JOIN
+            program_purposes ppu
+        ON
+            ppu.program_id = p.id
+        LEFT JOIN
+              purposes pur
+        ON
+            pur.id = ppu.purpose_id
+        WHERE
+            prod.title LIKE '%{word}%'
         GROUP BY
-              p.id, ex.id, prod.id, pur.id
+          p.id, ex.id, prod.id, pur.id
         ORDER BY
-              {sort_standard} DESC"""
+          {sort_standard} DESC"""
 
     return sql_program, sql_coach, sql_exercise, sql_equipment
 
