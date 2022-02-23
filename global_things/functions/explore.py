@@ -34,7 +34,8 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
               (SELECT pathname FROM files WHERE id = p.thumbnail_id) AS thumbnail,
               JSON_ARRAYAGG(JSON_OBJECT('pathname', f.pathname)) AS thumbnails,
               (SELECT COUNT(*) FROM lectures WHERE program_id = p.id) AS num_lectures,
-               IFNULL(cl.num_completed_lectures, 0) AS num_completed_lectures
+               IFNULL(cl.num_completed_lectures, 0) AS num_completed_lectures,
+               p.type               
         FROM
               programs p
         LEFT JOIN
