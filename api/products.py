@@ -69,7 +69,7 @@ def read_products():
                         'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id),
                         'type', prog.type
                     )
-                ) AS related_program,
+                ) AS related_programs,
                  prod.status,
                  prod.is_hidden                 
             FROM
@@ -122,7 +122,7 @@ def read_products():
                             'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
                             'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id),
                             'type', prog.type                            
-                        )) AS related_program,
+                        )) AS related_programs,
                     prod.status,
                     prod.is_hidden
                 FROM
@@ -156,7 +156,7 @@ def read_products():
     products_df = pd.DataFrame(result, columns=['id', 'type', 'code',
                                                 'title', 'description', 'brandTitle',
                                                 'original_price', 'price', 'stocks',
-                                                'thumbnail', 'details', 'related_program', 'status', 'is_hidden'])
+                                                'thumbnail', 'details', 'related_programs', 'status', 'is_hidden'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
         products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
@@ -165,9 +165,9 @@ def read_products():
         result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
     try:
-        products_df['related_program'] = products_df['related_program'].apply(lambda x: json.loads(x))
-        products_df['related_program'] = products_df['related_program'].apply(lambda x: list({data['id']: data for data in x}.values()))
-        products_df['related_program'] = products_df['related_program'].apply(lambda x: [] if x[0]['id'] is None else x)
+        products_df['related_programs'] = products_df['related_programs'].apply(lambda x: json.loads(x))
+        products_df['related_programs'] = products_df['related_programs'].apply(lambda x: list({data['id']: data for data in x}.values()))
+        products_df['related_programs'] = products_df['related_programs'].apply(lambda x: [] if x[0]['id'] is None else x)
 
         products_df = products_df.sort_values(by=['stocks', 'price'], ascending=False)
         sorter = ['on_sale', 'future', 'sold_out_temp', 'sold_out']
@@ -246,7 +246,7 @@ def read_a_product(product_id: int):
                     'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
                     'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id),
                     'type', prog.type
-                )) AS related_program,
+                )) AS related_programs,
             prod.status,
             prod.is_hidden
         FROM
@@ -280,7 +280,7 @@ def read_a_product(product_id: int):
     products_df = pd.DataFrame(result, columns=['id', 'type', 'code',
                                                 'title', 'description', 'brandTitle',
                                                 'original_price', 'price', 'stocks',
-                                                'thumbnail', 'details', 'related_program', 'status', 'is_hidden'])
+                                                'thumbnail', 'details', 'related_programs', 'status', 'is_hidden'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
         products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
@@ -290,9 +290,9 @@ def read_a_product(product_id: int):
         result_dict = json.loads(products_df.to_json(orient='records'))[0]  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
     try:
-        products_df['related_program'] = products_df['related_program'].apply(lambda x: json.loads(x))
-        products_df['related_program'] = products_df['related_program'].apply(lambda x: list({data['id']: data for data in x}.values()))
-        products_df['related_program'] = products_df['related_program'].apply(lambda x: [] if x[0]['id'] is None else x)
+        products_df['related_programs'] = products_df['related_programs'].apply(lambda x: json.loads(x))
+        products_df['related_programs'] = products_df['related_programs'].apply(lambda x: list({data['id']: data for data in x}.values()))
+        products_df['related_programs'] = products_df['related_programs'].apply(lambda x: [] if x[0]['id'] is None else x)
     except:
         connection.close()
         result_dict = json.loads(products_df.to_json(orient='records'))[0]  # Array type으로 가고있음
