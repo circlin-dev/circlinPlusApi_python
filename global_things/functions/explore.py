@@ -373,7 +373,7 @@ def make_query_to_find_related_terms(word: str):
     ).where(
         Criterion.all([
             programs.title.like(f'%{word}%'),
-            programs.deleted_at is not None
+            programs.deleted_at.isnotnull()
         ])
     ).orderby(fn.Length(programs.title)).get_sql()
 
@@ -385,7 +385,7 @@ def make_query_to_find_related_terms(word: str):
     ).where(
         Criterion.all([
             coaches.name.like(f'%{word}%'),
-            coaches.deleted_at is not None
+            coaches.deleted_at.isnotnull()
         ])
     ).orderby(fn.Length(coaches.name)).get_sql()
 
