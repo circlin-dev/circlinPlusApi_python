@@ -102,7 +102,7 @@ def get_coaches():
         release_at = df_by_id['release_at'].unique()[0].strftime('%Y-%m-%d %H:%M:%S')
         status = df_by_id['status'].unique()[0]
         tag_list = json.loads(df_by_id['tag'].unique()[0])
-        related_product = json.loads(df_by_id['related_product'])
+        related_product = json.loads(df_by_id['related_product'].unique()[0])
 
         result_dict = {
             "id": each_id,
