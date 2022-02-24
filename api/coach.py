@@ -43,8 +43,8 @@ def get_coaches():
         ) AS related_program,
         p.release_at,
         CASE
-            WHEN p.release_at > NOW() THEN 'future'
-            ELSE 'on_sale'
+            WHEN p.release_at > NOW() THEN 'comming'
+            ELSE 'released'
         END AS status,
         JSON_ARRAYAGG(pt.tag) AS tag,
         JSON_OBJECT(
@@ -107,7 +107,7 @@ def get_coaches():
             "release_at": release_at,
             "status": coach[8],
             "tag_list": json.loads(coach[9]),
-            "related_product": json.loads(coach[10]),
+            "related_equipment": json.loads(coach[10]),
             "intro": intro
         }
         result_list.append(result_dict)
