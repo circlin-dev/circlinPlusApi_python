@@ -126,11 +126,11 @@ def get_coaches():
         }
         result_list.append(result_dict)
 
-    result = {
-        'result': True,
-        'data': result_list
-    }
-    return json.dumps(result, ensure_ascii=False), 200
+    # result = {
+    #     'result': True,
+    #     'data': result_list
+    # }
+    return json.dumps(result_list, ensure_ascii=False), 200
 
 
 @api.route('/coach/<coach_id>', methods=['GET'])
@@ -252,8 +252,4 @@ def get_coach(coach_id):
         "intro": intro
     }
 
-    result = {
-        'result': True,
-        'data': result_dict
-    }
-    return json.dumps(result, ensure_ascii=False), 200
+    return json.dumps(result_dict, ensure_ascii=False), 200
