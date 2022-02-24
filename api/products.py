@@ -170,10 +170,10 @@ def read_products():
         products_df['related_programs'] = products_df['related_programs'].apply(lambda x: [] if x[0]['id'] is None else x)
 
         products_df = products_df.sort_values(by=['stocks', 'price'], ascending=False)
-        sorter = ['on_sale', 'future', 'sold_out_temp', 'sold_out']
-        products_df.status = products_df.status.astype('category')
-        products_df.status.cat.set_categories(sorter)
-        products_df = products_df.sort_values(by=['status'])
+        # sorter = ['on_sale', 'future', 'sold_out_temp', 'sold_out']
+        # products_df.status = products_df.status.astype('category')
+        # products_df.status.cat.set_categories(sorter)
+        products_df = products_df.sort_values(by=['on_sale', 'future', 'sold_out_temp', 'sold_out', 'status'])
 
     except:
         connection.close()
