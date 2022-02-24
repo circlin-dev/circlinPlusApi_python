@@ -152,7 +152,18 @@ def read_a_program(program_id):
                (SELECT DISTINCT COUNT(round) FROM lectures WHERE program_id = p.id) AS num_rounds,
                (SELECT COUNT(*) FROM lectures WHERE program_id = p.id) AS num_lectures,
                JSON_OBJECT(
-                       'id', prod.id,
+                   'id', c.id,
+                   'title', c.name,
+                   'thumbnail', (SELECT pathname FROM files WHERE id = c.profile_id),
+                   'description', c.greeting,
+                   'exercise', c.category,
+                   'team', CASE WHEN c.affiliation = '' THEN NULL ELSE c.affiliation END,
+                   'intro', (SELECT pathname FROM files WHERE id = c.intro_id)
+                ) AS coach,
+                e.title AS exercises,
+               JSON_ARRAYAGG(
+                   JSON_OBJECT(
+                        'id', prod.id,
                        'type', prod.type,
                        'code', prod.code,
                        'title', prod.title,
@@ -160,15 +171,6 @@ def read_a_program(program_id):
                        'brandTitle', (SELECT title FROM brands WHERE id = prod.brand_id),
                        'original_price', prod.original_price,
                        'price', prod.price,
-                       'thumbnail', (SELECT pathname FROM files WHERE id = (SELECT pi.file_id FROM product_images pi WHERE pi.product_id = prod.id AND pi.type = 'thumbnail')),
-                       'stocks', prod.stocks,
-                       'is_hidden', prod.is_hidden
-                ) AS coach,
-                e.title AS exercises,
-               JSON_ARRAYAGG(
-                   JSON_OBJECT(
-                       'id', prod.id,
-                       'title', prod.title,
                        'thumbnail', (SELECT pathname FROM files WHERE id = (SELECT pi.file_id FROM product_images pi WHERE pi.product_id = prod.id AND pi.type = 'thumbnail')),
                        'stocks', prod.stocks,
                        'is_hidden', prod.is_hidden
