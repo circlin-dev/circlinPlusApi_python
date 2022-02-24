@@ -51,13 +51,13 @@ def validation_subscription_order(purchase_information: tuple, discount_informat
         return to_be_paid, subscription_original_price, discount_id
 
     if method == 'percent':
-        to_be_paid = round(subscription_original_price * (1 - (value * 0.01)), -1)  # 1의 자리에서 '반올림'
+        to_be_paid = round(subscription_price * (1 - (value * 0.01)), -1)  # 1의 자리에서 '반올림'
         return to_be_paid, subscription_original_price, discount_id
     elif method == 'amount':
-        to_be_paid = subscription_original_price - value
+        to_be_paid = subscription_price - value
         return to_be_paid, subscription_original_price, discount_id
     else:
-        return subscription_original_price, subscription_original_price, discount_id
+        return subscription_price, subscription_original_price, discount_id
 
 
 def validation_equipment_delivery(equipment_information: dict, discount_information: dict):
