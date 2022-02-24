@@ -4,4 +4,4 @@ from flask_cors import CORS
 api = Blueprint('api', __name__)
 CORS(api, supports_credentials=True)
 
-from . import bodylab, user_question, explore, trial, products, order, coach
+from . import bodylab, user_question, explore, trial, products, order, coach, program

@@ -33,7 +33,7 @@ def get_coaches():
         c.id,
         c.name,
         f.pathname AS coach_thumbnail,
-        c.greeting AS introducing,
+        c.greeting AS description,
         c.category AS exercise,
         CASE
             WHEN c.affiliation = '' THEN NULL
@@ -156,7 +156,7 @@ def get_coach(coach_id):
             c.id,
             c.name,
             f.pathname AS coach_thumbnail,
-            c.greeting AS introducing,
+            c.greeting AS description,
             c.category AS exercise,
             CASE
                 WHEN c.affiliation = '' THEN NULL
