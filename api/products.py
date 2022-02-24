@@ -172,7 +172,7 @@ def read_products():
         products_df = products_df.sort_values(by=['stocks', 'price'], ascending=False)
         sorter = ['released', 'comming', 'sold_out']
         products_df.status = products_df.status.astype('category')
-        products_df.status.cat.set_categories(sorter)
+        products_df.status.cat.set_categories(sorter, inplace=True)
         products_df = products_df.sort_values(by=['status'])
 
     except:

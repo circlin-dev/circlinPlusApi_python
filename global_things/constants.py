@@ -76,3 +76,13 @@ BODY_IMAGE_ANALYSIS_CRITERIA = {
 # endregion
 
 
+
+
+    products_df = products_df.sort_values(by=['stocks', 'price'], ascending=False)
+    sorter = ['on_sale', 'future', 'sold_out_temp', 'sold_out']
+    products_df.status = products_df.status.astype('category')
+    products_df.status.cat.set_categories(sorter, inplace=True)
+    products_df = products_df.sort_values(by=['status'])
+except:
+    result_dict = sorted(result_dict, key=lambda x: (x['stocks'], x['price']), reverse=True)
+    return json.dumps(result_dict, ensure_ascii=False), 200
