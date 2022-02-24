@@ -71,7 +71,7 @@ def read_products():
                         'type', prog.type
                     )
                 ) AS related_programs,
-                DATE_FORMAT(prod.release_at, '%Y-%m-%d %h:%i:%s') AS release_at,
+                DATE_FORMAT(prod.release_at, '%Y-%m-%d %H:%i:%s') AS release_at,
                 CASE
                     WHEN prod.release_at > NOW() THEN 'comming'
                     ELSE 'released'
@@ -135,7 +135,7 @@ def read_products():
                             'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id),
                             'type', prog.type
                         )) AS related_programs,
-                        DATE_FORMAT(prod.release_at, '%Y-%m-%d %h:%i:%s') AS release_at,
+                        DATE_FORMAT(prod.release_at, '%Y-%m-%d %H:%i:%s') AS release_at,
                         CASE
                             WHEN prod.release_at > NOW() THEN 'comming'
                             ELSE 'released'
@@ -271,7 +271,7 @@ def read_a_product(product_id: int):
                     'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id),
                     'type', prog.type
                 )) AS related_programs,
-            DATE_FORMAT(prod.release_at, '%Y-%m-%d %h:%i:%s') AS release_at,
+            DATE_FORMAT(prod.release_at, '%Y-%m-%d %H:%i:%s') AS release_at,
             CASE
                 WHEN prod.release_at > NOW() THEN 'comming'
                 ELSE 'released'
