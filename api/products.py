@@ -66,7 +66,8 @@ def read_products():
                         'title', prog.title,
                         'thumbnail', (SELECT pathname FROM files WHERE id = prog.thumbnail_id),
                         'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
-                        'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id)
+                        'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id),
+                        'type', prog.type
                     )
                 ) AS related_program,
                  prod.status,
@@ -119,7 +120,8 @@ def read_products():
                             'title', prog.title,
                             'thumbnail', (SELECT pathname FROM files WHERE id = prog.thumbnail_id),
                             'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
-                            'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id)
+                            'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id),
+                            'type', prog.type                            
                         )) AS related_program,
                     prod.status,
                     prod.is_hidden
@@ -242,7 +244,8 @@ def read_a_product(product_id: int):
                     'title', prog.title,
                     'thumbnail', (SELECT pathname FROM files WHERE id = prog.thumbnail_id),
                     'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
-                    'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id)
+                    'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id),
+                    'type', prog.type
                 )) AS related_program,
             prod.status,
             prod.is_hidden
