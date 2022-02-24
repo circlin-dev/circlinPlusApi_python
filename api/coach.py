@@ -216,35 +216,35 @@ def get_coach(coach_id):
     coach = cursor.fetchall()
     connection.close()
 
-    if coach[7] is None:
+    if coach[0][7] is None:
         release_at = None
     else:
-        release_at = coach[7].strftime('%Y-%m-%d %H:%M:%S')
-    if coach[11] is None:
+        release_at = coach[0][7].strftime('%Y-%m-%d %H:%M:%S')
+    if coach[0][11] is None:
         intro = None
     else:
-        intro = coach[11]
-    related_program = json.loads(coach[6])
-    if json.loads(coach[9])[0] is None:
+        intro = coach[0][11]
+    related_program = json.loads(coach[0][6])
+    if json.loads(coach[0][9])[0] is None:
         tags = None
     else:
-        tags = json.loads(coach[9])
+        tags = json.loads(coach[0][9])
     for x in related_program:
         if x['id'] is None:
             related_program.remove(x)
 
     result_dict = {
-        "id": coach[0],
-        "title": coach[1],
-        "thumbnail": coach[2],
-        "description": coach[3],
-        "exercise": coach[4],
-        "team": coach[5],
+        "id": coach[0][0],
+        "title": coach[0][1],
+        "thumbnail": coach[0][2],
+        "description": coach[0][3],
+        "exercise": coach[0][4],
+        "team": coach[0][5],
         "related_program": related_program,
         "release_at": release_at,
-        "status": coach[8],
+        "status": coach[0][8],
         "tag_list": tags,
-        "related_equipment": json.loads(coach[10]),
+        "related_equipment": json.loads(coach[0][10]),
         "intro": intro
     }
 
