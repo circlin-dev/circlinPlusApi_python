@@ -89,6 +89,7 @@ def get_coaches():
     GROUP BY c.id"""
     cursor.execute(sql)
     coaches = cursor.fetchall()
+    connection.close()
 
     result_list = []
     for coach in coaches:
@@ -138,26 +139,47 @@ def get_coach(coach_id):
     endpoint = API_ROOT + url_for('api.get_coach', coach_id=coach_id)
     # token = request.headers['Authorization']
 
+    try:
+        connection = login_to_db()
+    except Exception as e:
+        error = str(e)
+        result = {
+            'result': False,
+            'error': f'Server Error while connecting to DB: {error}'
+        }
+        slack_error_notification(user_ip=ip, api=endpoint, error_message=result['error'], method=request.method)
+        return json.dumps(result, ensure_ascii=False), 500
+    cursor = connection.cursor()
+
     sql = f"""
         SELECT
             c.id,
             c.name,
-            JSON_OBJECT('id', f.id, 'thumbnail', f.pathname) AS coach_thumbnail,
+            f.pathname AS coach_thumbnail,
             c.greeting AS introducing,
             c.category AS exercise,
-            c.affiliation AS team,
-            JSON_OBJECT('id', p.id, 'title', p.title) AS program_title,
-            p.release_at,
             CASE
-                WHEN p.release_at > NOW() THEN 'future'
-                ELSE 'on_sale'
+                WHEN c.affiliation = '' THEN NULL
+                ELSE c.affiliation
+            END AS team,
+            JSON_ARRAY(JSON_OBJECT(
+                'id', p.id,
+                'title', p.title,
+                'thumbnail', (SELECT pathname FROM files WHERE id=p.thumbnail_id),
+                'release_at', p.release_at
+            )) AS related_program,
+            c.release_at,
+            CASE
+                WHEN c.release_at > NOW() THEN 'comming'
+                ELSE 'released'
             END AS status,
-            JSON_ARRAYAGG(JSON_OBJECT('id', pt.id, 'tag', pt.tag)) AS tag,
+            JSON_ARRAYAGG(pt.tag) AS tag,
             JSON_OBJECT(
                 'id', prod.id,
                 'title', prod.title,
                 'thumbnail', (SELECT files.pathname FROM files WHERE files.id=(SELECT file_id FROM product_images WHERE product_id = prod.id AND type='thumbnail'))
-            ) AS product
+            ) AS product,
+           (SELECT files.pathname FROM files WHERE files.id=c.intro_id) AS intro
         FROM
              coaches c
         LEFT JOIN
@@ -189,3 +211,45 @@ def get_coach(coach_id):
         WHERE c.deleted_at IS NULL
         AND c.id={coach_id}
         GROUP BY c.id"""
+
+    cursor.execute(sql)
+    coach = cursor.fetchall()
+    connection.close()
+
+    if coach[7] is None:
+        release_at = None
+    else:
+        release_at = coach[7].strftime('%Y-%m-%d %H:%M:%S')
+    if coach[11] is None:
+        intro = None
+    else:
+        intro = coach[11]
+    related_program = json.loads(coach[6])
+    if json.loads(coach[9])[0] is None:
+        tags = None
+    else:
+        tags = json.loads(coach[9])
+    for x in related_program:
+        if x['id'] is None:
+            related_program.remove(x)
+
+    result_dict = {
+        "id": coach[0],
+        "title": coach[1],
+        "thumbnail": coach[2],
+        "description": coach[3],
+        "exercise": coach[4],
+        "team": coach[5],
+        "related_program": related_program,
+        "release_at": release_at,
+        "status": coach[8],
+        "tag_list": tags,
+        "related_equipment": json.loads(coach[10]),
+        "intro": intro
+    }
+
+    result = {
+        'result': True,
+        'data': result_dict
+    }
+    return json.dumps(result, ensure_ascii=False), 200
