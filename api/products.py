@@ -71,7 +71,7 @@ def read_products():
                         'type', prog.type
                     )
                 ) AS related_programs,
-                prod.release_at AS released_at,
+                prod.release_at AS release_at,
                 CASE
                     WHEN prod.release_at > NOW() THEN 'comming'
                     ELSE 'released'
@@ -135,7 +135,7 @@ def read_products():
                             'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id),
                             'type', prog.type
                         )) AS related_programs,
-                        prod.release_at AS released_at,
+                        prod.release_at AS release_at,
                         CASE
                             WHEN prod.release_at > NOW() THEN 'comming'
                             ELSE 'released'
@@ -180,7 +180,7 @@ def read_products():
                                                 'title', 'description', 'brandTitle',
                                                 'original_price', 'price', 'stocks',
                                                 'thumbnail', 'details', 'related_programs',
-                                                'released_at', 'status', 'is_hidden', 'exercises'])
+                                                'release_at', 'status', 'is_hidden', 'exercises'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
         products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
@@ -317,7 +317,7 @@ def read_a_product(product_id: int):
                                                 'title', 'description', 'brandTitle',
                                                 'original_price', 'price', 'stocks',
                                                 'thumbnail', 'details', 'related_programs',
-                                                'released_at', 'status', 'is_hidden', 'exercises'])
+                                                'release_at', 'status', 'is_hidden', 'exercises'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
         products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
