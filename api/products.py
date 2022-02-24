@@ -43,9 +43,9 @@ def read_products():
                prod.id,
                prod.type,
                prod.code,
-               prod.title as name,
+               prod.title as title,
                prod.description,
-               b.title as brand_name,
+               b.title as brandTitle,
                prod.original_price as original_price,
                prod.price as price,
                CASE
@@ -70,8 +70,13 @@ def read_products():
                         'type', prog.type
                     )
                 ) AS related_programs,
-                 prod.status,
-                 prod.is_hidden                 
+                prod.release_at AS released_at,
+                CASE
+                    WHEN prod.release_at > NOW() THEN 'comming'
+                    ELSE 'released'
+                END AS status,
+                prod.is_hidden,
+                e.title AS exercises
             FROM
                 products prod
             INNER JOIN
@@ -89,6 +94,12 @@ def read_products():
             LEFT OUTER JOIN
                     programs prog
                 ON prog.id = pp.program_id
+            LEFT OUTER JOIN
+                    product_exercises pe
+                    ON prod.id = pe.product_id
+            LEFT OUTER JOIN
+                    exercises e
+                        ON pe.exercise_id = e.id                
             WHERE prod.is_hidden = 1  
             GROUP BY prod.id"""
     else:
@@ -121,10 +132,15 @@ def read_products():
                             'thumbnail', (SELECT pathname FROM files WHERE id = prog.thumbnail_id),
                             'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
                             'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id),
-                            'type', prog.type                            
+                            'type', prog.type
                         )) AS related_programs,
-                    prod.status,
-                    prod.is_hidden
+                        prod.release_at AS released_at,
+                        CASE
+                            WHEN prod.release_at > NOW() THEN 'comming'
+                            ELSE 'released'
+                        END AS status,
+                        prod.is_hidden,
+                        e.title AS exercises
                 FROM
                     products prod
                 INNER JOIN
@@ -142,6 +158,12 @@ def read_products():
                 LEFT OUTER JOIN
                         programs prog
                     ON prog.id = pp.program_id
+                LEFT OUTER JOIN
+                        product_exercises pe
+                        ON prod.id = pe.product_id
+                LEFT OUTER JOIN
+                        exercises e
+                            ON pe.exercise_id = e.id
                 WHERE prod.type='{parameters[0]}'
 --                 AND prod.is_hidden = 1
                 GROUP BY prod.id"""
@@ -156,7 +178,8 @@ def read_products():
     products_df = pd.DataFrame(result, columns=['id', 'type', 'code',
                                                 'title', 'description', 'brandTitle',
                                                 'original_price', 'price', 'stocks',
-                                                'thumbnail', 'details', 'related_programs', 'status', 'is_hidden'])
+                                                'thumbnail', 'details', 'related_programs',
+                                                'released_at', 'status', 'is_hidden', 'exercises'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
         products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
@@ -247,8 +270,13 @@ def read_a_product(product_id: int):
                     'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id),
                     'type', prog.type
                 )) AS related_programs,
-            prod.status,
-            prod.is_hidden
+            prod.release_at AS release_at,
+            CASE
+                WHEN prod.release_at > NOW() THEN 'comming'
+                ELSE 'released'
+            END AS status,
+            prod.is_hidden,
+            e.title AS exercises            
         FROM
             products prod
         INNER JOIN
@@ -266,6 +294,12 @@ def read_a_product(product_id: int):
         LEFT OUTER JOIN
                 programs prog
             ON prog.id = pp.program_id
+        LEFT OUTER JOIN
+                product_exercises pe
+                ON prod.id = pe.product_id
+        LEFT OUTER JOIN
+                exercises e
+                    ON pe.exercise_id = e.id            
         WHERE prod.id = {product_id}
 --         AND prod.is_hidden = 1
         GROUP BY prod.id"""
@@ -280,7 +314,8 @@ def read_a_product(product_id: int):
     products_df = pd.DataFrame(result, columns=['id', 'type', 'code',
                                                 'title', 'description', 'brandTitle',
                                                 'original_price', 'price', 'stocks',
-                                                'thumbnail', 'details', 'related_programs', 'status', 'is_hidden'])
+                                                'thumbnail', 'details', 'related_programs',
+                                                'released_at', 'status', 'is_hidden', 'exercises'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
         products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
