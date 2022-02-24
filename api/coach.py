@@ -100,10 +100,10 @@ def get_coaches():
         exercise = df_by_id['exercise'].unique()[0]
         team = df_by_id['team'].unique()[0]
         related_program = json.loads(df_by_id['related_program'].unique()[0])
-        if df_by_id['release_at'].unique()[0] is None:
+        if df_by_id['release_at'].unique()[0].dt is None:
             release_at = None
         else:
-            release_at = pd.to_datetime(df_by_id['release_at'].unique()[0]).strftime('%Y-%m-%d %H:%M:%S')
+            release_at = pd.to_datetime(df_by_id['release_at'].unique()[0]).dt.strftime('%Y-%m-%d %H:%M:%S')
         status = df_by_id['status'].unique()[0]
         tag_list = json.loads(df_by_id['tag'].unique()[0])
         related_product = json.loads(df_by_id['related_product'].unique()[0])
