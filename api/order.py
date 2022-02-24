@@ -142,7 +142,7 @@ def create_chat_with_manager():
         return json.dumps(result, ensure_ascii=False), 200
 
     if order_id is not None:
-        slack_purchase_notification(cursor, user_id, manager_id, order_id)
+        slack_purchase_notification(cursor, user_id, order_id)
     connection.close()
     result = {
         'result': True,
@@ -412,7 +412,7 @@ def add_subscription_order():
     users = Table('users')
 
     parameters = json.loads(request.get_data(), encoding='utf-8')
-    user_id = parameters['user_id']
+    user_id = int(parameters['user_id'])
     subscription_code = parameters['subscription_code']
     discount_code = parameters['discount_code']
     period = int(parameters['subscription_period'])  # Month!!!!!
@@ -667,8 +667,8 @@ def add_subscription_order():
             users.id == user_id
         ).get_sql()
         cursor.execute(sql)
-        user_infromation = cursor.fetchall()
-        user_nickname, user_phone = user_infromation[0]
+        user_information = cursor.fetchall()
+        user_nickname, user_phone = user_information[0]
         slack_purchase_notification(cursor, user_id, user_nickname, user_phone, order_id)
 
         connection.close()
