@@ -96,7 +96,7 @@ def get_coaches():
         if coach[7] is None:
             release_at = None
         else:
-            release_at = coach[7].strftime('%Y-%m-%d %H:%M:%S')
+            release_at = coach[7]
         if coach[11] is None:
             intro = None
         else:
@@ -219,7 +219,7 @@ def get_coach(coach_id):
     if coach[0][7] is None:
         release_at = None
     else:
-        release_at = coach[0][7].strftime('%Y-%m-%d %H:%M:%S')
+        release_at = coach[0][7]
     if coach[0][11] is None:
         intro = None
     else:
