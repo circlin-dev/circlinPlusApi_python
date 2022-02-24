@@ -91,19 +91,32 @@ def get_coaches():
 
     result_list = []
     for coach in coaches:
+        if coach[5] is None:
+            team = None
+        else:
+            team = coach[5]
+        if coach[7] is None:
+            release_at = None
+        else:
+            release_at = coach[7].strftime('%Y-%m-%d %H:%M:%S')
+
+        if coach[11] is None:
+            intro = None
+        else:
+            intro = coach[11]
         result_dict = {
             "id": coach[0],
             "title": coach[1],
             "thumbnail": json.loads(coach[2]),
             "description": coach[3],
             "exercise": coach[4],
-            "team": coach[5],
+            "team": team,
             "related_program": coach[6],
-            "release_at": coach[7].strftime('%Y-%m-%d %H:%M:%S'),
+            "release_at": release_at,
             "status": coach[8],
             "tag_list": json.loads(coach[9]),
             "related_product": json.loads(coach[10]),
-            "intro": coach[11]
+            "intro": intro
         }
         result_list.append(result_dict)
 
