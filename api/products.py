@@ -173,7 +173,7 @@ def read_products():
         sorter = ['on_sale', 'future', 'sold_out_temp', 'sold_out']
         products_df.status = products_df.status.astype('category')
         # products_df.status.cat.set_categories(sorter, inplace=True)
-        # products_df = products_df.sort_values(by=['status'])
+        products_df = products_df.sort_values(by=['status'])
 
     except:
         connection.close()
