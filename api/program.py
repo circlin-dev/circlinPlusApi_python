@@ -14,7 +14,7 @@ from pypika import MySQLQuery as Query, Criterion, Interval, Table, Field, Order
 @api.route('/program', methods=['GET'])
 def read_programs():
     ip = request.headers["X-Forwarded-For"]
-    endpoint = API_ROOT + url_for('api.read_products')
+    endpoint = API_ROOT + url_for('api.read_programs')
     # session_id = request.headers['Authorization']
     # check_session(session_id)
     """페이징 필요!!!"""
@@ -111,9 +111,9 @@ def read_programs():
 
 
 @api.route('/program/<program_id>', methods=['GET'])
-def read_programs(program_id):
+def read_a_program(program_id):
     ip = request.headers["X-Forwarded-For"]
-    endpoint = API_ROOT + url_for('api.read_products')
+    endpoint = API_ROOT + url_for('api.read_a_program', program_id=program_id)
     # session_id = request.headers['Authorization']
     # check_session(session_id)
     """페이징 필요!!!"""
@@ -191,6 +191,7 @@ def read_programs(program_id):
         ON
             pp.product_id = prod.id
         WHERE p.deleted_at IS NULL
+        AND p.id = {program_id}
         GROUP BY p.id"""
     cursor.execute(sql)
     result = cursor.fetchall()
