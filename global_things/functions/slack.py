@@ -77,6 +77,10 @@ def slack_purchase_notification(cursor, user_id: int = 0, user_nickname: str = '
     users.subscription_expired_at,
     subscriptions.title
   ).join(
+    users
+  ).on(
+    users.id == user_id
+  ).join(
     order_subscriptions
   ).on(
     order_subscriptions.order_id == orders.id

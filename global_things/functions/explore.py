@@ -35,7 +35,7 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
               JSON_ARRAYAGG(JSON_OBJECT('pathname', f.pathname)) AS thumbnails,
               (SELECT COUNT(*) FROM lectures WHERE program_id = p.id) AS num_lectures,
                IFNULL(cl.num_completed_lectures, 0) AS num_completed_lectures,
-               p.type               
+               p.type
         FROM
               programs p
         LEFT JOIN
@@ -84,6 +84,8 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
             pur.id = ppu.purpose_id
         WHERE
                p.title LIKE '%{word}%'
+        AND
+            p.deleted_at IS NULL
         GROUP BY
               p.id, ex.id, prod.id, pur.id
         ORDER BY
@@ -155,6 +157,8 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
             WHERE
                    c.name LIKE '%{word}%'
             AND p.coach_id = (SELECT id FROM coaches WHERE name=c.name)
+            AND
+                p.deleted_at IS NULL            
             GROUP BY
                   p.id, ex.id, prod.id, pur.id
             ORDER BY
@@ -221,6 +225,8 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
             pur.id = ppu.purpose_id
         WHERE
             ex.title LIKE '%{word}%'
+        AND
+            p.deleted_at IS NULL            
         GROUP BY
               p.id, ex.id, prod.id, pur.id
         ORDER BY
@@ -287,6 +293,8 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
             pur.id = ppu.purpose_id
         WHERE
             prod.title LIKE '%{word}%'
+        AND
+            p.deleted_at IS NULL            
         GROUP BY
           p.id, ex.id, prod.id, pur.id
         ORDER BY
