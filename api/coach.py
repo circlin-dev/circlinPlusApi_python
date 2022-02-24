@@ -33,17 +33,21 @@ def get_coaches():
         c.id,
         c.name,
         f.pathname AS coach_thumbnail,
-        c.greeting AS description,
+        c.greeting AS introducing,
         c.category AS exercise,
-        c.affiliation AS team,
-        JSON_OBJECT(
-            'id', p.id, 
-            'title', p.title,
-            'thumbnail', (SELECT pathname FROM files WHERE id=p.thumbnail_id)            
-        ) AS related_program,
-        p.release_at,
         CASE
-            WHEN p.release_at > NOW() THEN 'comming'
+            WHEN c.affiliation = '' THEN NULL
+            ELSE c.affiliation
+        END AS team,
+        JSON_ARRAY(JSON_OBJECT(
+            'id', p.id,
+            'title', p.title,
+            'thumbnail', (SELECT pathname FROM files WHERE id=p.thumbnail_id),
+            'release_at', p.release_at
+        )) AS related_program,
+        c.release_at,
+        CASE
+            WHEN c.release_at > NOW() THEN 'comming'
             ELSE 'released'
         END AS status,
         JSON_ARRAYAGG(pt.tag) AS tag,
@@ -51,8 +55,8 @@ def get_coaches():
             'id', prod.id,
             'title', prod.title,
             'thumbnail', (SELECT files.pathname FROM files WHERE files.id=(SELECT file_id FROM product_images WHERE product_id = prod.id AND type='thumbnail'))
-        ) AS related_product,
-        (SELECT files.pathname FROM files WHERE files.id=c.intro_id) AS intro
+        ) AS product,
+       (SELECT files.pathname FROM files WHERE files.id=c.intro_id) AS intro
     FROM
          coaches c
     LEFT JOIN
@@ -96,6 +100,15 @@ def get_coaches():
             intro = None
         else:
             intro = coach[11]
+        related_program = json.loads(coach[6])
+        if json.loads(coach[9])[0] is None:
+            tags = None
+        else:
+            tags = json.loads(coach[9])
+        for x in related_program:
+            if x['id'] is None:
+                related_program.remove(x)
+
         result_dict = {
             "id": coach[0],
             "title": coach[1],
@@ -103,10 +116,10 @@ def get_coaches():
             "description": coach[3],
             "exercise": coach[4],
             "team": coach[5],
-            "related_program": json.loads(coach[6]),
+            "related_program": related_program,
             "release_at": release_at,
             "status": coach[8],
-            "tag_list": json.loads(coach[9]),
+            "tag_list": tags,
             "related_equipment": json.loads(coach[10]),
             "intro": intro
         }
@@ -114,7 +127,7 @@ def get_coaches():
 
     result = {
         'result': True,
-        'data': result_dict
+        'data': result_list
     }
     return json.dumps(result, ensure_ascii=False), 200
 
