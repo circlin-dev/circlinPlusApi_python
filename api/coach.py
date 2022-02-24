@@ -44,7 +44,7 @@ def get_coaches():
             'title', p.title,
             'thumbnail', (SELECT pathname FROM files WHERE id=p.thumbnail_id),
             'release_at', p.release_at
-        )) AS related_program,
+        )) AS related_programs,
         c.release_at,
         CASE
             WHEN c.release_at > NOW() THEN 'comming'
@@ -101,14 +101,14 @@ def get_coaches():
             intro = None
         else:
             intro = coach[11]
-        related_program = json.loads(coach[6])
         if json.loads(coach[9])[0] is None:
             tags = None
         else:
             tags = json.loads(coach[9])
-        for x in related_program:
+        related_programs = json.loads(coach[6])
+        for x in related_programs:
             if x['id'] is None:
-                related_program.remove(x)
+                related_programs.remove(x)
 
         result_dict = {
             "id": coach[0],
@@ -117,7 +117,7 @@ def get_coaches():
             "description": coach[3],
             "exercise": coach[4],
             "team": coach[5],
-            "related_program": related_program,
+            "related_programs": related_programs,
             "release_at": release_at,
             "status": coach[8],
             "tag_list": tags,
@@ -167,7 +167,7 @@ def get_coach(coach_id):
                 'title', p.title,
                 'thumbnail', (SELECT pathname FROM files WHERE id=p.thumbnail_id),
                 'release_at', p.release_at
-            )) AS related_program,
+            )) AS related_programs,
             c.release_at,
             CASE
                 WHEN c.release_at > NOW() THEN 'comming'
@@ -224,14 +224,14 @@ def get_coach(coach_id):
         intro = None
     else:
         intro = coach[0][11]
-    related_program = json.loads(coach[0][6])
     if json.loads(coach[0][9])[0] is None:
         tags = None
     else:
         tags = json.loads(coach[0][9])
-    for x in related_program:
+    related_programs = json.loads(coach[0][6])
+    for x in related_programs:
         if x['id'] is None:
-            related_program.remove(x)
+            related_programs.remove(x)
     if json.loads(coach[0][10])['id'] is None:
         related_equipment = {}
     else:
@@ -244,7 +244,7 @@ def get_coach(coach_id):
         "description": coach[0][3],
         "exercise": coach[0][4],
         "team": coach[0][5],
-        "related_program": related_program,
+        "related_program": related_programs,
         "release_at": release_at,
         "status": coach[0][8],
         "tag_list": tags,
