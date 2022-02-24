@@ -71,7 +71,7 @@ def read_products():
                         'type', prog.type
                     )
                 ) AS related_programs,
-                prod.release_at AS release_at,
+                DATE_FORMAT(prod.release_at, '%Y-%m-%d %h:%i:%s') AS release_at,
                 CASE
                     WHEN prod.release_at > NOW() THEN 'comming'
                     ELSE 'released'
@@ -135,7 +135,7 @@ def read_products():
                             'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id),
                             'type', prog.type
                         )) AS related_programs,
-                        prod.release_at AS release_at,
+                        DATE_FORMAT(prod.release_at, '%Y-%m-%d %h:%i:%s') AS release_at,
                         CASE
                             WHEN prod.release_at > NOW() THEN 'comming'
                             ELSE 'released'
@@ -198,7 +198,7 @@ def read_products():
         products_df.status = products_df.status.astype('category')
         products_df.status.cat.set_categories(sorter, inplace=True)
         products_df = products_df.sort_values(by=['status'])
-        products_df['release_at'] = products_df['release_at'].apply(lambda x: None if x is None else datetime.fromtimestamp(x/1000).strftime('%Y-%m-%d %H:%M:%S'))
+        # products_df['release_at'] = products_df['release_at'].apply(lambda x: None if x is None else datetime.fromtimestamp(x/1000).strftime('%Y-%m-%d %H:%M:%S'))
     except:
         connection.close()
         result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
@@ -271,7 +271,7 @@ def read_a_product(product_id: int):
                     'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id),
                     'type', prog.type
                 )) AS related_programs,
-            prod.release_at AS release_at,
+            DATE_FORMAT(prod.release_at, '%Y-%m-%d %h:%i:%s') AS release_at,
             CASE
                 WHEN prod.release_at > NOW() THEN 'comming'
                 ELSE 'released'
@@ -329,7 +329,7 @@ def read_a_product(product_id: int):
         products_df['related_programs'] = products_df['related_programs'].apply(lambda x: json.loads(x))
         products_df['related_programs'] = products_df['related_programs'].apply(lambda x: list({data['id']: data for data in x}.values()))
         products_df['related_programs'] = products_df['related_programs'].apply(lambda x: [] if x[0]['id'] is None else x)
-        products_df['release_at'] = products_df['release_at'].apply(lambda x: None if x is None else datetime.fromtimestamp(x/1000).strftime('%Y-%m-%d %H:%M:%S'))
+        # products_df['release_at'] = products_df['release_at'].apply(lambda x: None if x is None else datetime.fromtimestamp(x/1000).strftime('%Y-%m-%d %H:%M:%S'))
     except:
         connection.close()
         result_dict = json.loads(products_df.to_json(orient='records'))[0]  # Array type으로 가고있음
