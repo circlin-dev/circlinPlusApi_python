@@ -43,7 +43,7 @@ def read_programs():
                p.title,
                p.subtitle,
                p.description,
-               f.pathname,
+               f.pathname AS thumbnail,
                (SELECT DISTINCT COUNT(round) FROM lectures WHERE program_id = p.id) AS num_rounds,
                (SELECT COUNT(*) FROM lectures WHERE program_id = p.id) AS num_lectures,
                JSON_OBJECT(
@@ -105,7 +105,7 @@ def read_programs():
 
     programs = pd.DataFrame(result, columns=['id', 'release_at', 'status', 'type',
                                              'title', 'subtitle', 'description',
-                                             'pathname', 'num_rounds', 'num_lectures',
+                                             'thumbnail', 'num_rounds', 'num_lectures',
                                              'coach', 'exercises', 'products'])
     programs['coach'] = programs['coach'].apply(lambda x: json.loads(x))
     programs['products'] = programs['products'].apply(lambda x: json.loads(x))
@@ -148,7 +148,7 @@ def read_a_program(program_id):
                p.title,
                p.subtitle,
                p.description,
-               f.pathname,
+               f.pathname AS thumbnail,
                (SELECT DISTINCT COUNT(round) FROM lectures WHERE program_id = p.id) AS num_rounds,
                (SELECT COUNT(*) FROM lectures WHERE program_id = p.id) AS num_lectures,
                JSON_OBJECT(
@@ -211,7 +211,7 @@ def read_a_program(program_id):
 
     programs = pd.DataFrame(result, columns=['id', 'release_at', 'status', 'type',
                                              'title', 'subtitle', 'description',
-                                             'pathname', 'num_rounds', 'num_lectures',
+                                             'thumbnail', 'num_rounds', 'num_lectures',
                                              'coach', 'exercises', 'products'])
     programs['coach'] = programs['coach'].apply(lambda x: json.loads(x))
     programs['products'] = programs['products'].apply(lambda x: json.loads(x))
