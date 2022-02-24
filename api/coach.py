@@ -32,10 +32,7 @@ def get_coaches():
     SELECT
         c.id,
         c.name,
-        JSON_OBJECT(
-            'id', f.id, 
-            'thumbnail', f.pathname
-        ) AS coach_thumbnail,
+        f.pathname AS coach_thumbnail,
         c.greeting AS description,
         c.category AS exercise,
         c.affiliation AS team,
@@ -49,7 +46,7 @@ def get_coaches():
             WHEN p.release_at > NOW() THEN 'future'
             ELSE 'on_sale'
         END AS status,
-        JSON_ARRAYAGG(JSON_OBJECT('id', pt.id, 'tag', pt.tag)) AS tag,
+        JSON_ARRAYAGG(pt.tag) AS tag,
         JSON_OBJECT(
             'id', prod.id,
             'title', prod.title,
@@ -91,15 +88,10 @@ def get_coaches():
 
     result_list = []
     for coach in coaches:
-        if coach[5] is None:
-            team = None
-        else:
-            team = coach[5]
         if coach[7] is None:
             release_at = None
         else:
             release_at = coach[7].strftime('%Y-%m-%d %H:%M:%S')
-
         if coach[11] is None:
             intro = None
         else:
@@ -107,11 +99,11 @@ def get_coaches():
         result_dict = {
             "id": coach[0],
             "title": coach[1],
-            "thumbnail": json.loads(coach[2]),
+            "thumbnail": coach[2],
             "description": coach[3],
             "exercise": coach[4],
-            "team": team,
-            "related_program": coach[6],
+            "team": coach[5],
+            "related_program": json.loads(coach[6]),
             "release_at": release_at,
             "status": coach[8],
             "tag_list": json.loads(coach[9]),
