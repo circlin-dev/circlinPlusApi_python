@@ -48,7 +48,7 @@ def read_programs():
                (SELECT COUNT(*) FROM lectures WHERE program_id = p.id) AS num_lectures,
                JSON_OBJECT(
                    'id', c.id,
-                   'name', c.name,
+                   'title', c.name,
                    'thumbnail', (SELECT pathname FROM files WHERE id = c.profile_id),
                    'description', c.greeting,
                    'exercise', c.category,
@@ -147,7 +147,7 @@ def read_a_program(program_id):
                (SELECT COUNT(*) FROM lectures WHERE program_id = p.id) AS num_lectures,
                JSON_OBJECT(
                    'id', c.id,
-                   'name', c.name,
+                   'title', c.name,
                    'thumbnail', (SELECT pathname FROM files WHERE id = c.profile_id),
                    'description', c.greeting,
                    'exercise', c.category,

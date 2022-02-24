@@ -236,6 +236,10 @@ def get_coach(coach_id):
         related_equipment = {}
     else:
         related_equipment = json.loads(coach[0][10])
+    result = pd.DataFrame(coach, columns=['id', 'title', 'thumbnail', 'description',
+                                          'exercise', 'team', 'related_programs', 'status',
+                                          'tag', 'product', 'intro'])
+    # result['related_programs'] =
 
     result_dict = {
         "id": coach[0][0],
