@@ -189,7 +189,6 @@ def read_products():
         result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
     try:
-        products_df['release_at'] = products_df['release_at'].apply(lambda x: datetime.fromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S') if x is not None else datetime.fromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S'))
         products_df['related_programs'] = products_df['related_programs'].apply(lambda x: json.loads(x))
         products_df['related_programs'] = products_df['related_programs'].apply(lambda x: list({data['id']: data for data in x}.values()))
         products_df['related_programs'] = products_df['related_programs'].apply(lambda x: [] if x[0]['id'] is None else x)
@@ -328,7 +327,6 @@ def read_a_product(product_id: int):
         result_dict = json.loads(products_df.to_json(orient='records'))[0]  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
     try:
-        products_df['release_at'] = products_df['release_at'].apply(lambda x: datetime.fromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S') if x is not None else datetime.fromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S'))
         products_df['related_programs'] = products_df['related_programs'].apply(lambda x: json.loads(x))
         products_df['related_programs'] = products_df['related_programs'].apply(lambda x: list({data['id']: data for data in x}.values()))
         products_df['related_programs'] = products_df['related_programs'].apply(lambda x: [] if x[0]['id'] is None else x)
