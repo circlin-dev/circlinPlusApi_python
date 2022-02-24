@@ -156,7 +156,7 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
                 pur.id = ppu.purpose_id
             WHERE
                    c.name LIKE '%{word}%'
-            AND p.coach_id = (SELECT id FROM coaches WHERE name=c.name)
+            AND p.coach_id = (SELECT id FROM coaches WHERE name=c.name AND deleted_at IS NOT NULL)
             AND
                 p.deleted_at IS NULL            
             GROUP BY
@@ -371,7 +371,10 @@ def make_query_to_find_related_terms(word: str):
         programs.id,
         programs.title
     ).where(
-        programs.title.like(f'%{word}%')
+        Criterion.all([
+            programs.title.like(f'%{word}%'),
+            programs.deleted_at is not None
+        ])
     ).orderby(fn.Length(programs.title)).get_sql()
 
     query_coach = Query.from_(
@@ -380,7 +383,10 @@ def make_query_to_find_related_terms(word: str):
         coaches.id,
         coaches.name
     ).where(
-        coaches.name.like(f'%{word}%')
+        Criterion.all([
+            coaches.name.like(f'%{word}%'),
+            coaches.deleted_at is not None
+        ])
     ).orderby(fn.Length(coaches.name)).get_sql()
 
     query_exercise = Query.from_(
