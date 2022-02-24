@@ -573,7 +573,7 @@ def add_subscription_order():
             - 환불 요청의 checksum, amount 파라미터의 값이 변경되어야 함.
         2. 케이스별 환불사유 준비하기
         """
-        refund_reason = "[결제검증 실패]: 판매가와 결제금액이 불일치합니다."
+        refund_reason = f"[결제검증 실패]: 판매가와 결제금액이 불일치합니다(판매 금액: {to_be_paid} | 실제 결제 금액: {import_paid_amount})."
         refund_result = request_import_refund(access_token, imp_uid, merchant_uid, import_paid_amount, import_paid_amount, refund_reason)
         if refund_result['code'] == 0:
             try:
