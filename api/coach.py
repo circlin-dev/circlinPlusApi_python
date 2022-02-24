@@ -232,6 +232,10 @@ def get_coach(coach_id):
     for x in related_program:
         if x['id'] is None:
             related_program.remove(x)
+    if json.loads(coach[0][10])['id'] is None:
+        related_equipment = {}
+    else:
+        related_equipment = json.loads(coach[0][10])
 
     result_dict = {
         "id": coach[0][0],
@@ -244,7 +248,7 @@ def get_coach(coach_id):
         "release_at": release_at,
         "status": coach[0][8],
         "tag_list": tags,
-        "related_equipment": json.loads(coach[0][10]),
+        "related_equipment": related_equipment,
         "intro": intro
     }
 
