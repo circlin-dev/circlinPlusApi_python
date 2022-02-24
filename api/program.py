@@ -206,5 +206,5 @@ def read_a_program(program_id):
     programs['products'] = programs['products'].apply(lambda x: list({data['id']: data for data in x}.values()))
     programs['products'] = programs['products'].apply(lambda x: [] if x[0]['id'] is None else x)
 
-    result_dict = json.loads(programs.to_json(orient='records'))
+    result_dict = json.loads(programs.to_json(orient='records')[0])
     return json.dumps(result_dict, ensure_ascii=False), 200
