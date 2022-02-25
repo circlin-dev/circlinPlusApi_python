@@ -43,7 +43,7 @@ def get_coaches():
             'id', p.id,
             'title', p.title,
             'thumbnail', (SELECT pathname FROM files WHERE id=p.thumbnail_id),
-            'intro', (SELECT pathname FROM files WHERE f.id = p.intro_id),            
+            'intro', (SELECT pathname FROM files WHERE id=p.intro_id),            
             'release_at', p.release_at
         )) AS related_programs,
         DATE_FORMAT(c.release_at, '%Y-%m-%d %H:%i:%s') AS release_at,
@@ -167,7 +167,7 @@ def get_coach(coach_id):
                 'id', p.id,
                 'title', p.title,
                 'thumbnail', (SELECT pathname FROM files WHERE id=p.thumbnail_id),
-                'intro', (SELECT pathname FROM files WHERE f.id = p.intro_id),
+                'intro', (SELECT pathname FROM files WHERE id = p.intro_id),
                 'release_at', p.release_at
             )) AS related_programs,
             DATE_FORMAT(c.release_at, '%Y-%m-%d %H:%i:%s') AS release_at,
