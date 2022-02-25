@@ -43,6 +43,7 @@ def read_programs():
                p.title,
                p.subtitle,
                p.description,
+               (SELECT pathname FROM files WHERE f.id = p.intro_id) AS intro,               
                f.pathname AS thumbnail,
                (SELECT DISTINCT COUNT(round) FROM lectures WHERE program_id = p.id) AS num_rounds,
                (SELECT COUNT(*) FROM lectures WHERE program_id = p.id) AS num_lectures,
@@ -104,7 +105,7 @@ def read_programs():
     connection.close()
 
     programs = pd.DataFrame(result, columns=['id', 'release_at', 'status', 'type',
-                                             'title', 'subtitle', 'description',
+                                             'title', 'subtitle', 'description', 'intro',
                                              'thumbnail', 'num_rounds', 'num_lectures',
                                              'coach', 'exercise', 'products'])
     programs['coach'] = programs['coach'].apply(lambda x: json.loads(x))
@@ -148,6 +149,7 @@ def read_a_program(program_id):
                p.title,
                p.subtitle,
                p.description,
+               (SELECT pathname FROM files WHERE f.id = p.intro_id) AS intro,
                f.pathname AS thumbnail,
                (SELECT DISTINCT COUNT(round) FROM lectures WHERE program_id = p.id) AS num_rounds,
                (SELECT COUNT(*) FROM lectures WHERE program_id = p.id) AS num_lectures,
@@ -210,7 +212,7 @@ def read_a_program(program_id):
     connection.close()
 
     programs = pd.DataFrame(result, columns=['id', 'release_at', 'status', 'type',
-                                             'title', 'subtitle', 'description',
+                                             'title', 'subtitle', 'description', 'intro',
                                              'thumbnail', 'num_rounds', 'num_lectures',
                                              'coach', 'exercise', 'products'])
     programs['coach'] = programs['coach'].apply(lambda x: json.loads(x))
