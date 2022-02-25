@@ -246,7 +246,7 @@ def get_coach(coach_id):
         "description": coach[0][3],
         "exercise": coach[0][4],
         "team": coach[0][5],
-        "related_program": related_programs,
+        "related_programs": related_programs,
         "release_at": release_at,
         "status": coach[0][8],
         "tag_list": tags,
