@@ -35,10 +35,7 @@ def get_coaches():
         f.pathname AS coach_thumbnail,
         c.greeting AS description,
         c.category AS exercise,
-        CASE
-            WHEN c.affiliation = '' THEN NULL
-            ELSE c.affiliation
-        END AS team,
+        c.affiliation AS team,
         JSON_ARRAY(JSON_OBJECT(
             'id', p.id,
             'title', p.title,
@@ -159,10 +156,7 @@ def get_coach(coach_id):
             f.pathname AS coach_thumbnail,
             c.greeting AS description,
             c.category AS exercise,
-            CASE
-                WHEN c.affiliation = '' THEN NULL
-                ELSE c.affiliation
-            END AS team,
+            c.affiliation AS team,
             JSON_ARRAY(JSON_OBJECT(
                 'id', p.id,
                 'title', p.title,

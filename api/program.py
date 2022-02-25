@@ -54,7 +54,7 @@ def read_programs():
                    'thumbnail', (SELECT pathname FROM files WHERE id = c.profile_id),
                    'description', c.greeting,
                    'exercise', c.category,
-                   'team', CASE WHEN c.affiliation = '' THEN NULL ELSE c.affiliation END,
+                   'team', c.affiliation,
                    'intro', (SELECT pathname FROM files WHERE id = c.intro_id)
                 ) AS coach,
                 e.title AS exercise,
@@ -165,7 +165,7 @@ def read_a_program(program_id):
                    'thumbnail', (SELECT pathname FROM files WHERE id = c.profile_id),
                    'description', c.greeting,
                    'exercise', c.category,
-                   'team', CASE WHEN c.affiliation = '' THEN NULL ELSE c.affiliation END,
+                   'team', c.affiliation,
                    'intro', (SELECT pathname FROM files WHERE id = c.intro_id)
                 ) AS coach,
                 e.title AS exercise,
