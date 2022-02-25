@@ -55,7 +55,7 @@ def read_programs():
                    'team', CASE WHEN c.affiliation = '' THEN NULL ELSE c.affiliation END,
                    'intro', (SELECT pathname FROM files WHERE id = c.intro_id)
                 ) AS coach,
-                e.title AS exercises,
+                e.title AS exercise,
                JSON_ARRAYAGG(
                    JSON_OBJECT(
                        'id', prod.id,
@@ -106,7 +106,7 @@ def read_programs():
     programs = pd.DataFrame(result, columns=['id', 'release_at', 'status', 'type',
                                              'title', 'subtitle', 'description',
                                              'thumbnail', 'num_rounds', 'num_lectures',
-                                             'coach', 'exercises', 'products'])
+                                             'coach', 'exercise', 'products'])
     programs['coach'] = programs['coach'].apply(lambda x: json.loads(x))
     programs['products'] = programs['products'].apply(lambda x: json.loads(x))
     programs['products'] = programs['products'].apply(lambda x: list({data['id']: data for data in x}.values()))
@@ -160,7 +160,7 @@ def read_a_program(program_id):
                    'team', CASE WHEN c.affiliation = '' THEN NULL ELSE c.affiliation END,
                    'intro', (SELECT pathname FROM files WHERE id = c.intro_id)
                 ) AS coach,
-                e.title AS exercises,
+                e.title AS exercise,
                JSON_ARRAYAGG(
                    JSON_OBJECT(
                         'id', prod.id,
@@ -212,7 +212,7 @@ def read_a_program(program_id):
     programs = pd.DataFrame(result, columns=['id', 'release_at', 'status', 'type',
                                              'title', 'subtitle', 'description',
                                              'thumbnail', 'num_rounds', 'num_lectures',
-                                             'coach', 'exercises', 'products'])
+                                             'coach', 'exercise', 'products'])
     programs['coach'] = programs['coach'].apply(lambda x: json.loads(x))
     programs['products'] = programs['products'].apply(lambda x: json.loads(x))
     programs['products'] = programs['products'].apply(lambda x: list({data['id']: data for data in x}.values()))
