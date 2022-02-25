@@ -1,10 +1,8 @@
 from global_things.constants import API_ROOT
-from global_things.functions.slack import slack_error_notification, slack_purchase_notification
+from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
 from global_things.functions.order import get_import_access_token
 from . import api
-import ast
-from datetime import datetime
 from flask import jsonify, url_for, request
 import json
 import requests

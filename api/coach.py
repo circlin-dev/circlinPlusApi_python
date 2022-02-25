@@ -3,10 +3,8 @@ from global_things.error_handler import HandleException
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
 from global_things.functions.slack import slack_error_notification
 from . import api
-from datetime import datetime
 from flask import url_for, request
 import json
-import pandas as pd
 from pypika import MySQLQuery as Query, Criterion, Table, Order, functions as fn
 
 
@@ -29,62 +27,73 @@ def get_coaches():
     cursor = connection.cursor()
 
     sql = f"""
-    SELECT
-        c.id,
-        c.name,
-        f.pathname AS coach_thumbnail,
-        c.greeting AS description,
-        c.category AS exercise,
-        c.affiliation AS team,
-        JSON_ARRAY(JSON_OBJECT(
-            'id', p.id,
-            'title', p.title,
-            'thumbnail', (SELECT pathname FROM files WHERE id=p.thumbnail_id),
-            'intro', (SELECT pathname FROM files WHERE id=p.intro_id),            
-            'release_at', p.release_at
-        )) AS related_programs,
-        DATE_FORMAT(c.release_at, '%Y-%m-%d %H:%i:%s') AS release_at,
-        CASE
-            WHEN c.release_at > NOW() THEN 'comming'
-            ELSE 'released'
-        END AS status,
-        JSON_ARRAYAGG(pt.tag) AS tag,
-        JSON_OBJECT(
-            'id', prod.id,
-            'title', prod.title,
-            'thumbnail', (SELECT files.pathname FROM files WHERE files.id=(SELECT file_id FROM product_images WHERE product_id = prod.id AND type='thumbnail'))
-        ) AS product,
-       (SELECT files.pathname FROM files WHERE files.id=c.intro_id) AS intro
-    FROM
-         coaches c
-    LEFT JOIN
-        programs p
-    ON p.coach_id = c.id
-    LEFT JOIN
-         program_tags as pt
-    ON p.id = pt.program_id
-    LEFT JOIN
-        program_exercises pe
-    ON
-        pe.program_id = p.id
-    LEFT JOIN
-        exercises e
-    ON
-        pe.exercise_id = e.id
-    LEFT JOIN
-        files f
-    ON
-        c.profile_id = f.id
-    LEFT JOIN
-        program_products pp
-    ON
-        p.id = pp.program_id
-    LEFT JOIN
-        products prod
-    ON
-        pp.product_id = prod.id
-    WHERE c.deleted_at IS NULL
-    GROUP BY c.id"""
+        SELECT
+            c.id,
+            c.name,
+            f.pathname AS coach_thumbnail,
+            (
+                SELECT JSON_ARRAYAGG(f2.pathname) FROM files f
+                INNER JOIN files f2 ON f.id = f2.original_file_id
+                WHERE f.id = c.profile_id
+            ) AS thumbnails,
+            c.greeting AS description,
+            c.category AS exercise,
+            c.affiliation AS team,
+            JSON_ARRAY(JSON_OBJECT(
+                'id', p.id,
+                'title', p.title,
+                'thumbnail', (SELECT pathname FROM files WHERE id=p.thumbnail_id),
+                'thumbnails', (SELECT JSON_ARRAYAGG(pathname) FROM files WHERE original_file_id = p.thumbnail_id),
+                'intro', (SELECT pathname FROM files WHERE id=p.intro_id),
+                'release_at', p.release_at
+            )) AS related_programs,
+            DATE_FORMAT(c.release_at, '%Y-%m-%d %H:%i:%s') AS release_at,
+            CASE
+                WHEN c.release_at > NOW() THEN 'comming'
+                ELSE 'released'
+            END AS status,
+            JSON_ARRAYAGG(pt.tag) AS tag,
+            JSON_OBJECT(
+                'id', prod.id,
+                'title', prod.title,
+                'thumbnail', (SELECT files.pathname FROM files WHERE files.id=(SELECT file_id FROM product_images WHERE product_id = prod.id AND type='thumbnail')),
+                'thumbnails', (
+                    SELECT JSON_ARRAYAGG(pathname) FROM files
+                        INNER JOIN product_images
+                            ON product_images.file_id = files.original_file_id
+                    WHERE product_images.product_id = prod.id AND product_images.type = 'thumbnail')
+            ) AS product,
+           (SELECT files.pathname FROM files WHERE files.id=c.intro_id) AS intro
+        FROM
+             coaches c
+        LEFT JOIN
+            programs p
+        ON p.coach_id = c.id
+        LEFT JOIN
+             program_tags as pt
+        ON p.id = pt.program_id
+        LEFT JOIN
+            program_exercises pe
+        ON
+            pe.program_id = p.id
+        LEFT JOIN
+            exercises e
+        ON
+            pe.exercise_id = e.id
+        LEFT JOIN
+            files f
+        ON
+            c.profile_id = f.id
+        LEFT JOIN
+            program_products pp
+        ON
+            p.id = pp.program_id
+        LEFT JOIN
+            products prod
+        ON
+            pp.product_id = prod.id
+        WHERE c.deleted_at IS NULL
+        GROUP BY c.id"""
     cursor.execute(sql)
     coaches = cursor.fetchall()
     connection.close()
@@ -150,10 +159,15 @@ def get_coach(coach_id):
     cursor = connection.cursor()
 
     sql = f"""
-        SELECT
+         SELECT
             c.id,
             c.name,
             f.pathname AS coach_thumbnail,
+            (
+                SELECT JSON_ARRAYAGG(f2.pathname) FROM files f
+                INNER JOIN files f2 ON f.id = f2.original_file_id
+                WHERE f.id = c.profile_id
+            ) AS thumbnails,
             c.greeting AS description,
             c.category AS exercise,
             c.affiliation AS team,
@@ -161,7 +175,8 @@ def get_coach(coach_id):
                 'id', p.id,
                 'title', p.title,
                 'thumbnail', (SELECT pathname FROM files WHERE id=p.thumbnail_id),
-                'intro', (SELECT pathname FROM files WHERE id = p.intro_id),
+                'thumbnails', (SELECT JSON_ARRAYAGG(pathname) FROM files WHERE original_file_id = p.thumbnail_id),
+                'intro', (SELECT pathname FROM files WHERE id=p.intro_id),
                 'release_at', p.release_at
             )) AS related_programs,
             DATE_FORMAT(c.release_at, '%Y-%m-%d %H:%i:%s') AS release_at,
@@ -173,7 +188,12 @@ def get_coach(coach_id):
             JSON_OBJECT(
                 'id', prod.id,
                 'title', prod.title,
-                'thumbnail', (SELECT files.pathname FROM files WHERE files.id=(SELECT file_id FROM product_images WHERE product_id = prod.id AND type='thumbnail'))
+                'thumbnail', (SELECT files.pathname FROM files WHERE files.id=(SELECT file_id FROM product_images WHERE product_id = prod.id AND type='thumbnail')),
+                'thumbnails', (
+                    SELECT JSON_ARRAYAGG(pathname) FROM files
+                        INNER JOIN product_images
+                            ON product_images.file_id = files.original_file_id
+                    WHERE product_images.product_id = prod.id AND product_images.type = 'thumbnail')
             ) AS product,
            (SELECT files.pathname FROM files WHERE files.id=c.intro_id) AS intro
         FROM
@@ -205,7 +225,7 @@ def get_coach(coach_id):
         ON
             pp.product_id = prod.id
         WHERE c.deleted_at IS NULL
-        AND c.id={coach_id}
+        AND c.id = {coach_id}
         GROUP BY c.id"""
 
     cursor.execute(sql)
