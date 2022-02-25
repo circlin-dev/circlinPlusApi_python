@@ -240,29 +240,44 @@ def get_coach(coach_id):
         GROUP BY c.id"""
 
     cursor.execute(sql)
-    coach = cursor.fetchall()
+    result = cursor.fetchall()
     connection.close()
 
-    if coach[0][7] is None:
-        release_at = None
-    else:
-        release_at = coach[0][7]
-    if coach[0][11] is None:
-        intro = None
-    else:
-        intro = coach[0][11]
-    if json.loads(coach[0][9])[0] is None:
-        tags = None
-    else:
-        tags = json.loads(coach[0][9])
-    related_programs = json.loads(coach[0][6])
-    for x in related_programs:
-        if x['id'] is None:
-            related_programs.remove(x)
-    if json.loads(coach[0][10])['id'] is None:
-        related_equipment = {}
-    else:
-        related_equipment = json.loads(coach[0][10])
+    coach = pd.DataFrame(result, columns=['id', 'title', 'thumbnail', 'thumbnails', 'description',
+                                            'exercise', 'team', 'related_programs', 'release_at', 'status',
+                                            'tags', 'product', 'intro'])
+    coach['thumbnails'] = coach['thumbnails'].apply(lambda x: json.loads(x))
+    coach['related_programs'] = coach['related_programs'].apply(lambda x: json.loads(x))
+    coach['tags'] = coach['tags'].apply(lambda x: json.loads(x))
+    coach['product'] = coach['product'].apply(lambda x: json.loads(x))
+
+    result_dict = json.loads(coach.to_json(orient='records'))
+    return json.dumps(result_dict, ensure_ascii=False), 200
+
+    # cursor.execute(sql)
+    # coach = cursor.fetchall()
+    # connection.close()
+    #
+    # if coach[0][7] is None:
+    #     release_at = None
+    # else:
+    #     release_at = coach[0][7]
+    # if coach[0][11] is None:
+    #     intro = None
+    # else:
+    #     intro = coach[0][11]
+    # if json.loads(coach[0][9])[0] is None:
+    #     tags = None
+    # else:
+    #     tags = json.loads(coach[0][9])
+    # related_programs = json.loads(coach[0][6])
+    # for x in related_programs:
+    #     if x['id'] is None:
+    #         related_programs.remove(x)
+    # if json.loads(coach[0][10])['id'] is None:
+    #     related_equipment = {}
+    # else:
+    #     related_equipment = json.loads(coach[0][10])
     # result = pd.DataFrame(coach, columns=['id', 'title', 'thumbnail', 'description',
     #                                       'exercise', 'team', 'related_programs', 'status',
     #                                       'tag', 'product', 'intro'])
@@ -270,19 +285,19 @@ def get_coach(coach_id):
     # result['tag'] = result['tag'].apply(lambda x: json.loads(x))
     # result['product'] = result['product'].apply(lambda x: json.loads(x))
     # result_dict = json.loads(result.to_json(orient='records'))
-    result_dict = {
-        "id": coach[0][0],
-        "title": coach[0][1],
-        "thumbnail": coach[0][2],
-        "description": coach[0][3],
-        "exercise": coach[0][4],
-        "team": coach[0][5],
-        "related_programs": related_programs,
-        "release_at": release_at,
-        "status": coach[0][8],
-        "tag_list": tags,
-        "related_equipment": related_equipment,
-        "intro": intro
-    }
-
-    return json.dumps(result_dict, ensure_ascii=False), 200
+    # result_dict = {
+    #     "id": coach[0][0],
+    #     "title": coach[0][1],
+    #     "thumbnail": coach[0][2],
+    #     "description": coach[0][3],
+    #     "exercise": coach[0][4],
+    #     "team": coach[0][5],
+    #     "related_programs": related_programs,
+    #     "release_at": release_at,
+    #     "status": coach[0][8],
+    #     "tag_list": tags,
+    #     "related_equipment": related_equipment,
+    #     "intro": intro
+    # }
+    #
+    # return json.dumps(result_dict, ensure_ascii=False), 200
