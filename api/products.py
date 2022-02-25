@@ -200,7 +200,7 @@ def read_products():
         sorter = ['released', 'comming', 'sold_out']
         products_df.status = products_df.status.astype('category')
         products_df.status.cat.set_categories(sorter, inplace=True)
-        products_df = products_df.sort_values(by=['status'])
+        # products_df = products_df.sort_values(by=['status'])
     except:
         connection.close()
         result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
