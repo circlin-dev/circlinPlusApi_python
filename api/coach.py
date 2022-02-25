@@ -229,7 +229,7 @@ def get_coach(coach_id):
     coach['related_programs'] = coach['related_programs'].apply(lambda x: [] if x[0]['id'] is None else x)
     coach['product'] = coach['product'].apply(lambda x: [] if x['id'] is None else x)
 
-    result_dict = json.loads(coach.to_json(orient='records'))
+    result_dict = json.loads(coach.to_json(orient='records'))[0]
     return json.dumps(result_dict, ensure_ascii=False), 200
 
 
