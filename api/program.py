@@ -43,7 +43,7 @@ def read_programs():
                p.title,
                p.subtitle,
                p.description,
-               JSON_ARRAYAGG(pt.tag) AS tag,
+               JSON_ARRAYAGG(pt.tag) AS tags,
                (SELECT pathname FROM files WHERE id = p.intro_id) AS intro,               
                f.pathname AS thumbnail,
                (SELECT DISTINCT COUNT(round) FROM lectures WHERE program_id = p.id) AS num_rounds,
@@ -109,11 +109,11 @@ def read_programs():
     connection.close()
 
     programs = pd.DataFrame(result, columns=['id', 'release_at', 'status', 'type',
-                                             'title', 'subtitle', 'description', 'tag', 'intro',
+                                             'title', 'subtitle', 'description', 'tags', 'intro',
                                              'thumbnail', 'num_rounds', 'num_lectures',
                                              'coach', 'exercise', 'products'])
     programs['coach'] = programs['coach'].apply(lambda x: json.loads(x))
-    programs['tag'] = programs['tag'].apply(lambda x: json.loads(x))
+    programs['tags'] = programs['tags'].apply(lambda x: json.loads(x))
     programs['products'] = programs['products'].apply(lambda x: json.loads(x))
     programs['products'] = programs['products'].apply(lambda x: list({data['id']: data for data in x}.values()))
     programs['products'] = programs['products'].apply(lambda x: [] if x[0]['id'] is None else x)
@@ -154,7 +154,7 @@ def read_a_program(program_id):
                p.title,
                p.subtitle,
                p.description,
-               JSON_ARRAYAGG(pt.tag) AS tag,               
+               JSON_ARRAYAGG(pt.tag) AS tags,               
                (SELECT pathname FROM files WHERE id = p.intro_id) AS intro,
                f.pathname AS thumbnail,
                (SELECT DISTINCT COUNT(round) FROM lectures WHERE program_id = p.id) AS num_rounds,
@@ -222,11 +222,11 @@ def read_a_program(program_id):
     connection.close()
 
     programs = pd.DataFrame(result, columns=['id', 'release_at', 'status', 'type',
-                                             'title', 'subtitle', 'description', 'tag', 'intro',
+                                             'title', 'subtitle', 'description', 'tags', 'intro',
                                              'thumbnail', 'num_rounds', 'num_lectures',
                                              'coach', 'exercise', 'products'])
     programs['coach'] = programs['coach'].apply(lambda x: json.loads(x))
-    programs['tag'] = programs['tag'].apply(lambda x: json.loads(x))
+    programs['tags'] = programs['tags'].apply(lambda x: json.loads(x))
     programs['products'] = programs['products'].apply(lambda x: json.loads(x))
     programs['products'] = programs['products'].apply(lambda x: list({data['id']: data for data in x}.values()))
     programs['products'] = programs['products'].apply(lambda x: [] if x[0]['id'] is None else x)
