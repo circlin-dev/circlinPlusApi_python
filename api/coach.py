@@ -114,7 +114,7 @@ def get_coaches():
     coaches['thumbnails'] = coaches['thumbnails'].apply(lambda x: [] if x[0] is None else x)
     coaches['tags'] = coaches['tags'].apply(lambda x: [] if x[0] is None else x)
     coaches['related_programs'] = coaches['related_programs'].apply(lambda x: [] if x[0]['id'] is None else x)
-    coaches['products'] = coaches['products'].apply(lambda x: [] if x[0]['id'] is None else x)
+    coaches['product'] = coaches['product'].apply(lambda x: [] if x[0]['id'] is None else x)
 
     result_dict = json.loads(coaches.to_json(orient='records'))
     return json.dumps(result_dict, ensure_ascii=False), 200
@@ -227,7 +227,7 @@ def get_coach(coach_id):
     coach['thumbnails'] = coach['thumbnails'].apply(lambda x: [] if x[0] is None else x)
     coach['tags'] = coach['tags'].apply(lambda x: [] if x[0] is None else x)
     coach['related_programs'] = coach['related_programs'].apply(lambda x: [] if x[0]['id'] is None else x)
-    coach['products'] = coach['products'].apply(lambda x: [] if x[0]['id'] is None else x)
+    coach['product'] = coach['product'].apply(lambda x: [] if x[0]['id'] is None else x)
 
     result_dict = json.loads(coach.to_json(orient='records'))
     return json.dumps(result_dict, ensure_ascii=False), 200
