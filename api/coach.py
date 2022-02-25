@@ -5,6 +5,7 @@ from global_things.functions.slack import slack_error_notification
 from . import api
 from flask import url_for, request
 import json
+import pandas as pd
 from pypika import MySQLQuery as Query, Criterion, Table, Order, functions as fn
 
 
@@ -95,49 +96,59 @@ def get_coaches():
         WHERE c.deleted_at IS NULL
         GROUP BY c.id"""
     cursor.execute(sql)
-    coaches = cursor.fetchall()
+    result = cursor.fetchall()
     connection.close()
 
-    result_list = []
-    for coach in coaches:
-        if coach[7] is None:
-            release_at = None
-        else:
-            release_at = coach[7]
-        if coach[11] is None:
-            intro = None
-        else:
-            intro = coach[11]
-        if json.loads(coach[9])[0] is None:
-            tags = None
-        else:
-            tags = json.loads(coach[9])
-        related_programs = json.loads(coach[6])
-        for x in related_programs:
-            if x['id'] is None:
-                related_programs.remove(x)
+    coaches = pd.DataFrame(result, columns=['id', 'title', 'thumbnail', 'thumbnails', 'description',
+                                            'exercise', 'team', 'related_programs', 'release_at', 'status',
+                                            'tags', 'product', 'intro'])
+    coaches['thumbnails'] = coaches['thumbnails'].apply(lambda x: json.loads(x))
+    coaches['related_programs'] = coaches['related_programs'].apply(lambda x: json.loads(x))
+    coaches['tags'] = coaches['tags'].apply(lambda x: json.loads(x))
+    coaches['product'] = coaches['product'].apply(lambda x: json.loads(x))
 
-        result_dict = {
-            "id": coach[0],
-            "title": coach[1],
-            "thumbnail": coach[2],
-            "description": coach[3],
-            "exercise": coach[4],
-            "team": coach[5],
-            "related_programs": related_programs,
-            "release_at": release_at,
-            "status": coach[8],
-            "tag_list": tags,
-            "related_equipment": json.loads(coach[10]),
-            "intro": intro
-        }
-        result_list.append(result_dict)
-
-    # result = {
-    #     'result': True,
-    #     'data': result_list
-    # }
-    return json.dumps(result_list, ensure_ascii=False), 200
+    result_dict = json.loads(coaches.to_json(orient='records'))
+    return json.dumps(result_dict, ensure_ascii=False), 200
+    # result_list = []
+    # for coach in coaches:
+    #     if coach[7] is None:
+    #         release_at = None
+    #     else:
+    #         release_at = coach[7]
+    #     if coach[11] is None:
+    #         intro = None
+    #     else:
+    #         intro = coach[11]
+    #     if json.loads(coach[9])[0] is None:
+    #         tags = None
+    #     else:
+    #         tags = json.loads(coach[9])
+    #     related_programs = json.loads(coach[6])
+    #     for x in related_programs:
+    #         if x['id'] is None:
+    #             related_programs.remove(x)
+    #
+    #     result_dict = {
+    #         "id": coach[0],
+    #         "title": coach[1],
+    #         "thumbnail": coach[2],
+    #         "description": coach[3],
+    #         "exercise": coach[4],
+    #         "team": coach[5],
+    #         "related_programs": related_programs,
+    #         "release_at": release_at,
+    #         "status": coach[8],
+    #         "tag_list": tags,
+    #         "related_equipment": json.loads(coach[10]),
+    #         "intro": intro
+    #     }
+    #     result_list.append(result_dict)
+    #
+    # # result = {
+    # #     'result': True,
+    # #     'data': result_list
+    # # }
+    # return json.dumps(result_list, ensure_ascii=False), 200
 
 
 @api.route('/coach/<coach_id>', methods=['GET'])
