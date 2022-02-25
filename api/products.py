@@ -66,7 +66,7 @@ def read_products():
                         'id', prog.id,
                         'title', prog.title,
                         'thumbnail', (SELECT pathname FROM files WHERE id = prog.thumbnail_id),
-                        'intro', (SELECT pathname FROM files WHERE f.id = prog.intro_id) AS intro,                        
+                        'intro', (SELECT pathname FROM files WHERE f.id = prog.intro_id),                        
                         'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
                         'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id),
                         'type', prog.type
@@ -132,7 +132,7 @@ def read_products():
                             'id', prog.id,
                             'title', prog.title,
                             'thumbnail', (SELECT pathname FROM files WHERE id = prog.thumbnail_id),
-                            'intro', (SELECT pathname FROM files WHERE f.id = prog.intro_id) AS intro,
+                            'intro', (SELECT pathname FROM files WHERE f.id = prog.intro_id),
                             'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
                             'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id),
                             'type', prog.type
@@ -268,7 +268,7 @@ def read_a_product(product_id: int):
                     'id', prog.id,
                     'title', prog.title,
                     'thumbnail', (SELECT pathname FROM files WHERE id = prog.thumbnail_id),
-                    'intro', (SELECT pathname FROM files WHERE f.id = prog.intro_id) AS intro,                    
+                    'intro', (SELECT pathname FROM files WHERE f.id = prog.intro_id),                    
                     'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
                     'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id),
                     'type', prog.type
