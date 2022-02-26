@@ -307,6 +307,7 @@ def read_a_product(product_id: int):
     cursor.execute(sql)
 
     result = cursor.fetchall()
+    connection.close()
     if query_result_is_none(result) is True:
         connection.close()
         result_dict = {}
@@ -321,7 +322,6 @@ def read_a_product(product_id: int):
         products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
         products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
     except:
-        connection.close()
         # 썸네일만 없는 경우.
         result_dict = json.loads(products_df.to_json(orient='records'))[0]  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
@@ -330,11 +330,15 @@ def read_a_product(product_id: int):
         products_df['related_programs'] = products_df['related_programs'].apply(lambda x: list({data['id']: data for data in x}.values()))
         products_df['related_programs'] = products_df['related_programs'].apply(lambda x: [] if x[0]['id'] is None else x)
     except:
-        connection.close()
         result_dict = json.loads(products_df.to_json(orient='records'))[0]  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
-    connection.close()
-    result_dict = json.loads(products_df.to_json(orient='records'))[0]  # Array type으로 가고있음
+
+    result_list = json.loads(products_df.to_json(orient='records'))
+    if len(result_list) == 0:
+        result_dict = {}
+    else:
+        result_dict = result_list[0]
+
     return json.dumps(result_dict, ensure_ascii=False), 200
 
 

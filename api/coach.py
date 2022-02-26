@@ -212,6 +212,10 @@ def get_coach(coach_id):
     result = cursor.fetchall()
     connection.close()
 
+    if query_result_is_none(result) is True:
+        result_dict = {}
+        return json.dumps(result_dict, ensure_ascii=False), 200
+
     coach = pd.DataFrame(result, columns=['id', 'title',
                                           'thumbnail', 'thumbnails',
                                           'description', 'exercise',
@@ -229,7 +233,11 @@ def get_coach(coach_id):
     coach['related_programs'] = coach['related_programs'].apply(lambda x: [] if x[0]['id'] is None else x)
     coach['product'] = coach['product'].apply(lambda x: [] if x['id'] is None else x)
 
-    result_dict = json.loads(coach.to_json(orient='records'))[0]
+    result_list = json.loads(coach.to_json(orient='records'))
+    if len(result_list) == 0:
+        result_dict = {}
+    else:
+        result_dict = result_list[0]
     return json.dumps(result_dict, ensure_ascii=False), 200
 
 

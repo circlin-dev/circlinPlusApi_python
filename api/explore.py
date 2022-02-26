@@ -123,6 +123,7 @@ def explore():
     try:
         cursor.execute(sql)
         connection.commit()
+        connection.close()
     except Exception as e:
         connection.rollback()
         connection.close()
@@ -135,8 +136,6 @@ def explore():
                               status_code=500,
                               payload=None,
                               result=False)
-
-    connection.close()
     result_dict = {
         "result": True,
         "search_results": result_list
@@ -300,6 +299,7 @@ def explore_log(user_id: int):
         try:
             cursor.execute(sql)
             search_records = cursor.fetchall()
+            connection.close()
         except Exception as e:
             connection.rollback()
             connection.close()
@@ -314,7 +314,6 @@ def explore_log(user_id: int):
                                   result=False)
 
         if query_result_is_none(search_records) is True:
-            connection.close()
             result = {
                 'result': True,
                 'logs': []
@@ -326,7 +325,6 @@ def explore_log(user_id: int):
             data = {'id': log[0], 'searched_word': log[1]}
             logs.append(data)
 
-        connection.close()
         result_dict = {
             'result': True,
             'logs': logs
@@ -359,6 +357,7 @@ def explore_log(user_id: int):
             try:
                 cursor.execute(sql)
                 connection.commit()
+                connection.close()
             except Exception as e:
                 connection.rollback()
                 connection.close()
@@ -371,8 +370,6 @@ def explore_log(user_id: int):
                                       status_code=400,
                                       payload=None,
                                       result=False)
-
-            connection.close()
             result_dict = {
                 'result': True,
                 'message': f"Successfully deleted the requested search term({word_to_delete})."
@@ -397,6 +394,7 @@ def explore_log(user_id: int):
             try:
                 cursor.execute(sql)
                 connection.commit()
+                connection.close()
             except Exception as e:
                 connection.rollback()
                 connection.close()
@@ -409,8 +407,6 @@ def explore_log(user_id: int):
                                       status_code=400,
                                       payload=None,
                                       result=False)
-
-            connection.close()
             result_dict = {
                 'result': True,
                 'message': f"Successfully deleted the requested whole search record({word_to_delete})."

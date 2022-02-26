@@ -221,6 +221,10 @@ def read_a_program(program_id):
     result = cursor.fetchall()
     connection.close()
 
+    if query_result_is_none(result) is True:
+        result_dict = {}
+        return json.dumps(result_dict, ensure_ascii=False), 200
+
     programs = pd.DataFrame(result, columns=['id', 'release_at', 'status', 'type',
                                              'title', 'subtitle', 'description', 'tags', 'intro',
                                              'thumbnail', 'num_rounds', 'num_lectures',
