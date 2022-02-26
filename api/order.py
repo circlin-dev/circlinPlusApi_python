@@ -404,23 +404,39 @@ def add_subscription_order():
     # token = request.headers['Authorization']
     """Define tables required to execute SQL."""
     orders = Table('orders')
-    order_products = Table('order_products')
-    order_product_deliveries = Table('order_product_delivery')
     order_subscriptions = Table('order_subscriptions')
     subscriptions = Table('subscriptions')
     discounts = Table('discounts')
     users = Table('users')
 
     parameters = json.loads(request.get_data(), encoding='utf-8')
-    user_id = int(parameters['user_id'])
-    subscription_code = parameters['subscription_code']
-    discount_code = parameters['discount_code']
-    period = int(parameters['subscription_period'])  # Month!!!!!
-    payment_info = parameters['payment_info']  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
+    try:
+        user_id = int(parameters['user_id'])
+        subscription_code = parameters['subscription_code']
+        discount_code = parameters['discount_code']
+        period = int(parameters['subscription_period'])  # Month!!!!!
+        payment_info = parameters['payment_info']  # Value format: yyyy-Www(Week 01, 2017 ==> "2017-W01")
 
-    # 결제 정보 변수
-    imp_uid = payment_info['imp_uid']
-    merchant_uid = payment_info['merchant_uid']
+        # 결제 정보 변수
+        imp_uid = payment_info['imp_uid']
+        merchant_uid = payment_info['merchant_uid']
+    except:
+        result = {
+            'result': False,
+            'error': f'Missing data in request.'
+        }
+        error_log = f"{result['error']}, parameters({json.dumps(parameters, ensure_ascii=False)}),"
+        slack_error_notification(user_ip=ip, api=endpoint, error_message=error_log, method=request.method)
+        return json.dumps(result, ensure_ascii=False), 400
+
+    if not(user_id and period and imp_uid and merchant_uid):
+        result = {
+            'result': False,
+            'error': f'Missing data in request.'
+        }
+        error_log = f"{result['error']}, parameters({json.dumps(parameters, ensure_ascii=False)}),"
+        slack_error_notification(user_ip=ip, api=endpoint, error_message=error_log, method=request.method)
+        return json.dumps(result, ensure_ascii=False), 400
 
     # 구독 기간 정보 변수
     subscription_days = 0
@@ -432,13 +448,6 @@ def add_subscription_order():
         subscription_days = 180
     elif period == 12:
         subscription_days = 365
-
-    if not(user_id and period and imp_uid and merchant_uid):
-        result = {
-            'result': False,
-            'error': f'Missing data in request: user_id: ({user_id}), subscription_period: ({period}), imp_uid:({imp_uid}, merchant_uid: {merchant_uid})'
-        }
-        return json.dumps(result, ensure_ascii=False), 400
 
     # 1. 유저 정보 확인
     try:
@@ -550,22 +559,25 @@ def add_subscription_order():
     else:
         pass
 
-    sql = Query.from_(
-        discounts
-    ).select(
-        discounts.id,
-        discounts.type,
-        discounts.method,
-        discounts.value,
-        discounts.code
-    ).where(
-        discounts.code == discount_code
-    ).get_sql()
-    cursor.execute(sql)
+    if discount_code is None:
+        to_be_paid = subscription_information[0][3]
+        discount_id = None
+    else:
+        sql = Query.from_(
+            discounts
+        ).select(
+            discounts.id,
+            discounts.type,
+            discounts.method,
+            discounts.value,
+            discounts.code
+        ).where(
+            discounts.code == discount_code
+        ).get_sql()
+        cursor.execute(sql)
+        discount_information = cursor.fetchall()
+        to_be_paid, subscription_original_price, discount_id = validation_subscription_order(subscription_information, discount_information)
 
-    discount_information = cursor.fetchall()
-
-    to_be_paid, subscription_original_price, discount_id = validation_subscription_order(subscription_information, discount_information)
     if to_be_paid != import_paid_amount:
         """
         1. '부분환불' 도입 시
@@ -649,7 +661,11 @@ def add_subscription_order():
             ])
         ).get_sql()
         cursor.execute(sql)
-        order_id = int(cursor.fetchall()[0][0])
+        result = cursor.fetchall()
+        if len(result) == 0:
+            order_id = None
+        else:
+            order_id = result[0][0]
 
         sql = f"""
             INSERT INTO 
@@ -669,6 +685,7 @@ def add_subscription_order():
         cursor.execute(sql)
         user_information = cursor.fetchall()
         user_nickname, user_phone = user_information[0]
+
         slack_purchase_notification(cursor, user_id, user_nickname, user_phone, order_id)
 
         connection.close()
