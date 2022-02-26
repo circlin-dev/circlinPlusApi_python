@@ -221,6 +221,8 @@ def get_related_terms_list():
         cursor.execute(query_equipments)
         equipments = cursor.fetchall()
 
+        connection.close()
+
         for program in programs:
             program_dict = {'id': program[0], 'value': program[1], 'similarity': jamo_levenshtein(word, program[1])}
             related_programs_list.append(program_dict)
@@ -243,7 +245,6 @@ def get_related_terms_list():
         related_equipments_list = sorted(related_equipments_list, key=lambda x: x['similarity'], reverse=True)[:3]
         all_searched_result = sorted(related_programs_list + related_coaches_list + related_exercises_list + related_equipments_list, key=lambda x: x['similarity'], reverse=True)
 
-    connection.close()
     result_dict = {
         "result": True,
         "related_terms": {

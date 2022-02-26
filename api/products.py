@@ -170,9 +170,9 @@ def read_products():
                 GROUP BY prod.id"""
     cursor.execute(sql)
     result = cursor.fetchall()
+    connection.close()
 
     if query_result_is_none(result):
-        connection.close()
         result_dict = {}
         return json.dumps(result_dict, ensure_ascii=False), 200
 
@@ -185,7 +185,6 @@ def read_products():
         products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
         products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
     except:
-        connection.close()
         result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
     try:
@@ -199,7 +198,6 @@ def read_products():
         products_df.status = products_df.status.astype('category')
         products_df.status.cat.set_categories(sorter, inplace=True)
     except:
-        connection.close()
         result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
 
         """정렬
@@ -211,7 +209,6 @@ def read_products():
 
         return json.dumps(result_dict, ensure_ascii=False), 200
 
-    connection.close()
     result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
     return json.dumps(result_dict, ensure_ascii=False), 200
 
@@ -309,7 +306,6 @@ def read_a_product(product_id: int):
     result = cursor.fetchall()
     connection.close()
     if query_result_is_none(result) is True:
-        connection.close()
         result_dict = {}
         return json.dumps(result_dict, ensure_ascii=False), 200
 
