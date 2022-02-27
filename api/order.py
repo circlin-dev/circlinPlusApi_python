@@ -561,6 +561,7 @@ def add_subscription_order():
 
     if discount_code is None:
         to_be_paid = subscription_information[0][3]
+        subscription_original_price = subscription_information[0][2]
         discount_id = None
     else:
         sql = Query.from_(
