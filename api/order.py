@@ -636,7 +636,7 @@ def add_subscription_order():
                 UPDATE
                     orders o
                 JOIN
-                    users u``
+                    users u
                 ON o.user_id = u.id
                 SET
                     o.user_id = {user_id},
@@ -651,7 +651,7 @@ def add_subscription_order():
                 UPDATE
                     orders o
                 JOIN
-                    users u``
+                    users u
                 ON o.user_id = u.id
                 SET
                     o.user_id = {user_id},
