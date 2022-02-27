@@ -434,7 +434,7 @@ def add_subscription_order():
             'result': False,
             'error': f'Missing data in request.'
         }
-        error_log = f"{result['error']}, parameters({json.dumps(parameters, ensure_ascii=False)}),"
+        error_log = f"{result['error']}, user_id({user_id}), subscription_code({subscription_code}), discount_code({discount_code}), period({period}),  imp_uid({imp_uid}), merchant_uid({merchant_uid})."
         slack_error_notification(user_ip=ip, api=endpoint, error_message=error_log, method=request.method)
         return json.dumps(result, ensure_ascii=False), 400
 
