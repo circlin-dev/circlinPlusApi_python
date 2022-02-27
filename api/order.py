@@ -631,21 +631,37 @@ def add_subscription_order():
     # 4. 결제 정보(orders) 저장
     subscription_id = subscription_information[0][0]
     try:
-        sql = f"""
-            UPDATE
-                orders o
-            JOIN
-                users u
-            ON o.user_id = u.id
-            SET
-                o.user_id = {user_id},
-                o.discount_id = {discount_id},
-                u.subscription_expired_at = (SELECT(NOW() + INTERVAL {subscription_days} DAY)),
-                u.subscription_id = {subscription_id}
-            WHERE
-                  o.user_id = {user_id}
-            AND o.imp_uid = %s
-            AND o.merchant_uid = %s"""
+        if discount_id is None:
+            sql = f"""
+                UPDATE
+                    orders o
+                JOIN
+                    users u``
+                ON o.user_id = u.id
+                SET
+                    o.user_id = {user_id},
+                    u.subscription_expired_at = (SELECT(NOW() + INTERVAL {subscription_days} DAY)),
+                    u.subscription_id = {subscription_id}
+                WHERE
+                      o.user_id = {user_id}
+                AND o.imp_uid = %s
+                AND o.merchant_uid = %s"""
+        else:
+            sql = f"""
+                UPDATE
+                    orders o
+                JOIN
+                    users u``
+                ON o.user_id = u.id
+                SET
+                    o.user_id = {user_id},
+                    o.discount_id = {discount_id}
+                    u.subscription_expired_at = (SELECT(NOW() + INTERVAL {subscription_days} DAY)),
+                    u.subscription_id = {subscription_id}
+                WHERE
+                      o.user_id = {user_id}
+                AND o.imp_uid = %s
+                AND o.merchant_uid = %s"""
         values = (imp_uid, merchant_uid)
         cursor.execute(sql, values)
         connection.commit()
