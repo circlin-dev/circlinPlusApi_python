@@ -46,6 +46,7 @@ def get_coaches():
                 'thumbnail', (SELECT pathname FROM files WHERE id=p.thumbnail_id),
                 'thumbnails', (SELECT JSON_ARRAYAGG(pathname) FROM files WHERE original_file_id = p.thumbnail_id),
                 'intro', (SELECT pathname FROM files WHERE id=p.intro_id),
+                'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = p.id),                
                 'release_at', p.release_at
             )) AS related_programs,
             DATE_FORMAT(c.release_at, '%Y-%m-%d %H:%i:%s') AS release_at,
@@ -157,6 +158,7 @@ def get_coach(coach_id):
                 'thumbnail', (SELECT pathname FROM files WHERE id=p.thumbnail_id),
                 'thumbnails', (SELECT JSON_ARRAYAGG(pathname) FROM files WHERE original_file_id = p.thumbnail_id),
                 'intro', (SELECT pathname FROM files WHERE id=p.intro_id),
+                'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = p.id),                
                 'release_at', p.release_at
             )) AS related_programs,
             DATE_FORMAT(c.release_at, '%Y-%m-%d %H:%i:%s') AS release_at,
