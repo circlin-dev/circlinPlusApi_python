@@ -656,7 +656,7 @@ def add_subscription_order():
                 ON o.user_id = u.id
                 SET
                     o.user_id = {user_id},
-                    o.discount_id = {discount_id}
+                    o.discount_id = {discount_id},
                     u.subscription_expired_at = (SELECT(NOW() + INTERVAL {subscription_days} DAY)),
                     u.subscription_id = {subscription_id}
                 WHERE
