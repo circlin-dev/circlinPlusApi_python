@@ -16,14 +16,15 @@ def create_chat_with_manager():
     endpoint = API_ROOT + url_for('api.create_chat_with_manager')
     # token = request.headers['Authorization']
     parameters = json.loads(request.get_data(), encoding='utf-8')
+    user_id = int(parameters['user_id'])
+    order_id = parameters['order_id']  # null or int
     """Define tables required to execute SQL."""
     user_questions = Table('user_questions')
     customers = Table('chat_users')
     managers = Table('chat_users')
     chat_rooms = Table('chat_rooms')
     chat_users = Table('chat_users')
-    user_id = int(parameters['user_id'])
-    order_id = parameters['order_id']  # null or int
+    users = Table('users')
 
     try:
         connection = login_to_db()
@@ -37,6 +38,20 @@ def create_chat_with_manager():
         return json.dumps(result, ensure_ascii=False), 500
 
     cursor = connection.cursor()
+
+    sql = Query.from_(
+        users
+    ).select(
+        users.nickname,
+        users.phone
+    ).where(
+        Criterion.all([
+            users.user_id == user_id
+        ])
+    ).get_sql()
+    cursor.execute(sql)
+    user_information = cursor.fetchall()
+    user_nickname, user_phone = user_information[0]
 
     sql = Query.from_(
         user_questions
@@ -122,6 +137,7 @@ def create_chat_with_manager():
             ).get_sql()
             cursor.execute(sql)
             connection.commit()
+            connection.close()
         except Exception as e:
             connection.rollback()
             connection.close()
@@ -141,9 +157,8 @@ def create_chat_with_manager():
         }
         return json.dumps(result, ensure_ascii=False), 200
 
-    if order_id is not None:
-        slack_purchase_notification(cursor, user_id, order_id)
-    connection.close()
+    slack_purchase_notification(cursor, user_id, user_nickname, user_phone, order_id)
+    # slack_purchase_notification(cursor, user_id, user_nickname, user_phone, order_id)
     result = {
         'result': True,
         'manager_id':  manager_id,  # 28 = 대표님, 18 = 희정님
