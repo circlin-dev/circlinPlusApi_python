@@ -60,24 +60,24 @@ def read_products():
                    ON pi2.file_id = f2.id
                     WHERE pi2.type='thumbnail' AND pi2.product_id=prod.id
                 ) AS thumbnail,
-               (
-                   SELECT JSON_ARRAYAGG(pathname) FROM files
-                       INNER JOIN product_images
-                            ON product_images.file_id = files.original_file_id
-                   WHERE product_images.product_id = prod.id AND product_images.type = 'thumbnail'
-               ) AS thumbnails,
+--                (
+--                    SELECT JSON_ARRAYAGG(pathname) FROM files
+--                        INNER JOIN product_images
+--                             ON product_images.file_id = files.original_file_id
+--                    WHERE product_images.product_id = prod.id AND product_images.type = 'thumbnail'
+--                ) AS thumbnails,
                (
                    SELECT JSON_ARRAYAGG(pathname) FROM files
                        INNER JOIN product_images
                            ON product_images.file_id = files.id
                    WHERE product_images.type = 'detail' AND product_images.product_id = prod.id
                ) AS details,
-               (
-                   SELECT JSON_ARRAYAGG(pathname) FROM files
-                       INNER JOIN product_images
-                            ON product_images.file_id = files.original_file_id
-                   WHERE product_images.type = 'detail' AND product_images.product_id = prod.id
-               ) AS detail_thumbnails,
+--                (
+--                    SELECT JSON_ARRAYAGG(pathname) FROM files
+--                        INNER JOIN product_images
+--                             ON product_images.file_id = files.original_file_id
+--                    WHERE product_images.type = 'detail' AND product_images.product_id = prod.id
+--                ) AS detail_thumbnails,
                JSON_ARRAYAGG(
                     JSON_OBJECT(
                         'id', prog.id,
@@ -124,91 +124,91 @@ def read_products():
             GROUP BY prod.id, prog.id"""
     else:
         sql = f"""
-    SELECT
-       prod.id,
-       prod.type,
-       prod.code,
-       prod.title as title,
-       prod.description,
-       b.title as brandTitle,
-       prod.original_price as original_price,
-       prod.price as price,
-       CASE
-           WHEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0)) <= 0 THEN 0
-           WHEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0)) > 0 THEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0))
-       END AS stock,
-       (
-           SELECT
-               f2.pathname
-           FROM
-                files f2
-            INNER JOIN product_images pi2
-           ON pi2.file_id = f2.id
-            WHERE pi2.type='thumbnail' AND pi2.product_id=prod.id
-        ) AS thumbnail,
---        (
---            SELECT JSON_ARRAYAGG(pathname) FROM files
---                INNER JOIN product_images
---                     ON product_images.file_id = files.original_file_id
---            WHERE product_images.product_id = prod.id AND product_images.type = 'thumbnail'
---        ) AS thumbnails,
-       (
-           SELECT JSON_ARRAYAGG(pathname) FROM files
-               INNER JOIN product_images
-                   ON product_images.file_id = files.id
-           WHERE product_images.type = 'detail' AND product_images.product_id = prod.id
-       ) AS details,
---        (
---            SELECT JSON_ARRAYAGG(pathname) FROM files
---                INNER JOIN product_images
---                     ON product_images.file_id = files.original_file_id
---            WHERE product_images.type = 'detail' AND product_images.product_id = prod.id
---        ) AS detail_thumbnails,
-       JSON_ARRAYAGG(
-            JSON_OBJECT(
-                'id', prog.id,
-                'title', prog.title,
-                'thumbnail', (SELECT pathname FROM files WHERE id = prog.thumbnail_id),
-                'thumbnails', (SELECT JSON_ARRAYAGG(pathname) FROM files WHERE original_file_id = prog.thumbnail_id),
-                'intro', (SELECT pathname FROM files WHERE id = prog.intro_id),
-                'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
-                'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id),
-                'type', prog.type
-            )
-        ) AS related_programs,
-        DATE_FORMAT(prod.release_at, '%Y-%m-%d %H:%i:%s') AS release_at,
-        CASE
-            WHEN prod.release_at > NOW() THEN 'comming'
-            ELSE 'released'
-        END AS status,
-        prod.is_hidden,
-        e.title AS exercises
-    FROM
-        products prod
-    INNER JOIN
-            brands b
-        ON b.id = prod.brand_id
-    LEFT OUTER JOIN
-            product_images pi
-        ON pi.product_id = prod.id
-    LEFT OUTER JOIN
-            files f
-        ON f.id = pi.file_id
-    LEFT OUTER JOIN
-            program_products pp
-        ON prod.id = pp.product_id
-    LEFT OUTER JOIN
-            programs prog
-        ON prog.id = pp.program_id
-    LEFT OUTER JOIN
-            product_exercises pe
-            ON prod.id = pe.product_id
-    LEFT OUTER JOIN
-            exercises e
-                ON pe.exercise_id = e.id
-                WHERE prod.type='{parameters[0]}'
---                 AND prod.is_hidden = 1
-                GROUP BY prod.id, prog.id"""
+            SELECT
+               prod.id,
+               prod.type,
+               prod.code,
+               prod.title as title,
+               prod.description,
+               b.title as brandTitle,
+               prod.original_price as original_price,
+               prod.price as price,
+               CASE
+                   WHEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0)) <= 0 THEN 0
+                   WHEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0)) > 0 THEN (IFNULL(prod.stocks, 0) - IFNULL((SELECT SUM(qty) FROM order_products WHERE product_id=prod.id), 0))
+               END AS stock,
+               (
+                   SELECT
+                       f2.pathname
+                   FROM
+                        files f2
+                    INNER JOIN product_images pi2
+                   ON pi2.file_id = f2.id
+                    WHERE pi2.type='thumbnail' AND pi2.product_id=prod.id
+                ) AS thumbnail,
+        --        (
+        --            SELECT JSON_ARRAYAGG(pathname) FROM files
+        --                INNER JOIN product_images
+        --                     ON product_images.file_id = files.original_file_id
+        --            WHERE product_images.product_id = prod.id AND product_images.type = 'thumbnail'
+        --        ) AS thumbnails,
+               (
+                   SELECT JSON_ARRAYAGG(pathname) FROM files
+                       INNER JOIN product_images
+                           ON product_images.file_id = files.id
+                   WHERE product_images.type = 'detail' AND product_images.product_id = prod.id
+               ) AS details,
+        --        (
+        --            SELECT JSON_ARRAYAGG(pathname) FROM files
+        --                INNER JOIN product_images
+        --                     ON product_images.file_id = files.original_file_id
+        --            WHERE product_images.type = 'detail' AND product_images.product_id = prod.id
+        --        ) AS detail_thumbnails,
+               JSON_ARRAYAGG(
+                    JSON_OBJECT(
+                        'id', prog.id,
+                        'title', prog.title,
+                        'thumbnail', (SELECT pathname FROM files WHERE id = prog.thumbnail_id),
+                        'thumbnails', (SELECT JSON_ARRAYAGG(pathname) FROM files WHERE original_file_id = prog.thumbnail_id),
+                        'intro', (SELECT pathname FROM files WHERE id = prog.intro_id),
+                        'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = prog.id),
+                        'exercise', (SELECT title FROM exercises e INNER JOIN program_exercises pe ON e.id = pe.exercise_id WHERE pe.program_id=prog.id),
+                        'type', prog.type
+                    )
+                ) AS related_programs,
+                DATE_FORMAT(prod.release_at, '%Y-%m-%d %H:%i:%s') AS release_at,
+                CASE
+                    WHEN prod.release_at > NOW() THEN 'comming'
+                    ELSE 'released'
+                END AS status,
+                prod.is_hidden,
+                e.title AS exercises
+            FROM
+                products prod
+            INNER JOIN
+                    brands b
+                ON b.id = prod.brand_id
+            LEFT OUTER JOIN
+                    product_images pi
+                ON pi.product_id = prod.id
+            LEFT OUTER JOIN
+                    files f
+                ON f.id = pi.file_id
+            LEFT OUTER JOIN
+                    program_products pp
+                ON prod.id = pp.product_id
+            LEFT OUTER JOIN
+                    programs prog
+                ON prog.id = pp.program_id
+            LEFT OUTER JOIN
+                    product_exercises pe
+                    ON prod.id = pe.product_id
+            LEFT OUTER JOIN
+                    exercises e
+                        ON pe.exercise_id = e.id
+                        WHERE prod.type='{parameters[0]}'
+        --                 AND prod.is_hidden = 1
+                        GROUP BY prod.id, prog.id"""
     cursor.execute(sql)
     result = cursor.fetchall()
     connection.close()
