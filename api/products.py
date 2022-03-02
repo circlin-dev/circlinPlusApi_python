@@ -146,24 +146,24 @@ def read_products():
            ON pi2.file_id = f2.id
             WHERE pi2.type='thumbnail' AND pi2.product_id=prod.id
         ) AS thumbnail,
-       (
-           SELECT JSON_ARRAYAGG(pathname) FROM files
-               INNER JOIN product_images
-                    ON product_images.file_id = files.original_file_id
-           WHERE product_images.product_id = prod.id AND product_images.type = 'thumbnail'
-       ) AS thumbnails,
+--        (
+--            SELECT JSON_ARRAYAGG(pathname) FROM files
+--                INNER JOIN product_images
+--                     ON product_images.file_id = files.original_file_id
+--            WHERE product_images.product_id = prod.id AND product_images.type = 'thumbnail'
+--        ) AS thumbnails,
        (
            SELECT JSON_ARRAYAGG(pathname) FROM files
                INNER JOIN product_images
                    ON product_images.file_id = files.id
            WHERE product_images.type = 'detail' AND product_images.product_id = prod.id
        ) AS details,
-       (
-           SELECT JSON_ARRAYAGG(pathname) FROM files
-               INNER JOIN product_images
-                    ON product_images.file_id = files.original_file_id
-           WHERE product_images.type = 'detail' AND product_images.product_id = prod.id
-       ) AS detail_thumbnails,
+--        (
+--            SELECT JSON_ARRAYAGG(pathname) FROM files
+--                INNER JOIN product_images
+--                     ON product_images.file_id = files.original_file_id
+--            WHERE product_images.type = 'detail' AND product_images.product_id = prod.id
+--        ) AS detail_thumbnails,
        JSON_ARRAYAGG(
             JSON_OBJECT(
                 'id', prog.id,
