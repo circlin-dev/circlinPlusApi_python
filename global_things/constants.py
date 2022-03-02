@@ -3,7 +3,7 @@ API_ROOT = "web-api-python.circlin.co.kr"
 
 # region bodylab
 AMAZON_URL = "https://circlin-plus.s3.ap-northeast-2.amazonaws.com"
-IMAGE_ANALYSYS_SERVER = "3.37.170.178"
+IMAGE_ANALYSYS_SERVER = "https://web-api-python-image.circlin.co.kr"
 BUCKET_NAME = "circlin-plus"
 BUCKET_IMAGE_PATH_BODY_INPUT = "bodylab/body/input"
 BUCKET_IMAGE_PATH_ATFLEE_INPUT = "bodylab/atflee/input"

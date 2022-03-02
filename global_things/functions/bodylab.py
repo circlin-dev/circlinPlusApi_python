@@ -110,7 +110,7 @@ def standard_healthiness_value(age_group: str, gender: str, weight: float, heigh
 
 def analyze_body_images(user_id, url):
     response = requests.post(
-        f"http://{IMAGE_ANALYSYS_SERVER}/api/analysis",
+        f"{IMAGE_ANALYSYS_SERVER}/api/analysis",
         json={
             "user_id": user_id,
             "url": url
