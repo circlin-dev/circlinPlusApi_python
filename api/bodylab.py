@@ -28,7 +28,7 @@ def weekly_bodylab():
     endpoint = API_ROOT + url_for('api.weekly_bodylab')
     user_token = request.headers.get('Authorization')
 
-    data = request.form.to_dict()
+    data = request.form.to_dict()  # {'body': ~~~~~.png, 'atflee': ~~~~~.png}
     try:
         user_id = int(data['user_id'])
         user_height = float(data['height'])
