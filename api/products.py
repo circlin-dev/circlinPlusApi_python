@@ -224,19 +224,19 @@ def read_products():
                                                 'related_programs', 'release_at', 'status', 'is_hidden', 'exercises'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
-        products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
+        products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" or x[0] is None else x)
     except:
         result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
     try:
         products_df['detail_thumbnails'] = products_df['detail_thumbnails'].apply(lambda x: json.loads(x))
-        products_df['detail_thumbnails'] = products_df['detail_thumbnails'].apply(lambda x: [] if x[0] == "" else x)
+        products_df['detail_thumbnails'] = products_df['detail_thumbnails'].apply(lambda x: [] if x[0] == "" or x[0] is None else x)
     except:
         result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
     try:
         products_df['thumbnails'] = products_df['thumbnails'].apply(lambda x: json.loads(x))
-        products_df['thumbnails'] = products_df['thumbnails'].apply(lambda x: [] if x[0] == "" else x)
+        products_df['thumbnails'] = products_df['thumbnails'].apply(lambda x: [] if x[0] == "" or x[0] is None else x)
     except:
         result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
@@ -390,19 +390,19 @@ def read_a_product(product_id: int):
                                                 'related_programs', 'release_at', 'status', 'is_hidden', 'exercises'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
-        products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
+        products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" or x[0] is None else x)
     except:
         result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
     try:
         products_df['detail_thumbnails'] = products_df['detail_thumbnails'].apply(lambda x: json.loads(x))
-        products_df['detail_thumbnails'] = products_df['detail_thumbnails'].apply(lambda x: [] if x[0] == "" else x)
+        products_df['detail_thumbnails'] = products_df['detail_thumbnails'].apply(lambda x: [] if x[0] == "" or x[0] is None else x)
     except:
         result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
     try:
         products_df['thumbnails'] = products_df['thumbnails'].apply(lambda x: json.loads(x))
-        products_df['thumbnails'] = products_df['thumbnails'].apply(lambda x: [] if x[0] == "" else x)
+        products_df['thumbnails'] = products_df['thumbnails'].apply(lambda x: [] if x[0] == "" or x[0] is None else x)
     except:
         result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
