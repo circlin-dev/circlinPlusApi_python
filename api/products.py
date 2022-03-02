@@ -206,9 +206,9 @@ def read_products():
             LEFT OUTER JOIN
                     exercises e
                         ON pe.exercise_id = e.id
-                        WHERE prod.type='{parameters[0]}'
-        --                 AND prod.is_hidden = 1
-                        GROUP BY prod.id, prog.id"""
+            WHERE prod.type='{parameters[0]}'
+--                 AND prod.is_hidden = 1
+            GROUP BY prod.id, prog.id"""
     cursor.execute(sql)
     result = cursor.fetchall()
     connection.close()
@@ -223,8 +223,7 @@ def read_products():
                                                 'thumbnail', 'details', 'related_programs',
                                                 'release_at', 'status', 'is_hidden', 'exercises'])
     try:
-        products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
-        products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
+        products_df['details'] = products_df['details'].apply(lambda x: [] if x is None else json.loads(x))
     except:
         result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
@@ -356,8 +355,7 @@ def read_a_product(product_id: int):
                                                 'thumbnail', 'details', 'related_programs',
                                                 'release_at', 'status', 'is_hidden', 'exercises'])
     try:
-        products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
-        products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
+        products_df['details'] = products_df['details'].apply(lambda x: [] if x is None else json.loads(x))
     except:
         # 썸네일만 없는 경우.
         result_dict = json.loads(products_df.to_json(orient='records'))[0]  # Array type으로 가고있음
