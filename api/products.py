@@ -220,8 +220,8 @@ def read_products():
     products_df = pd.DataFrame(result, columns=['id', 'type', 'code',
                                                 'title', 'description', 'brandTitle',
                                                 'original_price', 'price', 'stocks',
-                                                'thumbnail', 'details', 'related_programs',
-                                                'release_at', 'status', 'is_hidden', 'exercises'])
+                                                'thumbnail', 'thumbnails', 'details', 'detail_thumbnails',
+                                                'related_programs', 'release_at', 'status', 'is_hidden', 'exercises'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
         products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
@@ -374,8 +374,8 @@ def read_a_product(product_id: int):
     products_df = pd.DataFrame(result, columns=['id', 'type', 'code',
                                                 'title', 'description', 'brandTitle',
                                                 'original_price', 'price', 'stocks',
-                                                'thumbnail', 'details', 'related_programs',
-                                                'release_at', 'status', 'is_hidden', 'exercises'])
+                                                'thumbnail', 'thumbnails', 'details', 'detail_thumbnails',
+                                                'related_programs', 'release_at', 'status', 'is_hidden', 'exercises'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: json.loads(x))
         products_df['details'] = products_df['details'].apply(lambda x: [] if x[0] == "" else x)
