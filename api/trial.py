@@ -107,30 +107,56 @@ def create_trial():
 
     week_routines = TRIAL_DICTIONARY[selected_exercise][gender]  # list
     week_routines = sorted(week_routines, key=lambda x: x['day'])
-    sql = f"""
-        INSERT INTO
-            user_lectures(created_at, updated_at, user_id, lecture_id, level, scheduled_at)
-        VALUES
-            ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[0]['lecture_id']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[0]['day']} DAY)),
-            ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[1]['lecture_id']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[1]['day']} DAY)),
-            ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[2]['lecture_id']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[2]['day']} DAY)),
-            ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[3]['lecture_id']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[3]['day']} DAY)),
-            ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[4]['lecture_id']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[4]['day']} DAY)),
-            ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[5]['lecture_id']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[5]['day']} DAY)),
-            ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[6]['lecture_id']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[6]['day']} DAY))"""
-    try:
-        cursor.execute(sql)
-        connection.commit()
-    except Exception as e:
-        connection.rollback()
-        connection.close()
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while executing INSERT query(user_questions): {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
-        return json.dumps(result, ensure_ascii=False), 500
+    for routine in week_routines:
+        sql = f"""
+            INSERT INTO
+                user_lectures(created_at, updated_at, user_id, lecture_id, level, scheduled_at)
+            VALUES
+                ((SELECT NOW()), (SELECT NOW()), {user_id}, {routine['lecture_id']}, {selected_level}, (SELECT NOW() + INTERVAL {routine['day']} DAY))"""
+        try:
+            cursor.execute(sql)
+            connection.commit()
+        except Exception as e:
+            connection.rollback()
+            connection.close()
+            error = str(e)
+            result = {
+                'result': False,
+                'error': f'Server Error while executing INSERT query(user_questions): {error}'
+            }
+            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
+            return json.dumps(result, ensure_ascii=False), 500
+    # sql = f"""
+    #     INSERT INTO
+    #         user_lectures(created_at, updated_at, user_id, lecture_id, level, scheduled_at)
+    #     VALUES
+    #         ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[0]['guide_lecture']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[0]['day']} DAY)),
+    #         ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[0]['drill_lecture']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[0]['day']} DAY)),
+    #         ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[1]['guide_lecture']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[1]['day']} DAY)),
+    #         ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[1]['drill_lecture']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[1]['day']} DAY)),
+    #         ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[2]['guide_lecture']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[2]['day']} DAY)),
+    #         ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[2]['drill_lecture']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[2]['day']} DAY)),
+    #         ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[3]['guide_lecture']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[3]['day']} DAY)),
+    #         ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[3]['drill_lecture']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[3]['day']} DAY)),
+    #         ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[4]['guide_lecture']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[4]['day']} DAY)),
+    #         ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[4]['drill_lecture']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[4]['day']} DAY)),
+    #         ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[5]['guide_lecture']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[5]['day']} DAY)),
+    #         ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[5]['drill_lecture']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[5]['day']} DAY)),
+    #         ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[6]['guide_lecture']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[6]['day']} DAY))
+    #         ((SELECT NOW()), (SELECT NOW()), {user_id}, {week_routines[6]['drill_lecture']}, {selected_level}, (SELECT NOW() + INTERVAL {week_routines[6]['day']} DAY))"""
+    # try:
+    #     cursor.execute(sql)
+    #     connection.commit()
+    # except Exception as e:
+    #     connection.rollback()
+    #     connection.close()
+    #     error = str(e)
+    #     result = {
+    #         'result': False,
+    #         'error': f'Server Error while executing INSERT query(user_questions): {error}'
+    #     }
+    #     slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
+    #     return json.dumps(result, ensure_ascii=False), 500
 
     connection.close()
     result = {'result': True, 'message': 'Created 7 days free trial routine.'}
