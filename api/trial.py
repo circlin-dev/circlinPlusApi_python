@@ -130,8 +130,11 @@ def create_trial():
         # hour_now = now.hour
         # minute_now = now.minute
         request_schedule = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) - timedelta(days=date_today) + timedelta(days=schedule_date)
-        request_schedule_30m = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) + timedelta(minutes=30)
-        request_schedule_7d = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) + timedelta(days=7)
+        request_schedule_30m = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) - timedelta(days=date_today) + timedelta(days=schedule_date) + timedelta(minutes=30)
+        request_schedule_7d = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) - timedelta(days=date_today) + timedelta(days=schedule_date) + timedelta(days=7)
+        # request_schedule = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) - timedelta(days=date_today) + timedelta(days=schedule_date)
+        # request_schedule_30m = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) + timedelta(minutes=30)
+        # request_schedule_7d = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) + timedelta(days=7)
 
         if schedule_date > date_today:
             scheduled_at = request_schedule.strftime('%Y-%m-%d %H:%M:00')  # request_schedule에 배정
