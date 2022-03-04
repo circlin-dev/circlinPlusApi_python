@@ -19,7 +19,7 @@ TRIAL_DICTIONARY = {
             {"day": 6, "lecture_id": 103, 'type': 'drill', "title": "기본 & 케틀벨 - 힙 운동 (실습)(체험)"},
         ],
         # case 4, 5, 6(완료)
-        "W": [
+        "W": [  # 1일차, 3일차, 5일차, 6일차
             {"day": 0, "lecture_id": 1, 'type': 'guide', "title": "기본기 - 하체 운동"},
             {"day": 0, "lecture_id": 97, 'type': 'drill', "title": "기본기 - 하체 운동 (실습)(체험)"},
             {"day": 1, "lecture_id": 41, 'type': 'guide', "title": "기본기 - 등/복근 운동"},

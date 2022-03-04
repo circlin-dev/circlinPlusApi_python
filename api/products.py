@@ -121,6 +121,7 @@ def read_products():
                     exercises e
                         ON pe.exercise_id = e.id
             WHERE prod.is_hidden = 1
+            AND prod.deleted_at IS NULL
             GROUP BY prod.id, prog.id"""
     else:
         sql = f"""
@@ -208,6 +209,7 @@ def read_products():
                         ON pe.exercise_id = e.id
             WHERE prod.type='{parameters[0]}'
 --                 AND prod.is_hidden = 1
+            AND prod.deleted_at IS NULL
             GROUP BY prod.id, prog.id"""
     cursor.execute(sql)
     result = cursor.fetchall()
@@ -340,6 +342,7 @@ def read_a_product(product_id: int):
                     ON pe.exercise_id = e.id            
         WHERE prod.id = {product_id}
 --         AND prod.is_hidden = 1
+        AND prod.deleted_at IS NULL
         GROUP BY prod.id"""
     cursor.execute(sql)
 
