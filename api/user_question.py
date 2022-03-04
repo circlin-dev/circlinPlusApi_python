@@ -36,8 +36,6 @@ def add_user_question():
         (2) 기간이 끝나지 않은 이용권 Or 프로그램(무료)
         있다면 더 이상 질문에 대한 응답을 받으면 안 된다.
         """
-
-
         if not(user_id and purpose and sports and gender and age_group and experience_group):
             result = {
                 'result': False,
@@ -140,7 +138,6 @@ def read_user_question(user_id):
     endpoint = API_ROOT + url_for('api.read_user_question', user_id=user_id)
     # token = request.headers['token']
     """Define tables required to execute SQL."""
-    user_questions = Table('user_questions')
 
     try:
         connection = login_to_db()
@@ -177,8 +174,7 @@ def read_user_question(user_id):
             user_questions uq
         WHERE uq.user_id = {user_id}
         ORDER BY uq.id DESC
-        LIMIT 1
-    """
+        LIMIT 1"""
     cursor.execute(sql)
     data = cursor.fetchall()
     if query_result_is_none(data) is True:
@@ -187,7 +183,6 @@ def read_user_question(user_id):
             'result': False,
             'error': f'Cannot find requested answer data of user(id: {user_id})(users)'
         }
-        # slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
         return json.dumps(result, ensure_ascii=False), 401
     else:
         connection.close()

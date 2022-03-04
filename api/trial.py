@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from flask import request, url_for
 import json
 from pypika import MySQLQuery as Query, Table, Criterion
+import random
 
 
 @api.route('/trial', methods=['POST'])  # 매니저 배정 리턴값을 받은 후!
@@ -71,16 +72,23 @@ def create_trial():
     answer = json.loads(data[0][0].replace("\\", "\\\\"), strict=False)  # To prevent decoding error.
     gender = answer['gender']  # M , W
     schedule_list = answer['schedule']
+    '''
+    운동 종목별로 각각의 무료 프로그램 준비가 완료되면, 
+    선택한 N개의 운동 중 임의로 두 종목을 선택해 무료 프로그램을 부여하는 로직을 적용한다.
+    '''
+    # if len(answer['sports']) == 1:
+    #     selected_exercise = answer['sports'][:1]  # list with string
+    # elif len(answer['schedule']) >= 2:
+    #     selected_exercise = answer['sports'][:2]
+    # # 혹은...
+    #     selected_exercise = random.sample(answer['sports'], 2)
+    # for sport in selected_exercise:
+    #     # 여기서 종목 리스트만큼 순회하면서, 종목별 강의 배정을 한다.
+    #     pass
+
     selected_exercise = answer['sports'][0]  # list with string
     free_week_routines = TRIAL_DICTIONARY[selected_exercise][gender]  # list
     free_week_routines = sorted(free_week_routines, key=lambda x: x['day'])
-    selected_level = 0
-    if answer['level'] == '고':
-        selected_level = 2
-    elif answer['level'] == '중':
-        selected_level = 1
-    else:
-        selected_level = 0
 
     # 검증 2: 유저가 이미 무료 강의들을 배정받은 기록이 있는지 여부
     sql = f"""
@@ -132,9 +140,6 @@ def create_trial():
         request_schedule = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) - timedelta(days=date_today) + timedelta(days=schedule_date)
         request_schedule_30m = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) - timedelta(days=date_today) + timedelta(days=schedule_date) + timedelta(minutes=30)
         request_schedule_7d = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) - timedelta(days=date_today) + timedelta(days=schedule_date) + timedelta(days=7)
-        # request_schedule = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) - timedelta(days=date_today) + timedelta(days=schedule_date)
-        # request_schedule_30m = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) + timedelta(minutes=30)
-        # request_schedule_7d = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) + timedelta(days=7)
 
         if schedule_date > date_today:
             scheduled_at = request_schedule.strftime('%Y-%m-%d %H:%M:00')  # request_schedule에 배정
@@ -151,12 +156,17 @@ def create_trial():
                 pass
 
         to_be_scheduled = [x for x in free_week_routines if x['day'] == schedule_date]
+
         for routine in to_be_scheduled:
-            # sql = f"""
-            #     INSERT INTO
-            #         user_lectures(created_at, updated_at, user_id, lecture_id, level, scheduled_at)
-            #     VALUES
-            #         ((SELECT NOW()), (SELECT NOW()), {user_id}, {routine['lecture_id']}, {selected_level}, (SELECT NOW() + INTERVAL {routine['day']} DAY))"""
+            if answer['type'] == 'guide':
+                selected_level = 0
+            else:
+                if answer['level'] == '고':
+                    selected_level = 2
+                elif answer['level'] == '중':
+                    selected_level = 1
+                else:
+                    selected_level = 0
             sql = f"""
                 INSERT INTO
                     user_lectures(created_at, updated_at, user_id, lecture_id, level, scheduled_at)
