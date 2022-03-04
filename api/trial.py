@@ -158,7 +158,7 @@ def create_trial():
         to_be_scheduled = [x for x in free_week_routines if x['day'] == schedule_date]
 
         for routine in to_be_scheduled:
-            if answer['type'] == 'guide':
+            if routine['type'] == 'guide':
                 selected_level = 0
             else:
                 if answer['level'] == '고':
