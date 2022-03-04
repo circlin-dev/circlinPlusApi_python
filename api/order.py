@@ -17,7 +17,7 @@ def create_chat_with_manager():
     # token = request.headers['Authorization']
     parameters = json.loads(request.get_data(), encoding='utf-8')
     user_id = int(parameters['user_id'])
-    order_id = parameters['order_id']  # null or int
+    # order_id = parameters['order_id']  # null or int
     """Define tables required to execute SQL."""
     user_questions = Table('user_questions')
     customers = Table('chat_users')
@@ -46,7 +46,7 @@ def create_chat_with_manager():
         users.phone
     ).where(
         Criterion.all([
-            users.user_id == user_id
+            users.id == user_id
         ])
     ).get_sql()
     cursor.execute(sql)
@@ -157,8 +157,11 @@ def create_chat_with_manager():
         }
         return json.dumps(result, ensure_ascii=False), 200
 
-    slack_purchase_notification(cursor, user_id, user_nickname, user_phone, order_id)
-    # slack_purchase_notification(cursor, user_id, user_nickname, user_phone, order_id)
+    # if order_id is not None:
+    #     slack_purchase_notification(cursor, user_id, user_nickname, user_phone, order_id)
+    #     # slack_purchase_notification(cursor, user_id, user_nickname, user_phone, order_id)
+    # else:
+    #     pass
     result = {
         'result': True,
         'manager_id':  manager_id,  # 28 = 대표님, 18 = 희정님

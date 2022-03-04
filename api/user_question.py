@@ -18,13 +18,13 @@ def add_user_question():
     user_questions = Table('user_questions')
 
     user_id = parameters['user_id']
-    purpose = parameters['purpose']  # array
-    sports = parameters['sports']  # array
-    gender = parameters['gender']  # string
-    age_group = parameters['age_group']  # string
-    experience_group = parameters['experience_group']  # string
-    schedule = parameters['schedule']  # array with index(int)
-    disease = parameters['disease']  # array with index(int) & short sentence for index 7(string)
+    purpose = parameters['purpose']
+    sports = parameters['sports']
+    gender = parameters['gender']
+    age_group = parameters['age_group']
+    experience_group = parameters['experience_group']
+    schedule = parameters['schedule']
+    disease = parameters['disease']
     disease_detail = parameters['disease_detail']
     level = parameters['level']
 
@@ -59,10 +59,10 @@ def add_user_question():
                 'disease_detail': disease_detail
             }
             return json.dumps(result, ensure_ascii=False), 400
-        if level not in ["고", "중", "저"]:
+        if level not in ["매우 약하게", "약하게", "보통", "강하게", "매우 강하게"]:
             result = {
                 'result': False,
-                'error': f'Invalid value: Variable intensity should be "고", "중", "저".',
+                'error': f'Invalid value: Variable intensity should be "매우 약하게", "약하게", "보통", "강하게", "매우 강하게"].',
             }
             return json.dumps(result, ensure_ascii=False), 400
 
@@ -102,7 +102,7 @@ def add_user_question():
         "disease": disease,
         "disease_detail": parse_for_mysql(disease_detail),
         "schedule": schedule,
-        "level": level
+        "level": int(level)
     }, ensure_ascii=False)
     sql = Query.into(
         user_questions
@@ -191,8 +191,8 @@ def read_user_question(user_id):
         answer = data[0][2]
         result_dict = json.loads(answer.replace("\\", "\\\\"), strict=False)  # To prevent decoding error.
         result_dict['result'] = True
-        result_dict['schedule'] = replace_number_to_schedule(result_dict['schedule'])
-        result_dict['experience_group'] = replace_number_to_experience(result_dict['experience_group'])
+        # result_dict['schedule'] = replace_number_to_schedule(result_dict['schedule'])
+        # result_dict['experience_group'] = replace_number_to_experience(result_dict['experience_group'])
         result_dict['id'] = answer_id
         result_dict['created_at'] = created_at.strftime('%Y-%m-%d %H:%M:%S')
 

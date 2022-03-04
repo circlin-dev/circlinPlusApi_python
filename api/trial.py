@@ -2,7 +2,7 @@ from . import api
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
-from global_things.functions.trial import TRIAL_DICTIONARY
+from global_things.functions.trial import TRIAL_DICTIONARY, replace_text_to_level
 from datetime import datetime, timedelta
 from flask import request, url_for
 import json
@@ -158,15 +158,11 @@ def create_trial():
         to_be_scheduled = [x for x in free_week_routines if x['day'] == schedule_date]
 
         for routine in to_be_scheduled:
+
             if routine['type'] == 'guide':
                 selected_level = 0
             else:
-                if answer['level'] == '고':
-                    selected_level = 2
-                elif answer['level'] == '중':
-                    selected_level = 1
-                else:
-                    selected_level = 0
+                selected_level = replace_text_to_level(answer['level'])
             sql = f"""
                 INSERT INTO
                     user_lectures(created_at, updated_at, user_id, lecture_id, level, scheduled_at)
