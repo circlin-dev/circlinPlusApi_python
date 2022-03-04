@@ -86,7 +86,7 @@ TRIAL_DICTIONARY = {
             {"day": 6, "lecture_id": 103, 'type': 'drill', "title": "기본 & 케틀벨 - 힙 운동 (실습)(체험)"},
             # {"day": 0, "lecture_id": , "title":  "틀어진 골반 교정운동 2"},  # 편집 미완성
             # {"day": 0, "lecture_id": , "title":  "틀어진 골반 교정운동 2 (실습)(체험)"},  # 편집 미완성
-            # {"day": 1, "lecture_id": 80, "title":  "하체 스트레칭 1"},,
+            # {"day": 1, "lecture_id": 80, "title":  "하체 스트레칭 1"},
             # {"day": 1, "lecture_id": 92, "title":  "하체 스트레칭 1 (실습)(체험)"},
             # {"day": 2, "lecture_id": 14, "title":  "before start 1"},
             # {"day": 2, "lecture_id": 116, "title":  "before start 1 (실습)(체험)"},

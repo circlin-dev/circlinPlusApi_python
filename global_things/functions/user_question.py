@@ -70,11 +70,27 @@ def replace_number_to_experience(experience_group: int):
     elif experience_group == 2:
         experience = '~3개월 이내'
     elif experience_group == 3:
-        experience = '~1년 이내'
+        experience = '~6개월 이내'
     elif experience_group == 4:
-        experience = '~3년 이내'
+        experience = '~1년 이내'
     elif experience_group == 5:
+        experience = '~3년 이내'
+    elif experience_group == 6:
         experience = '~5년 이내'
     else:
         experience = '5년이상'
     return experience
+
+
+def replace_text_to_level(level_text: str):
+    if level_text == '매우 약하게':
+        level = -1
+    elif level_text == '약하게':
+        level = 0
+    elif level_text == '보통':
+        level = 1
+    elif level_text == '강하게':
+        level = 2
+    else:
+        level = 3
+    return level
