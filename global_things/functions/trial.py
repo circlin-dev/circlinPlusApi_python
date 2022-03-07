@@ -39,20 +39,20 @@ TRIAL_DICTIONARY = {
     "필라테스": {
         # case 7, 8, 9(W 완료)(M은 W의 것으로 배정되게 해 둔 상태이며, 주석한 부분이 원래 M용.
         "M": [
-            {"day": 0, "lecture_id": 142, "title": "틀어진 골반 교정 운동 2"},
-            {"day": 0, "lecture_id": 144, "title": "[실습] 틀어진 골반 교정 운동 2(체험)"},
-            {"day": 1, "lecture_id": 80, "title": "하체 스트레칭 1"},
-            {"day": 1, "lecture_id": 92, "title": "하체 스트레칭 1 (실습)(체험)"},
-            {"day": 2, "lecture_id": 14, "title": "before start 1"},
-            {"day": 2, "lecture_id": 116, "title": "before start 1 (실습)(체험)"},
-            {"day": 3, "lecture_id": 16, "title": "before start 2"},
-            {"day": 3, "lecture_id": 117, "title": "before start 2 (실습)(체험)"},
-            {"day": 4, "lecture_id": 18, "title": "before start 3"},
-            {"day": 4, "lecture_id": 118, "title": "before start 3 (실습)(체험)"},
-            {"day": 5, "lecture_id": 81, "title": "하체 스트레칭 2"},
-            {"day": 5, "lecture_id": 93, "title": "하체 스트레칭 2 (실습)(체험)"},
-            {"day": 6, "lecture_id": 104, "title": "Core Integration (코어통합) LEVEL 1"},
-            {"day": 6, "lecture_id": 120, "title": "Core Integration (코어통합) LEVEL 1 (실습)(체험)"}
+            {"day": 0, "lecture_id": 142, "type": "guide", "title":  "틀어진 골반 교정 운동 2"},
+            {"day": 0, "lecture_id": 144, "type": "drill", "title":  "[실습] 틀어진 골반 교정 운동 2(체험)"},
+            {"day": 1, "lecture_id": 80,  "type": "guide", "title":  "하체 스트레칭 1"},
+            {"day": 1, "lecture_id": 92, "type": "drill",  "title":  "하체 스트레칭 1 (실습)(체험)"},
+            {"day": 2, "lecture_id": 14,  "type": "guide", "title":  "before start 1"},
+            {"day": 2, "lecture_id": 116, "type": "drill", "title":  "before start 1 (실습)(체험)"},
+            {"day": 3, "lecture_id": 16,  "type": "guide", "title": "before start 2"},
+            {"day": 3, "lecture_id": 117, "type": "drill", "title": "before start 2 (실습)(체험)"},
+            {"day": 4, "lecture_id": 18,  "type": "guide", "title":  "before start 3"},
+            {"day": 4, "lecture_id": 118, "type": "drill", "title":  "before start 3 (실습)(체험)"},
+            {"day": 5, "lecture_id": 81,  "type": "guide", "title":  "하체 스트레칭 2"},
+            {"day": 5, "lecture_id": 93, "type": "drill",  "title":  "하체 스트레칭 2 (실습)(체험)"},
+            {"day": 6, "lecture_id": 104, "type": "guide",  "title": "Core Integration (코어통합) LEVEL 1"},
+            {"day": 6, "lecture_id": 120, "type": "drill", "title": "Core Integration (코어통합) LEVEL 1 (실습)(체험)"}
             # {"day": 0, "lecture_id": 80, "title":  "하체 스트레칭 1"},
             # {"day": 0, "lecture_id": 92, "title":  "하체 스트레칭 1 (실습)(체험)"}
             # {"day": 1, "lecture_id": 81, "title":  "하체 스트레칭 2"}
@@ -70,20 +70,20 @@ TRIAL_DICTIONARY = {
         ],
         # case 10, 11, 12(완료)
         "W": [
-            {"day": 0, "lecture_id": 142, "title":  "틀어진 골반 교정 운동 2"},
-            {"day": 0, "lecture_id": 144, "title":  "[실습] 틀어진 골반 교정 운동 2(체험)"},
-            {"day": 1, "lecture_id": 80, "title":  "하체 스트레칭 1"},
-            {"day": 1, "lecture_id": 92, "title":  "하체 스트레칭 1 (실습)(체험)"},
-            {"day": 2, "lecture_id": 14, "title":  "before start 1"},
-            {"day": 2, "lecture_id": 116, "title":  "before start 1 (실습)(체험)"},
-            {"day": 3, "lecture_id": 16, "title": "before start 2"},
-            {"day": 3, "lecture_id": 117, "title": "before start 2 (실습)(체험)"},
-            {"day": 4, "lecture_id": 18, "title":  "before start 3"},
-            {"day": 4, "lecture_id": 118, "title":  "before start 3 (실습)(체험)"},
-            {"day": 5, "lecture_id": 81, "title":  "하체 스트레칭 2"},
-            {"day": 5, "lecture_id": 93, "title":  "하체 스트레칭 2 (실습)(체험)"},
-            {"day": 6, "lecture_id": 104, "title": "Core Integration (코어통합) LEVEL 1"},
-            {"day": 6, "lecture_id": 120, "title": "Core Integration (코어통합) LEVEL 1 (실습)(체험)"}
+            {"day": 0, "lecture_id": 142, "type": "guide", "title":  "틀어진 골반 교정 운동 2"},
+            {"day": 0, "lecture_id": 144, "type": "drill", "title":  "[실습] 틀어진 골반 교정 운동 2(체험)"},
+            {"day": 1, "lecture_id": 80,  "type": "guide", "title":  "하체 스트레칭 1"},
+            {"day": 1, "lecture_id": 92, "type": "drill",  "title":  "하체 스트레칭 1 (실습)(체험)"},
+            {"day": 2, "lecture_id": 14,  "type": "guide", "title":  "before start 1"},
+            {"day": 2, "lecture_id": 116, "type": "drill", "title":  "before start 1 (실습)(체험)"},
+            {"day": 3, "lecture_id": 16,  "type": "guide", "title": "before start 2"},
+            {"day": 3, "lecture_id": 117, "type": "drill", "title": "before start 2 (실습)(체험)"},
+            {"day": 4, "lecture_id": 18,  "type": "guide", "title":  "before start 3"},
+            {"day": 4, "lecture_id": 118, "type": "drill", "title":  "before start 3 (실습)(체험)"},
+            {"day": 5, "lecture_id": 81,  "type": "guide", "title":  "하체 스트레칭 2"},
+            {"day": 5, "lecture_id": 93, "type": "drill",  "title":  "하체 스트레칭 2 (실습)(체험)"},
+            {"day": 6, "lecture_id": 104, "type": "guide",  "title": "Core Integration (코어통합) LEVEL 1"},
+            {"day": 6, "lecture_id": 120, "type": "drill", "title": "Core Integration (코어통합) LEVEL 1 (실습)(체험)"}
         ]
     },
     "요가": {  # case 13(완료)
