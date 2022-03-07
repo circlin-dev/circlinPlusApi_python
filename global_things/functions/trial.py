@@ -140,7 +140,7 @@ TRIAL_DICTIONARY = {
             {"day": 6, "lecture_id": 152, "type": "drill2", "title": "[실습] LEVEL UP 상체(체험)"}
         ]
     },
-    "서킷 트레이닝(맨몸운동)": {  # case 17, 18, 19(완성)  ==>  강의(guide) 없이 '실습(drill)'만 있음.
+    "서킷 트레이닝": {  # case 17, 18, 19(완성)  ==>  강의(guide) 없이 '실습(drill)'만 있음.
         "M": [
             {"day": 0, "lecture_id": 160, "type": "drill", "title": "왕초보 전신&팔 운동(체험)"},
             {"day": 1, "lecture_id": 161, "type": "drill", "title": "누워서 하는 복근&상체 운동(체험)"},
