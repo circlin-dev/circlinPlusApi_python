@@ -7,7 +7,7 @@ from . import api
 from flask import url_for, request
 import json
 import requests
-from pypika import MySQLQuery as Query, Criterion, Table, JoinType, Order, functions as fn
+from pypika import MySQLQuery as Query, Criterion, Table, Order, functions as fn
 
 
 @api.route('/assign-manager', methods=['POST'])
@@ -299,7 +299,7 @@ def update_payment_state_by_webhook():
             'result': False,
             'error': f'Server Error while connecting to DB: {error}'
         }
-        slack_error_notification(user_ip=ip, api=endpoint, error_message=result['error'], method=request.method)
+        slack_error_notification(user_ip=ip, api=endpoint, error_message=result['error'], method=request.method, status_code=500)
         return json.dumps(result, ensure_ascii=False), 500
     cursor = connection.cursor()
 
@@ -316,7 +316,7 @@ def update_payment_state_by_webhook():
         connection.close()
         result = {'result': False,
                   'error': f'Failed to get import access token at server(message: {get_token["message"]})'}
-        slack_error_notification(user_ip=ip, api=endpoint, error_message=get_token['message'], method=request.method)
+        slack_error_notification(user_ip=ip, api=endpoint, error_message=get_token['message'], method=request.method, status_code=500)
         return json.dumps(result, ensure_ascii=False), 500
     else:
         access_token = get_token['access_token']
@@ -422,7 +422,6 @@ def add_subscription_order():
     # token = request.headers['Authorization']
     """Define tables required to execute SQL."""
     orders = Table('orders')
-    order_subscriptions = Table('order_subscriptions')
     subscriptions = Table('subscriptions')
     discounts = Table('discounts')
     users = Table('users')
@@ -444,7 +443,7 @@ def add_subscription_order():
             'error': f'Missing data in request.'
         }
         error_log = f"{result['error']}, parameters({json.dumps(parameters, ensure_ascii=False)}),"
-        slack_error_notification(user_ip=ip, api=endpoint, error_message=error_log, method=request.method)
+        slack_error_notification(user_ip=ip, api=endpoint, error_message=error_log, method=request.method, status_code=400)
         return json.dumps(result, ensure_ascii=False), 400
 
     if not(user_id and period and imp_uid and merchant_uid):

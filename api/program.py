@@ -1,15 +1,11 @@
 from global_things.constants import API_ROOT
-from global_things.functions.slack import slack_error_notification, slack_purchase_notification
+from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
 from global_things.functions.order import get_import_access_token
 from . import api
-import ast
-from datetime import datetime
-from flask import jsonify, url_for, request
+from flask import url_for, request
 import json
-import requests
 import pandas as pd
-from pypika import MySQLQuery as Query, Criterion, Interval, Table, Field, Order, functions as fn
 
 @api.route('/program', methods=['GET'])
 def read_programs():
@@ -229,11 +225,16 @@ def read_a_program(program_id):
                                              'title', 'subtitle', 'description', 'tags', 'intro',
                                              'thumbnail', 'num_rounds', 'num_lectures',
                                              'coach', 'exercise', 'products'])
+    # programs = pd.DataFrame(result, columns=['id', 'release_at', 'status', 'type',
+    #                                          'title', 'subtitle', 'description', 'tags', 'intro',
+    #                                          'thumbnail', 'thumbnails', 'num_rounds', 'num_lectures',
+    #                                          'coach', 'exercise', 'products'])
     programs['coach'] = programs['coach'].apply(lambda x: json.loads(x))
     programs['tags'] = programs['tags'].apply(lambda x: json.loads(x))
     programs['products'] = programs['products'].apply(lambda x: json.loads(x))
     programs['products'] = programs['products'].apply(lambda x: list({data['id']: data for data in x}.values()))
     programs['products'] = programs['products'].apply(lambda x: [] if x[0]['id'] is None else x)
+    # products_df['thumbnails'] = products_df['thumbnails'].apply(lambda x: [] if x is None else json.loads(x))
 
     result_list = json.loads(programs.to_json(orient='records'))
     if len(result_list) == 0:

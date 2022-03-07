@@ -6,7 +6,6 @@ from . import api
 from flask import url_for, request
 import json
 import pandas as pd
-from pypika import MySQLQuery as Query, Criterion, Table, Order, functions as fn
 
 
 @api.route('/coach', methods=['GET'])

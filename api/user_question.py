@@ -17,17 +17,25 @@ def add_user_question():
     """Define tables required to execute SQL."""
     user_questions = Table('user_questions')
 
-    user_id = parameters['user_id']
-    purpose = parameters['purpose']
-    sports = parameters['sports']
-    gender = parameters['gender']
-    age_group = parameters['age_group']
-    experience_group = parameters['experience_group']
-    schedule = parameters['schedule']
-    disease = parameters['disease']
-    disease_detail = parameters['disease_detail']
-    level = parameters['level']
-
+    try:
+        user_id = int(parameters['user_id'])
+        purpose = parameters['purpose']  # Array
+        sports = parameters['sports']  # Array
+        gender = parameters['gender']  # string
+        age_group = parameters['age_group']  # string
+        experience_group = parameters['experience_group']  # string
+        schedule = parameters['schedule']  # Array
+        disease = parameters['disease']  # Array
+        disease_detail = parameters['disease_detail']  # None or string
+        level = parameters['level']  # string
+    except:
+        result = {
+            'result': False,
+            'error': f'Missing data in request.'
+        }
+        error_log = f"{result['error']}, parameters({json.dumps(parameters, ensure_ascii=False)}),"
+        slack_error_notification(user_ip=ip, api=endpoint, error_message=error_log, method=request.method, status_code=400)
+        return json.dumps(result, ensure_ascii=False), 400
     # Verify if mandatory information is not null.
     if request.method == 'POST':
         """
@@ -39,16 +47,10 @@ def add_user_question():
         if not(user_id and purpose and sports and gender and age_group and experience_group):
             result = {
                 'result': False,
-                'error': f'Missing data in request.',
-                'values': {
-                    'user_id': user_id,
-                    'purpose': purpose,
-                    'sports': sports,
-                    'gender': gender,
-                    'age_group': age_group,
-                    'experience_group': experience_group
-                }
+                'error': f'Missing data in request.'
             }
+            error_log = f"{result['error']}, parameters({json.dumps(parameters, ensure_ascii=False)}),"
+            slack_error_notification(user_ip=ip, api=endpoint, error_message=error_log, method=request.method, status_code=400)
             return json.dumps(result, ensure_ascii=False), 400
         # Check if disease_detail is None, or disease_detail is empty string("" or " " or "  " ...).
         if len(disease) == 0 and (disease_detail is not None or (type(disease_detail) == str and len(disease_detail.strip()) > 0)):
@@ -74,7 +76,7 @@ def add_user_question():
             'result': False,
             'error': f'Server Error while connecting to DB: {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method, status_code=500)
         return json.dumps(result, ensure_ascii=False), 500
 
     cursor = connection.cursor()
@@ -102,7 +104,7 @@ def add_user_question():
         "disease": disease,
         "disease_detail": parse_for_mysql(disease_detail),
         "schedule": schedule,
-        "level": int(level)
+        "level": level
     }, ensure_ascii=False)
     sql = Query.into(
         user_questions
@@ -116,6 +118,7 @@ def add_user_question():
         cursor.execute(sql)
         connection.commit()
         user_question_id = int(cursor.lastrowid)  # 사전설문 데이터 저장 후 client에 반환, 무료 체험 프로그램 배정 시 다시 parameter로 전송받음.
+        connection.close()
     except Exception as e:
         connection.rollback()
         connection.close()
@@ -127,7 +130,6 @@ def add_user_question():
         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
 
-    connection.close()
     result = {'result': True, 'user_question_id': user_question_id}
     return json.dumps(result, ensure_ascii=False), 201
 
@@ -147,7 +149,7 @@ def read_user_question(user_id):
             'result': False,
             'error': f'Server Error while connecting to DB: {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method, status_code=500)
         return json.dumps(result, ensure_ascii=False), 500
 
     cursor = connection.cursor()
@@ -183,6 +185,7 @@ def read_user_question(user_id):
             'result': False,
             'error': f'Cannot find requested answer data of user(id: {user_id})(users)'
         }
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method, status_code=401)
         return json.dumps(result, ensure_ascii=False), 401
     else:
         connection.close()
@@ -208,15 +211,25 @@ def update_user_question(user_id, question_id):
     """Define tables required to execute SQL."""
     user_questions = Table('user_questions')
 
-    purpose = parameters['purpose']  # array
-    sports = parameters['sports']  # array
-    gender = parameters['gender']  # string
-    age_group = parameters['age_group']  # string
-    experience_group = parameters['experience_group']  # string
-    schedule = parameters['schedule']  # array with index(int)
-    disease = parameters['disease']  # array with index(int) & short sentence for index 7(string)
-    disease_detail = parameters['disease_detail']
-    level = parameters['level']
+
+    try:
+        purpose = parameters['purpose']  # array
+        sports = parameters['sports']  # array
+        gender = parameters['gender']  # string
+        age_group = parameters['age_group']  # string
+        experience_group = parameters['experience_group']  # string
+        schedule = parameters['schedule']  # array with index(string)
+        disease = parameters['disease']  # short sentence for index 7(string)
+        disease_detail = parameters['disease_detail']
+        level = parameters['level']
+    except:
+        result = {
+            'result': False,
+            'error': f'Missing data in request.'
+        }
+        error_log = f"{result['error']}, parameters({json.dumps(parameters, ensure_ascii=False)}),"
+        slack_error_notification(user_ip=ip, api=endpoint, error_message=error_log, method=request.method, status_code=400)
+        return json.dumps(result, ensure_ascii=False), 400
 
     try:
         connection = login_to_db()
@@ -278,7 +291,7 @@ def update_user_question(user_id, question_id):
             'result': False,
             'error': f'Server Error while executing INSERT query(user_questions): {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method, status_code=500)
         return json.dumps(result, ensure_ascii=False), 500
 
     result = {'result': True}

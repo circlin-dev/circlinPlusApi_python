@@ -1,13 +1,10 @@
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, query_result_is_none
-from global_things.functions.order import get_import_access_token
 from . import api
-from flask import jsonify, url_for, request
+from flask import url_for, request
 import json
-import requests
 import pandas as pd
-from pypika import MySQLQuery as Query, Criterion, Interval, Table, Field, Order, functions as fn
 
 
 @api.route('/products', methods=['GET'])
@@ -224,11 +221,23 @@ def read_products():
                                                 'original_price', 'price', 'stocks',
                                                 'thumbnail', 'details', 'related_programs',
                                                 'release_at', 'status', 'is_hidden', 'exercises'])
+    # products_df = pd.DataFrame(result, columns=['id', 'type', 'code',
+    #                                             'title', 'description', 'brandTitle',
+    #                                             'original_price', 'price', 'stocks',
+    #                                             'thumbnail', 'thumbnails', 'details', 'detail_thumbnails',
+    #                                             'related_programs', 'release_at', 'status',
+    #                                             'is_hidden', 'exercises'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: [] if x is None else json.loads(x))
+        # products_df['detail_thumbnails'] = products_df['detail_thumbnails'].apply(lambda x: [] if x is None else json.loads(x))
     except:
         result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
+    # try:
+    #     products_df['thumbnails'] = products_df['thumbnails'].apply(lambda x: [] if x is None else json.loads(x))
+    # except:
+    #     result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
+    #     return json.dumps(result_dict, ensure_ascii=False), 200
     try:
         products_df['related_programs'] = products_df['related_programs'].apply(lambda x: json.loads(x))
         products_df['related_programs'] = products_df['related_programs'].apply(lambda x: list({data['id']: data for data in x}.values()))
@@ -261,9 +270,6 @@ def read_a_product(product_id: int):
     endpoint = API_ROOT + url_for('api.read_a_product', product_id=product_id)
     # session_id = request.headers['Authorization']
     # check_session(session_id)
-    programs = Table('programs')
-    products = Table('products')
-    program_products = Table('program_products')
     """페이징 필요!!!"""
 
     try:
@@ -357,12 +363,24 @@ def read_a_product(product_id: int):
                                                 'original_price', 'price', 'stocks',
                                                 'thumbnail', 'details', 'related_programs',
                                                 'release_at', 'status', 'is_hidden', 'exercises'])
+    # products_df = pd.DataFrame(result, columns=['id', 'type', 'code',
+    #                                             'title', 'description', 'brandTitle',
+    #                                             'original_price', 'price', 'stocks',
+    #                                             'thumbnail', 'thumbnails', 'details', 'detail_thumbnails',
+    #                                             'related_programs', 'release_at', 'status',
+    #                                             'is_hidden', 'exercises'])
     try:
         products_df['details'] = products_df['details'].apply(lambda x: [] if x is None else json.loads(x))
+        # products_df['detail_thumbnails'] = products_df['detail_thumbnails'].apply(lambda x: [] if x is None else json.loads(x))
     except:
         # 썸네일만 없는 경우.
         result_dict = json.loads(products_df.to_json(orient='records'))[0]  # Array type으로 가고있음
         return json.dumps(result_dict, ensure_ascii=False), 200
+    # try:
+    #     products_df['thumbnails'] = products_df['thumbnails'].apply(lambda x: [] if x is None else json.loads(x))
+    # except:
+    #     result_dict = json.loads(products_df.to_json(orient='records'))  # Array type으로 가고있음
+    #     return json.dumps(result_dict, ensure_ascii=False), 200
     try:
         products_df['related_programs'] = products_df['related_programs'].apply(lambda x: json.loads(x))
         products_df['related_programs'] = products_df['related_programs'].apply(lambda x: list({data['id']: data for data in x}.values()))
