@@ -2,7 +2,7 @@ from . import api
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_session, parse_for_mysql, query_result_is_none
-from global_things.functions.user_question import replace_number_to_schedule, replace_number_to_experience
+from global_things.functions.user_question import sort_schedule_by_date, replace_number_to_experience
 from flask import request, url_for
 import json
 from pypika import MySQLQuery as Query, Table, Order, Criterion
@@ -44,7 +44,7 @@ def add_user_question():
         (2) 기간이 끝나지 않은 이용권 Or 프로그램(무료)
         있다면 더 이상 질문에 대한 응답을 받으면 안 된다.
         """
-        if not(user_id and purpose and sports and gender and age_group and experience_group):
+        if not(user_id and purpose and sports and gender and age_group and experience_group and level and schedule):
             result = {
                 'result': False,
                 'error': f'Missing data in request.'
@@ -64,7 +64,14 @@ def add_user_question():
         if level not in ["매우 약하게", "약하게", "보통", "강하게", "매우 강하게"]:
             result = {
                 'result': False,
-                'error': f'Invalid value: Variable intensity should be "매우 약하게", "약하게", "보통", "강하게", "매우 강하게"].',
+                'error': f"Invalid request parameter: 'level' should be ['매우 약하게', '약하게', '보통', '강하게', '매우 강하게']."
+            }
+            return json.dumps(result, ensure_ascii=False), 400
+        if len(schedule) == 0 or "" in schedule:
+            result = {
+                'result': False,
+                'error': f'Invalid request parameter: Schedule data is empty or invalid.',
+                'schedule': schedule
             }
             return json.dumps(result, ensure_ascii=False), 400
 
@@ -89,7 +96,7 @@ def add_user_question():
     #     'result': False,
     #     'error': f"Cannot find user {user_id}: No such user."
     #   }
-    #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
+    #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method, status_code=401)
     #   return json.dumps(result, ensure_ascii=False), 401
     # elif is_valid_user['result'] is True:
     #   pass
@@ -103,7 +110,7 @@ def add_user_question():
         "experience_group": experience_group,
         "disease": disease,
         "disease_detail": parse_for_mysql(disease_detail),
-        "schedule": schedule,
+        "schedule": sort_schedule_by_date(schedule),
         "level": level
     }, ensure_ascii=False)
     sql = Query.into(
@@ -127,7 +134,7 @@ def add_user_question():
             'result': False,
             'error': f'Server Error while executing INSERT query(user_questions): {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method, status_code=500)
         return json.dumps(result, ensure_ascii=False), 500
 
     result = {'result': True, 'user_question_id': user_question_id}
@@ -194,7 +201,7 @@ def read_user_question(user_id):
         answer = data[0][2]
         result_dict = json.loads(answer.replace("\\", "\\\\"), strict=False)  # To prevent decoding error.
         result_dict['result'] = True
-        # result_dict['schedule'] = replace_number_to_schedule(result_dict['schedule'])
+        # result_dict['schedule'] = sort_schedule_by_date(result_dict['schedule'])
         # result_dict['experience_group'] = replace_number_to_experience(result_dict['experience_group'])
         result_dict['id'] = answer_id
         result_dict['created_at'] = created_at.strftime('%Y-%m-%d %H:%M:%S')
@@ -239,7 +246,7 @@ def update_user_question(user_id, question_id):
             'result': False,
             'error': f'Server Error while connecting to DB: {error}'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method, status_code=500)
         return json.dumps(result, ensure_ascii=False), 500
 
     cursor = connection.cursor()
@@ -252,7 +259,7 @@ def update_user_question(user_id, question_id):
     #     'result': False,
     #     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
     #   }
-    #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
+    #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method, status_code=401)
     #   return json.dumps(result, ensure_ascii=False), 401
     # elif is_valid_user['result'] is True:
     #   pass
