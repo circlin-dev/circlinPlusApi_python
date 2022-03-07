@@ -75,115 +75,119 @@ def create_trial():
     '''
     # 운동 종목별로 각각의 무료 프로그램 준비가 완료되면, 
     # 선택한 N개의 운동 중 임의로 두 종목을 선택해 무료 프로그램을 부여하는 로직을 적용한다.
-
-    # if len(answer['sports']) == 1:
-    #     selected_exercise = answer['sports'][:1]  # list with string
-    # elif len(answer['schedule']) >= 2:
-    #     selected_exercise = answer['sports'][:2]
-    # # 혹은...
-    #     selected_exercise = random.sample(answer['sports'], 2)
-    # for sport in selected_exercise:
-    #     # 여기서 종목 리스트만큼 순회하면서, 종목별 강의 배정을 한다.
-    #     pass
     '''
-
-    selected_exercise = answer['sports'][0]  # list with string
-    free_week_routines = TRIAL_DICTIONARY[selected_exercise][gender]  # list
-    free_week_routines = sorted(free_week_routines, key=lambda x: x['day'])
-
-    # 검증 2: 유저가 이미 무료 강의들을 배정받은 기록이 있는지 여부
-    sql = f"""
-        SELECT 
-            ul.lecture_id,
-            l.program_id 
-        FROM 
-            user_lectures ul
-        INNER JOIN
-            lectures l
-            ON l.id = ul.lecture_id
-        WHERE user_id={user_id}
-        AND l.program_id IS NULL
-        AND ul.deleted_at IS NULL
-    """
-    cursor.execute(sql)
-    free_lecture_on_progress = cursor.fetchall()
-
-    if query_result_is_none(free_lecture_on_progress) is False:
+    if len(answer['sports']) == 1:
+        selected_exercise = answer['sports'][:1]  # list with string
+    elif len(answer['schedule']) >= 2:
+        selected_exercise = random.sample(answer['sports'], 2)
+    else:
         connection.close()
         result = {
             'result': False,
-            'message': 'Failed to create 1 week free trial(1 week free trial already exists).'
+            'message': "Invalid data: User didn't selected 1 or more exercises."
         }
         return json.dumps(result, ensure_ascii=False), 400
 
-    for schedule in schedule_list:
-        schedule_date_text, schedule_time_text = schedule.split(' ')
-        if schedule_date_text == '월':
-            schedule_date = 0
-        elif schedule_date_text == '화':
-            schedule_date = 1
-        elif schedule_date_text == '수':
-            schedule_date = 2
-        elif schedule_date_text == '목':
-            schedule_date = 3
-        elif schedule_date_text == '금':
-            schedule_date = 4
-        elif schedule_date_text == '토':
-            schedule_date = 5
-        else:
-            schedule_date = 6
-        hour_schedule = int(schedule_time_text.split(':')[0])
-        minute_schedule = int(schedule_time_text.split(':')[1])
-        now = datetime.now()
-        date_today = now.weekday()
-        # hour_now = now.hour
-        # minute_now = now.minute
-        request_schedule = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) - timedelta(days=date_today) + timedelta(days=schedule_date)
-        request_schedule_30m = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) - timedelta(days=date_today) + timedelta(days=schedule_date) + timedelta(minutes=30)
-        request_schedule_7d = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) - timedelta(days=date_today) + timedelta(days=schedule_date) + timedelta(days=7)
+    for sport in selected_exercise:
+        # 여기서 종목 리스트만큼 순회하면서, 종목별 강의 배정을 한다.
 
-        if schedule_date > date_today:
-            scheduled_at = request_schedule.strftime('%Y-%m-%d %H:%M:00')  # request_schedule에 배정
-            pass
-        elif schedule_date < date_today:
-            scheduled_at = request_schedule_7d.strftime('%Y-%m-%d %H:%M:00')  # request_schedule + 7days에 배정
-            pass
-        else:   # date_schedule == date_today
-            if now < request_schedule_30m:
-                scheduled_at = request_schedule.strftime('%Y-%m-%d %H:%M:00')  # request_schedule 에 배정
-                pass
-            else:   # now >= request_schedule_30m
-                scheduled_at = request_schedule_7d.strftime('%Y-%m-%d %H:%M:00')  # request_schedule + 7 days에 배정
-                pass
+    # selected_exercise = answer['sports'][0]  # list with string
+        free_week_routines = TRIAL_DICTIONARY[sport][gender]  # list
+        free_week_routines = sorted(free_week_routines, key=lambda x: x['day'])
 
-        to_be_scheduled = [x for x in free_week_routines if x['day'] == schedule_date]
+        # 검증 2: 유저가 이미 무료 강의들을 배정받은 기록이 있는지 여부
+        sql = f"""
+            SELECT 
+                ul.lecture_id,
+                l.program_id 
+            FROM 
+                user_lectures ul
+            INNER JOIN
+                lectures l
+                ON l.id = ul.lecture_id
+            WHERE user_id={user_id}
+            AND l.program_id IS NULL
+            AND ul.deleted_at IS NULL
+        """
+        cursor.execute(sql)
+        free_lecture_on_progress = cursor.fetchall()
 
-        for routine in to_be_scheduled:
+        if query_result_is_none(free_lecture_on_progress) is False:
+            connection.close()
+            result = {
+                'result': False,
+                'message': 'Failed to create 1 week free trial(1 week free trial already exists).'
+            }
+            return json.dumps(result, ensure_ascii=False), 400
 
-            if routine['type'] == 'guide':
-                selected_level = 0
+        for schedule in schedule_list:
+            schedule_date_text, schedule_time_text = schedule.split(' ')
+            if schedule_date_text == '월':
+                schedule_date = 0
+            elif schedule_date_text == '화':
+                schedule_date = 1
+            elif schedule_date_text == '수':
+                schedule_date = 2
+            elif schedule_date_text == '목':
+                schedule_date = 3
+            elif schedule_date_text == '금':
+                schedule_date = 4
+            elif schedule_date_text == '토':
+                schedule_date = 5
             else:
-                selected_level = replace_text_to_level(answer['level'])
-            sql = f"""
-                INSERT INTO
-                    user_lectures(created_at, updated_at, user_id, lecture_id, level, scheduled_at)
-                VALUES
-                    ((SELECT NOW()), (SELECT NOW()), {user_id}, {routine['lecture_id']}, {selected_level}, TIMESTAMP('{scheduled_at}'))"""
-            try:
-                cursor.execute(sql)
-                connection.commit()
-            except Exception as e:
-                connection.rollback()
-                connection.close()
-                error = str(e)
-                result = {
-                    'result': False,
-                    'error': f'Server Error while executing INSERT query(user_questions): {error}'
-                }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
-                return json.dumps(result, ensure_ascii=False), 500
-        else:
-            pass
+                schedule_date = 6
+            hour_schedule = int(schedule_time_text.split(':')[0])
+            minute_schedule = int(schedule_time_text.split(':')[1])
+            now = datetime.now()
+            date_today = now.weekday()
+            # hour_now = now.hour
+            # minute_now = now.minute
+            request_schedule = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) - timedelta(days=date_today) + timedelta(days=schedule_date)
+            request_schedule_30m = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) - timedelta(days=date_today) + timedelta(days=schedule_date) + timedelta(minutes=30)
+            request_schedule_7d = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) - timedelta(days=date_today) + timedelta(days=schedule_date) + timedelta(days=7)
+
+            if schedule_date > date_today:
+                scheduled_at = request_schedule.strftime('%Y-%m-%d %H:%M:00')  # request_schedule에 배정
+                pass
+            elif schedule_date < date_today:
+                scheduled_at = request_schedule_7d.strftime('%Y-%m-%d %H:%M:00')  # request_schedule + 7days에 배정
+                pass
+            else:   # date_schedule == date_today
+                if now < request_schedule_30m:
+                    scheduled_at = request_schedule.strftime('%Y-%m-%d %H:%M:00')  # request_schedule 에 배정
+                    pass
+                else:   # now >= request_schedule_30m
+                    scheduled_at = request_schedule_7d.strftime('%Y-%m-%d %H:%M:00')  # request_schedule + 7 days에 배정
+                    pass
+
+            to_be_scheduled = [x for x in free_week_routines if x['day'] == schedule_date]
+
+            for routine in to_be_scheduled:
+
+                if routine['type'] == 'guide':
+                    selected_level = 0
+                else:
+                    selected_level = replace_text_to_level(answer['level'])
+                sql = f"""
+                    INSERT INTO
+                        user_lectures(created_at, updated_at, user_id, lecture_id, level, scheduled_at)
+                    VALUES
+                        ((SELECT NOW()), (SELECT NOW()), {user_id}, {routine['lecture_id']}, {selected_level}, TIMESTAMP('{scheduled_at}'))"""
+                try:
+                    cursor.execute(sql)
+                    connection.commit()
+                except Exception as e:
+                    connection.rollback()
+                    connection.close()
+                    error = str(e)
+                    result = {
+                        'result': False,
+                        'error': f'Server Error while executing INSERT query(user_questions): {error}'
+                    }
+                    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
+                    return json.dumps(result, ensure_ascii=False), 500
+            else:
+                pass
 
     connection.close()
     result = {'result': True, 'message': 'Created 7 days free trial routine.'}
