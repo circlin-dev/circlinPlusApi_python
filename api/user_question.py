@@ -238,6 +238,37 @@ def update_user_question(user_id, question_id):
         slack_error_notification(user_ip=ip, api=endpoint, error_message=error_log, method=request.method, status_code=400)
         return json.dumps(result, ensure_ascii=False), 400
 
+    # if not(user_id and purpose and sports and gender and age_group and experience_group and level and schedule):
+    #     result = {
+    #         'result': False,
+    #         'error': f'Missing data in request.'
+    #     }
+    #     error_log = f"{result['error']}, parameters({json.dumps(parameters, ensure_ascii=False)}),"
+    #     slack_error_notification(user_ip=ip, api=endpoint, error_message=error_log, method=request.method, status_code=400)
+    #     return json.dumps(result, ensure_ascii=False), 400
+    # # Check if disease_detail is None, or disease_detail is empty string("" or " " or "  " ...).
+    # if len(disease) == 0 and (disease_detail is not None or (type(disease_detail) == str and len(disease_detail.strip()) > 0)):
+    #     result = {
+    #         'result': False,
+    #         'error': f'User answered that he/she has no disease, but disease_detail has value.',
+    #         'disease': disease,
+    #         'disease_detail': disease_detail
+    #     }
+    #     return json.dumps(result, ensure_ascii=False), 400
+    # if level not in ["매우 약하게", "약하게", "보통", "강하게", "매우 강하게"]:
+    #     result = {
+    #         'result': False,
+    #         'error': f"Invalid request parameter: 'level' should be ['매우 약하게', '약하게', '보통', '강하게', '매우 강하게']."
+    #     }
+    #     return json.dumps(result, ensure_ascii=False), 400
+    # if len(schedule) == 0 or "" in schedule:
+    #     result = {
+    #         'result': False,
+    #         'error': f'Invalid request parameter: Schedule data is empty or invalid.',
+    #         'schedule': schedule
+    #     }
+    #     return json.dumps(result, ensure_ascii=False), 400
+
     try:
         connection = login_to_db()
     except Exception as e:
