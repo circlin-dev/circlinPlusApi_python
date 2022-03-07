@@ -159,6 +159,48 @@ TRIAL_DICTIONARY = {
             {"day": 5, "lecture_id": 166, "type": "drill", "title": "운동량 up! 전신 유산소 운동(체험)"},
             {"day": 6, "lecture_id": 165, "type": "drill", "title": "왕초보 전신&하체 운동(체험)"}
         ],
+    },
+    "복싱": {
+        # 무료 체험 강의 편성에는 없는 종목이지만, 써킷 트레이닝으로 부여함(단, 서킷 트레이닝을 이미 선택한 유저의 경우 중복을 제거한다)(https://circlincoltd.slack.com/archives/C01BY52TMPZ/p1646665898210579)
+        "M": [
+            {"day": 0, "lecture_id": 160, "type": "drill", "title": "왕초보 전신&팔 운동(체험)"},
+            {"day": 1, "lecture_id": 161, "type": "drill", "title": "누워서 하는 복근&상체 운동(체험)"},
+            {"day": 2, "lecture_id": 164, "type": "drill", "title": "허벅지 집중 운동(체험)"},
+            {"day": 3, "lecture_id": 162, "type": "drill", "title": "코어 강화 운동(체험)"},
+            {"day": 4, "lecture_id": 163, "type": "drill", "title": "엉덩이 자극 집중 운동(체험)"},
+            {"day": 5, "lecture_id": 166, "type": "drill", "title": "운동량 up! 전신 유산소 운동(체험)"},
+            {"day": 6, "lecture_id": 165, "type": "drill", "title": "왕초보 전신&하체 운동(체험)"}
+        ],
+        "W": [
+            {"day": 0, "lecture_id": 160, "type": "drill", "title": "왕초보 전신&팔 운동(체험)"},
+            {"day": 1, "lecture_id": 161, "type": "drill", "title": "누워서 하는 복근&상체 운동(체험)"},
+            {"day": 2, "lecture_id": 164, "type": "drill", "title": "허벅지 집중 운동(체험)"},
+            {"day": 3, "lecture_id": 162, "type": "drill", "title": "코어 강화 운동(체험)"},
+            {"day": 4, "lecture_id": 163, "type": "drill", "title": "엉덩이 자극 집중 운동(체험)"},
+            {"day": 5, "lecture_id": 166, "type": "drill", "title": "운동량 up! 전신 유산소 운동(체험)"},
+            {"day": 6, "lecture_id": 165, "type": "drill", "title": "왕초보 전신&하체 운동(체험)"}
+        ],
+    },
+    "기타": {
+        # 무료 체험 강의 편성에는 없는 종목이지만, 써킷 트레이닝으로 부여함(단, 서킷 트레이닝을 이미 선택한 유저의 경우 중복을 제거한다)(https://circlincoltd.slack.com/archives/C01BY52TMPZ/p1646665898210579)
+        "M": [
+            {"day": 0, "lecture_id": 160, "type": "drill", "title": "왕초보 전신&팔 운동(체험)"},
+            {"day": 1, "lecture_id": 161, "type": "drill", "title": "누워서 하는 복근&상체 운동(체험)"},
+            {"day": 2, "lecture_id": 164, "type": "drill", "title": "허벅지 집중 운동(체험)"},
+            {"day": 3, "lecture_id": 162, "type": "drill", "title": "코어 강화 운동(체험)"},
+            {"day": 4, "lecture_id": 163, "type": "drill", "title": "엉덩이 자극 집중 운동(체험)"},
+            {"day": 5, "lecture_id": 166, "type": "drill", "title": "운동량 up! 전신 유산소 운동(체험)"},
+            {"day": 6, "lecture_id": 165, "type": "drill", "title": "왕초보 전신&하체 운동(체험)"}
+        ],
+        "W": [
+            {"day": 0, "lecture_id": 160, "type": "drill", "title": "왕초보 전신&팔 운동(체험)"},
+            {"day": 1, "lecture_id": 161, "type": "drill", "title": "누워서 하는 복근&상체 운동(체험)"},
+            {"day": 2, "lecture_id": 164, "type": "drill", "title": "허벅지 집중 운동(체험)"},
+            {"day": 3, "lecture_id": 162, "type": "drill", "title": "코어 강화 운동(체험)"},
+            {"day": 4, "lecture_id": 163, "type": "drill", "title": "엉덩이 자극 집중 운동(체험)"},
+            {"day": 5, "lecture_id": 166, "type": "drill", "title": "운동량 up! 전신 유산소 운동(체험)"},
+            {"day": 6, "lecture_id": 165, "type": "drill", "title": "왕초보 전신&하체 운동(체험)"}
+        ],
     }
 }
 

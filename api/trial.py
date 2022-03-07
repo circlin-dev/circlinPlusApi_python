@@ -76,10 +76,18 @@ def create_trial():
     # 운동 종목별로 각각의 무료 프로그램 준비가 완료되면, 
     # 선택한 N개의 운동 중 임의로 두 종목을 선택해 무료 프로그램을 부여하는 로직을 적용한다.
     '''
-    if len(answer['sports']) == 1:
-        selected_exercise = answer['sports'][:1]  # list with string
+    # 복싱, 기타 종목은 잠정적으로 서킷 트레이닝의 강의를 배정해 주기로 한다.
+    # 이를 위해, '기타'와 '복싱' 종목을 '서킷 트레이닝'으로 바꾼 다음, 중복을 없앤다.
+    selected_sports = [title if title !='기타' and title != '복싱' else '서킷 트레이닝' for title in answer['sports']]
+    sports_list = list(set(selected_sports))
+    # if len(answer['sports']) == 1:
+    #     selected_exercise = answer['sports'][:1]  # list with string
+    # elif len(answer['schedule']) >= 2:
+    #     selected_exercise = random.sample(answer['sports'], 2)
+    if len(sports_list) == 1:
+        selected_exercise = sports_list[:1]  # list with string
     elif len(answer['schedule']) >= 2:
-        selected_exercise = random.sample(answer['sports'], 2)
+        selected_exercise = random.sample(sports_list, 2)
     else:
         connection.close()
         result = {
@@ -100,8 +108,7 @@ def create_trial():
             ON l.id = ul.lecture_id
         WHERE user_id={user_id}
         AND l.program_id IS NULL
-        AND ul.deleted_at IS NULL
-    """
+        AND ul.deleted_at IS NULL"""
     cursor.execute(sql)
     free_lecture_on_progress = cursor.fetchall()
 
