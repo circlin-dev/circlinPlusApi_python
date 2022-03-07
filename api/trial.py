@@ -88,37 +88,35 @@ def create_trial():
         }
         return json.dumps(result, ensure_ascii=False), 400
 
+    # 검증 2: 유저가 이미 무료 강의들을 배정받은 기록이 있는지 여부
+    sql = f"""
+        SELECT 
+            ul.lecture_id,
+            l.program_id 
+        FROM 
+            user_lectures ul
+        INNER JOIN
+            lectures l
+            ON l.id = ul.lecture_id
+        WHERE user_id={user_id}
+        AND l.program_id IS NULL
+        AND ul.deleted_at IS NULL
+    """
+    cursor.execute(sql)
+    free_lecture_on_progress = cursor.fetchall()
+
+    if query_result_is_none(free_lecture_on_progress) is False:
+        connection.close()
+        result = {
+            'result': False,
+            'message': 'Failed to create 1 week free trial(1 week free trial already exists).'
+        }
+        return json.dumps(result, ensure_ascii=False), 400
+
     for sport in selected_exercise:
         # 여기서 종목 리스트만큼 순회하면서, 종목별 강의 배정을 한다.
-
-    # selected_exercise = answer['sports'][0]  # list with string
         free_week_routines = TRIAL_DICTIONARY[sport][gender]  # list
         free_week_routines = sorted(free_week_routines, key=lambda x: x['day'])
-
-        # 검증 2: 유저가 이미 무료 강의들을 배정받은 기록이 있는지 여부
-        sql = f"""
-            SELECT 
-                ul.lecture_id,
-                l.program_id 
-            FROM 
-                user_lectures ul
-            INNER JOIN
-                lectures l
-                ON l.id = ul.lecture_id
-            WHERE user_id={user_id}
-            AND l.program_id IS NULL
-            AND ul.deleted_at IS NULL
-        """
-        cursor.execute(sql)
-        free_lecture_on_progress = cursor.fetchall()
-
-        if query_result_is_none(free_lecture_on_progress) is False:
-            connection.close()
-            result = {
-                'result': False,
-                'message': 'Failed to create 1 week free trial(1 week free trial already exists).'
-            }
-            return json.dumps(result, ensure_ascii=False), 400
 
         for schedule in schedule_list:
             schedule_date_text, schedule_time_text = schedule.split(' ')
