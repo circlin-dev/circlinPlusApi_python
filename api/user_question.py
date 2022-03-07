@@ -208,7 +208,6 @@ def update_user_question(user_id, question_id):
     """Define tables required to execute SQL."""
     user_questions = Table('user_questions')
 
-    user_id = parameters['user_id']
     purpose = parameters['purpose']  # array
     sports = parameters['sports']  # array
     gender = parameters['gender']  # string

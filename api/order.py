@@ -71,7 +71,7 @@ def create_chat_with_manager():
             'result': False,
             'error': f': No pre-survey answer data of user({user_id})'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
+        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method, status_code=403)
         return json.dumps(result, ensure_ascii=False), 403
 
     gender = json.loads(answer_data[0][0].replace("\\", "\\\\"), strict=False)['gender']

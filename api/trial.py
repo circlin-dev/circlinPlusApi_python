@@ -73,9 +73,9 @@ def create_trial():
     gender = answer['gender']  # M , W
     schedule_list = answer['schedule']
     '''
-    운동 종목별로 각각의 무료 프로그램 준비가 완료되면, 
-    선택한 N개의 운동 중 임의로 두 종목을 선택해 무료 프로그램을 부여하는 로직을 적용한다.
-    '''
+    # 운동 종목별로 각각의 무료 프로그램 준비가 완료되면, 
+    # 선택한 N개의 운동 중 임의로 두 종목을 선택해 무료 프로그램을 부여하는 로직을 적용한다.
+
     # if len(answer['sports']) == 1:
     #     selected_exercise = answer['sports'][:1]  # list with string
     # elif len(answer['schedule']) >= 2:
@@ -85,6 +85,7 @@ def create_trial():
     # for sport in selected_exercise:
     #     # 여기서 종목 리스트만큼 순회하면서, 종목별 강의 배정을 한다.
     #     pass
+    '''
 
     selected_exercise = answer['sports'][0]  # list with string
     free_week_routines = TRIAL_DICTIONARY[selected_exercise][gender]  # list
