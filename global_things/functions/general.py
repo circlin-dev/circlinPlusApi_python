@@ -29,6 +29,7 @@ def check_user_token(cursor, bearer_token):
         personal_access_tokens.tokens == hashed_bearer_token
     ).get_sql()
 
+    cursor.execute(sql)
     verified_user_id = cursor.fetchall()
     if len(verified_user_id) == 0 or verified_user_id == ():
         result = {'result': False, 'user_id': None}
