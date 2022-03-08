@@ -18,7 +18,8 @@ def login_to_db():
 
 # User verification by exploring user table.
 def check_user_token(cursor, bearer_token):
-    hashed_bearer_token = hashlib.sha256(bearer_token.encode()).hexdigest()
+    token = bearer_token.split(' ')[-1]
+    hashed_bearer_token = hashlib.sha256(token.encode()).hexdigest()
     personal_access_tokens = Table('personal_access_tokens')
 
     sql = Query.from_(

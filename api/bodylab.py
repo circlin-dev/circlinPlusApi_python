@@ -26,7 +26,7 @@ from werkzeug.utils import secure_filename
 def weekly_bodylab():
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.weekly_bodylab')
-    user_token = request.headers.get('Authorization').split(' ')[-1]
+    user_token = request.headers.get('Authorization')
 
     data = request.form.to_dict()
     try:
@@ -574,7 +574,7 @@ def weekly_bodylab():
 def read_user_bodylab(user_id):
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.read_user_bodylab', user_id=user_id)
-    user_token = request.headers.get('Authorization').split(' ')[-1]
+    user_token = request.headers.get('Authorization')
 
     """Define tables required to execute SQL."""
     bodylabs = Table('bodylabs')
@@ -834,7 +834,7 @@ def read_user_bodylab(user_id):
 def read_user_bodylab_single(user_id, start_date):
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.read_user_bodylab_single', user_id=user_id, start_date=start_date)
-    user_token = request.headers.get('Authorization').split(' ')[-1]
+    user_token = request.headers.get('Authorization')
 
     """Define tables required to execute SQL."""
     bodylabs = Table('bodylabs')

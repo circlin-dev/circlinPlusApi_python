@@ -12,7 +12,7 @@ from pypika import MySQLQuery as Query, Table, Order, Criterion, functions as fn
 def add_user_question():
     ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.add_user_question')
-    # user_token = request.headers.get('Authorization').split(' ')[-1]
+    # user_token = request.headers.get('Authorization')
     parameters = json.loads(request.get_data(), encoding='utf-8')
 
     """Define tables required to execute SQL."""
@@ -143,7 +143,7 @@ def add_user_question():
 def read_user_question(user_id):
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.read_user_question', user_id=user_id)
-    # user_token = request.headers.get('Authorization').split(' ')[-1]
+    # user_token = request.headers.get('Authorization')
     """Define tables required to execute SQL."""
     user_questions = Table('user_questions')
 
@@ -221,7 +221,7 @@ def read_user_question(user_id):
 def update_user_question(user_id, question_id):
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.update_user_question', user_id=user_id, question_id=question_id)
-    # user_token = request.headers.get('Authorization').split(' ')[-1]
+    # user_token = request.headers.get('Authorization')
     parameters = json.loads(request.get_data(), encoding='utf-8')
     """Define tables required to execute SQL."""
     user_questions = Table('user_questions')

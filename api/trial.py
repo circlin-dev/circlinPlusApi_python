@@ -14,7 +14,7 @@ import random
 def create_trial():
     ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.create_trial')
-    # user_token = request.headers.get('Authorization').split(' ')[-1]
+    # user_token = request.headers.get('Authorization')
     parameters = json.loads(request.get_data(), encoding='utf-8')
     user_id = parameters['user_id']
     user_question_id = parameters['user_question_id']

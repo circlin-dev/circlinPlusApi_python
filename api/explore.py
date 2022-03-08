@@ -18,7 +18,7 @@ def explore():
     """
     ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.explore')
-    user_token = request.headers.get('Authorization').split(' ')[-1]
+    user_token = request.headers.get('Authorization')
     """Define tables required to execute SQL."""
     search_logs = Table('search_logs')
 
@@ -158,7 +158,7 @@ def explore():
 def get_related_terms_list():
     ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.get_related_terms_list')
-    user_token = request.headers.get('Authorization').split(' ')[-1]
+    user_token = request.headers.get('Authorization')
 
     try:
         connection = login_to_db()
@@ -282,7 +282,7 @@ def get_related_terms_list():
 def explore_log(user_id: int):
     ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.explore_log', user_id=user_id)
-    user_token = request.headers.get('Authorization').split(' ')[-1]
+    user_token = request.headers.get('Authorization')
 
     """Define tables required to execute SQL."""
     search_logs = Table('search_logs')
