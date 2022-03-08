@@ -263,7 +263,7 @@ def get_related_terms_list():
 def explore_log(user_id: int):
     ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.explore_log', user_id=user_id)
-    user_token = request.authorization
+    user_token = request.headers['Authorization']
     # session_id = request.headers['Authorization']
     # check_session(session_id)
     """Define tables required to execute SQL."""
