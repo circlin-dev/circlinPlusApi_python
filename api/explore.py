@@ -304,7 +304,7 @@ def explore_log(user_id: int):
     if verify_user['result'] is False:
         result = {
             'result': False,
-            'error': f'Unauthorized user({user_token, verify_user}).'
+            'error': f'Unauthorized user.'
         }
         return json.dumps(result), 401
     verified_user_id = verify_user['user_id']
