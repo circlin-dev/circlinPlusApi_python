@@ -30,9 +30,9 @@ def read_programs():
     sql = f"""
         SELECT
                p.id,
-               DATE_FORMAT(p.release_at, '%Y-%m-%d %H:%i:%s') AS released_at,
+               DATE_FORMAT(p.released_at, '%Y-%m-%d %H:%i:%s') AS released_at,
                 CASE
-                    WHEN p.release_at > NOW() THEN 'comming'
+                    WHEN p.released_at > NOW() THEN 'comming'
                     ELSE 'released'
                 END AS status,
                p.type,
@@ -141,9 +141,9 @@ def read_a_program(program_id):
     sql = f"""
         SELECT
                p.id,
-               DATE_FORMAT(p.release_at, '%Y-%m-%d %H:%i:%s') AS released_at,
+               DATE_FORMAT(p.released_at, '%Y-%m-%d %H:%i:%s') AS released_at,
                CASE
-                    WHEN p.release_at > NOW() THEN 'comming'
+                    WHEN p.released_at > NOW() THEN 'comming'
                     ELSE 'released'
                 END AS status,
                p.type,

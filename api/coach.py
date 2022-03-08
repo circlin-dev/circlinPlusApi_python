@@ -46,11 +46,11 @@ def get_coaches():
                 'thumbnails', (SELECT JSON_ARRAYAGG(pathname) FROM files WHERE original_file_id = p.thumbnail_id),
                 'intro', (SELECT pathname FROM files WHERE id=p.intro_id),
                 'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = p.id),                
-                'release_at', p.release_at
+                'released_at', p.released_at
             )) AS related_programs,
-            DATE_FORMAT(c.release_at, '%Y-%m-%d %H:%i:%s') AS release_at,
+            DATE_FORMAT(c.released_at, '%Y-%m-%d %H:%i:%s') AS released_at,
             CASE
-                WHEN c.release_at > NOW() THEN 'comming'
+                WHEN c.released_at > NOW() THEN 'comming'
                 ELSE 'released'
             END AS status,
             JSON_ARRAYAGG(pt.tag) AS tag,
@@ -103,7 +103,7 @@ def get_coaches():
                                             'thumbnail', 'thumbnails',
                                             'description', 'exercise',
                                             'team', 'related_programs',
-                                            'release_at', 'status',
+                                            'released_at', 'status',
                                             'tags', 'product',
                                             'intro'])
     coaches['thumbnails'] = coaches['thumbnails'].apply(lambda x: json.loads(x))
@@ -158,11 +158,11 @@ def get_coach(coach_id):
                 'thumbnails', (SELECT JSON_ARRAYAGG(pathname) FROM files WHERE original_file_id = p.thumbnail_id),
                 'intro', (SELECT pathname FROM files WHERE id=p.intro_id),
                 'num_lectures', (SELECT COUNT(*) FROM lectures WHERE program_id = p.id),                
-                'release_at', p.release_at
+                'released_at', p.released_at
             )) AS related_programs,
-            DATE_FORMAT(c.release_at, '%Y-%m-%d %H:%i:%s') AS release_at,
+            DATE_FORMAT(c.released_at, '%Y-%m-%d %H:%i:%s') AS released_at,
             CASE
-                WHEN c.release_at > NOW() THEN 'comming'
+                WHEN c.released_at > NOW() THEN 'comming'
                 ELSE 'released'
             END AS status,
             JSON_ARRAYAGG(pt.tag) AS tag,
@@ -221,7 +221,7 @@ def get_coach(coach_id):
                                           'thumbnail', 'thumbnails',
                                           'description', 'exercise',
                                           'team', 'related_programs',
-                                          'release_at', 'status',
+                                          'released_at', 'status',
                                           'tags', 'product',
                                           'intro'])
     coach['thumbnails'] = coach['thumbnails'].apply(lambda x: json.loads(x))
