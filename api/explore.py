@@ -303,7 +303,6 @@ def explore_log(user_id: int):
 
     verify_user = check_user_token(connection, user_token)
     if verify_user['result'] is False:
-        connection.close()
         result = {
             'result': False,
             'error': f'Unauthorized user({user_token}).'
