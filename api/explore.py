@@ -148,8 +148,8 @@ def explore():
 def get_related_terms_list():
     ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.get_related_terms_list')
-    # session_id = request.headers['Authorization']
-    # check_session(session_id)
+    # user_token = request.headers['Authorization']
+    # check_token(user_token)
 
     try:
         connection = login_to_db()
@@ -263,6 +263,7 @@ def get_related_terms_list():
 def explore_log(user_id: int):
     ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.explore_log', user_id=user_id)
+    user_token = request.authorization
     # session_id = request.headers['Authorization']
     # check_session(session_id)
     """Define tables required to execute SQL."""
@@ -323,7 +324,7 @@ def explore_log(user_id: int):
 
         logs = []
         for log in search_records:
-            data = {'id': log[0], 'searched_word': log[1]}
+            data = {'id': log[0], 'searched_word': log[1], 'user_token': user_token}
             logs.append(data)
 
         result_dict = {
