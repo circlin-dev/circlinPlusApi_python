@@ -309,7 +309,7 @@ def explore_log(user_id: int):
             'error': 'Unauthorized user.'
         }
         return json.dumps(result), 401
-    # user_id = verify_user['user_id']
+    verified_user_id = verify_user['user_id']
 
     if request.method == 'GET':  # 검색 기록 조회
         sql = Query.from_(
@@ -319,7 +319,7 @@ def explore_log(user_id: int):
             search_logs.search_term
         ).where(
             Criterion.all([
-                search_logs.user_id == user_id,
+                search_logs.user_id == verified_user_id,
                 search_logs.deleted_at.isnull()
             ])
         ).groupby(
@@ -381,7 +381,7 @@ def explore_log(user_id: int):
             ).where(
                 Criterion.all([
                     search_logs.search_term == word_to_delete,
-                    search_logs.user_id == user_id,
+                    search_logs.user_id == verified_user_id,
                     search_logs.deleted_at.isnull()
                 ])
             ).get_sql()
@@ -418,7 +418,7 @@ def explore_log(user_id: int):
                 search_logs.deleted_at, fn.Now()
             ).where(
                 Criterion.all([
-                    search_logs.user_id == user_id,
+                    search_logs.user_id == verified_user_id,
                     search_logs.deleted_at.isnull()
                 ])
             ).get_sql()
