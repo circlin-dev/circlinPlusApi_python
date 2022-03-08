@@ -6,7 +6,7 @@ from global_things.functions.trial import TRIAL_DICTIONARY, replace_text_to_leve
 from datetime import datetime, timedelta
 from flask import request, url_for
 import json
-from pypika import MySQLQuery as Query, Table, Criterion
+from pypika import MySQLQuery as Query, Table, Criterion, functions as fn
 import random
 
 
@@ -21,6 +21,8 @@ def create_trial():
 
     """Define tables required to execute SQL."""
     user_questions = Table('user_questions')
+    user_lectures = Table('user_lectures')
+    lectures = Table('lectures')
 
     try:
         connection = login_to_db()
@@ -97,18 +99,35 @@ def create_trial():
         return json.dumps(result, ensure_ascii=False), 400
 
     # 검증 2: 유저가 이미 무료 강의들을 배정받은 기록이 있는지 여부
-    sql = f"""
-        SELECT 
-            ul.lecture_id,
-            l.program_id 
-        FROM 
-            user_lectures ul
-        INNER JOIN
-            lectures l
-            ON l.id = ul.lecture_id
-        WHERE user_id={user_id}
-        AND l.program_id IS NULL
-        AND ul.deleted_at IS NULL"""
+    # sql = f"""
+    #     SELECT
+    #         ul.lecture_id,
+    #         l.program_id
+    #     FROM
+    #         user_lectures ul
+    #     INNER JOIN
+    #         lectures l
+    #         ON l.id = ul.lecture_id
+    #     WHERE ul.user_id={user_id}
+    #     AND l.program_id IS NULL
+    #     AND ul.deleted_at IS NULL"""
+    sql = Query.from_(
+        user_lectures
+    ).select(
+        user_lectures.lecture_id,
+        lectures.program_id
+    ).join(
+        lectures
+    ).on(
+        lectures.id == user_lectures.lecture_id
+    ).where(
+        Criterion.all([
+            user_lectures.user_id == user_id,
+            lectures.program_id.isnull(),
+            user_lectures.deleted_at.isnull()
+        ])
+    ).get_sql()
+
     cursor.execute(sql)
     free_lecture_on_progress = cursor.fetchall()
 
@@ -172,11 +191,28 @@ def create_trial():
                     selected_level = 0
                 else:
                     selected_level = replace_text_to_level(answer['level'])
-                sql = f"""
-                    INSERT INTO
-                        user_lectures(created_at, updated_at, user_id, lecture_id, level, scheduled_at)
-                    VALUES
-                        ((SELECT NOW()), (SELECT NOW()), {user_id}, {routine['lecture_id']}, {selected_level}, TIMESTAMP('{scheduled_at}'))"""
+                # sql = f"""
+                #     INSERT INTO
+                #         user_lectures(created_at, updated_at, user_id, lecture_id, level, scheduled_at)
+                #     VALUES
+                #         ((SELECT NOW()), (SELECT NOW()), {user_id}, {routine['lecture_id']}, {selected_level}, TIMESTAMP('{scheduled_at}'))"""
+                sql = Query.into(
+                    user_lectures
+                ).columns(
+                    user_lectures.created_at,
+                    user_lectures.updated_at,
+                    user_lectures.user_id,
+                    user_lectures.lecture_id,
+                    user_lectures.level,
+                    user_lectures.scheduled_at
+                ).insert(
+                    fn.Now(),
+                    fn.Now(),
+                    user_id,
+                    routine['lecture_id'],
+                    selected_level,
+                    fn.Timestamp(scheduled_at)
+                ).get_sql()
                 try:
                     cursor.execute(sql)
                     connection.commit()

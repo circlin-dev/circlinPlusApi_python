@@ -5,7 +5,7 @@ from global_things.functions.general import login_to_db, check_session, parse_fo
 from global_things.functions.user_question import sort_schedule_by_date, replace_number_to_experience
 from flask import request, url_for
 import json
-from pypika import MySQLQuery as Query, Table, Order, Criterion
+from pypika import MySQLQuery as Query, Table, Order, Criterion, functions as fn
 
 
 @api.route('/user-question', methods=['POST'])
@@ -147,6 +147,7 @@ def read_user_question(user_id):
     endpoint = API_ROOT + url_for('api.read_user_question', user_id=user_id)
     # token = request.headers['token']
     """Define tables required to execute SQL."""
+    user_questions = Table('user_questions')
 
     try:
         connection = login_to_db()
@@ -174,16 +175,27 @@ def read_user_question(user_id):
     # elif is_valid_user['result'] is True:
     #   pass
 
-    sql = f"""
-        SELECT 
-            uq.id,
-            uq.created_at, 
-            IFNULL(uq.updated_data, uq.data) AS answer
-        FROM
-            user_questions uq
-        WHERE uq.user_id = {user_id}
-        ORDER BY uq.id DESC
-        LIMIT 1"""
+    # sql = f"""
+    #     SELECT
+    #         uq.id,
+    #         uq.created_at,
+    #         IFNULL(uq.updated_data, uq.data) AS answer
+    #     FROM
+    #         user_questions uq
+    #     WHERE uq.user_id = {user_id}
+    #     ORDER BY uq.id DESC
+    #     LIMIT 1"""
+    sql = Query.from_(
+        user_questions
+    ).select(
+        user_questions.id,
+        user_questions.created_at,
+        fn.IfNull(user_questions.updated_data, user_questions.data).as_('answer')
+    ).where(
+        user_questions.user_id == 11
+    ).orderby(
+        user_questions.id, order=Order.desc
+    ).limit(1).get_sql()
     cursor.execute(sql)
     data = cursor.fetchall()
     if query_result_is_none(data) is True:
@@ -217,7 +229,6 @@ def update_user_question(user_id, question_id):
     parameters = json.loads(request.get_data(), encoding='utf-8')
     """Define tables required to execute SQL."""
     user_questions = Table('user_questions')
-
 
     try:
         purpose = parameters['purpose']  # array

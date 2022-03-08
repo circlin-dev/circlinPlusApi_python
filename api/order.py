@@ -7,7 +7,7 @@ from . import api
 from flask import url_for, request
 import json
 import requests
-from pypika import MySQLQuery as Query, Criterion, Table, Order, functions as fn
+from pypika import MySQLQuery as Query, Criterion, Table, Order, Interval, functions as fn
 
 
 @api.route('/assign-manager', methods=['POST'])
@@ -425,6 +425,7 @@ def add_subscription_order():
     subscriptions = Table('subscriptions')
     discounts = Table('discounts')
     users = Table('users')
+    order_subscriptions = Table('order_subscriptions')
 
     parameters = json.loads(request.get_data(), encoding='utf-8')
     try:
@@ -650,38 +651,79 @@ def add_subscription_order():
     subscription_id = subscription_information[0][0]
     try:
         if discount_id is None:
-            sql = f"""
-                UPDATE
-                    orders o
-                JOIN
-                    users u
-                ON o.user_id = u.id
-                SET
-                    o.user_id = {user_id},
-                    u.subscription_expired_at = (SELECT(NOW() + INTERVAL {subscription_days} DAY)),
-                    u.subscription_id = {subscription_id}
-                WHERE
-                      o.user_id = {user_id}
-                AND o.imp_uid = %s
-                AND o.merchant_uid = %s"""
+            # sql = f"""
+            #     UPDATE
+            #         orders o
+            #     JOIN
+            #         users u
+            #     ON o.user_id = u.id
+            #     SET
+            #         o.user_id = {user_id},
+            #         u.subscription_expired_at = (SELECT(NOW() + INTERVAL {subscription_days} DAY)),
+            #         u.subscription_id = {subscription_id}
+            #     WHERE
+            #           o.user_id = {user_id}
+            #     AND o.imp_uid = %s
+            #     AND o.merchant_uid = %s"""
+            sql = Query.update(
+                orders
+            ).join(
+                users
+            ).on(
+                orders.user_id == users.id
+            ).set(
+                orders.user_id, {user_id}
+            ).set(
+                users.subscription_expired_at, fn.Now() + Interval(days=subscription_days)
+            ).set(
+                users.subscription_id, {subscription_id}
+            ).where(
+                Criterion.all([
+                    orders.user_id == user_id,
+                    orders.imp_uid == imp_uid,
+                    orders.merchant_uid == merchant_uid
+                ])
+            ).get_sql()
         else:
-            sql = f"""
-                UPDATE
-                    orders o
-                JOIN
-                    users u
-                ON o.user_id = u.id
-                SET
-                    o.user_id = {user_id},
-                    o.discount_id = {discount_id},
-                    u.subscription_expired_at = (SELECT(NOW() + INTERVAL {subscription_days} DAY)),
-                    u.subscription_id = {subscription_id}
-                WHERE
-                      o.user_id = {user_id}
-                AND o.imp_uid = %s
-                AND o.merchant_uid = %s"""
-        values = (imp_uid, merchant_uid)
-        cursor.execute(sql, values)
+            # sql = f"""
+            #     UPDATE
+            #         orders o
+            #     JOIN
+            #         users u
+            #     ON o.user_id = u.id
+            #     SET
+            #         o.user_id = {user_id},
+            #         o.discount_id = {discount_id},
+            #         u.subscription_expired_at = (SELECT(NOW() + INTERVAL {subscription_days} DAY)),
+            #         u.subscription_id = {subscription_id}
+            #     WHERE
+            #           o.user_id = {user_id}
+            #     AND o.imp_uid = %s
+            #     AND o.merchant_uid = %s"""
+            sql = Query.update(
+                orders
+            ).join(
+                users
+            ).on(
+                orders.user_id == users.id
+            ).set(
+                orders.user_id, user_id
+            ).set(
+                orders.discount_id, discount_id
+            ).set(
+                users.subscription_expired_at, fn.Now() + Interval(days=subscription_days)
+            ).set(
+                users.subscription_id, {subscription_id}
+            ).where(
+                Criterion.all([
+                    orders.user_id == user_id,
+                    orders.imp_uid == imp_uid,
+                    orders.merchant_uid == merchant_uid
+                ])
+            ).get_sql()
+        cursor.execute(sql)
+        # values = (imp_uid, merchant_uid)
+        # cursor.execute(sql, values)
         connection.commit()
 
         sql = Query.from_(
@@ -701,10 +743,23 @@ def add_subscription_order():
         else:
             order_id = result[0][0]
 
-        sql = f"""
-            INSERT INTO 
-                    order_subscriptions(order_id, subscription_id, price, discount_price)
-                VALUES({order_id}, {subscription_id}, {import_paid_amount}, {subscription_original_price - import_paid_amount})"""
+        # sql = f"""
+        #     INSERT INTO
+        #             order_subscriptions(order_id, subscription_id, price, discount_price)
+        #         VALUES({order_id}, {subscription_id}, {import_paid_amount}, {subscription_original_price - import_paid_amount})"""
+        sql = Query.into(
+            order_subscriptions
+        ).columns(
+            order_subscriptions.order_id,
+            order_subscriptions.subscription_id,
+            order_subscriptions.price,
+            order_subscriptions.discount_price
+        ).insert(
+            order_id,
+            subscription_id,
+            import_paid_amount,
+            subscription_original_price - import_paid_amount
+        ).get_sql()
         cursor.execute(sql)
         connection.commit()
 
@@ -718,11 +773,11 @@ def add_subscription_order():
         ).get_sql()
         cursor.execute(sql)
         user_information = cursor.fetchall()
+        connection.close()
         user_nickname, user_phone = user_information[0]
 
         slack_purchase_notification(cursor, user_id, user_nickname, user_phone, order_id)
 
-        connection.close()
         result = {'result': True,
                   'message': 'Saved subscription payment data.',
                   'order_id': order_id}
