@@ -1,6 +1,6 @@
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
-from global_things.functions.general import login_to_db, check_session, query_result_is_none
+from global_things.functions.general import login_to_db, query_result_is_none
 from . import api
 from flask import url_for, request
 import json

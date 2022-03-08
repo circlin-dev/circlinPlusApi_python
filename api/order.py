@@ -1,6 +1,6 @@
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification, slack_purchase_notification
-from global_things.functions.general import login_to_db, check_session, query_result_is_none
+from global_things.functions.general import login_to_db, query_result_is_none
 from global_things.functions.order import validation_subscription_order, validation_equipment_delivery, get_import_access_token, request_import_refund
 from global_things.constants import IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET
 from . import api

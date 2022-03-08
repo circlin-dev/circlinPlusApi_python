@@ -1,7 +1,7 @@
 import datetime
 from global_things.constants import API_ROOT, AMAZON_URL, ATTRACTIVENESS_SCORE_CRITERIA, BODY_IMAGE_ANALYSIS_CRITERIA
 from global_things.functions.slack import slack_error_notification
-from global_things.functions.general import login_to_db, check_session, query_result_is_none
+from global_things.functions.general import login_to_db, query_result_is_none
 from global_things.error_handler import HandleException
 from global_things.functions.bodylab import analyze_body_images, generate_resized_image, get_image_information, validate_and_save_to_s3, upload_image_to_s3, standard_healthiness_value, healthiness_score, attractiveness_score, return_dict_when_nothing_to_return, analyze_atflee_images
 from . import api

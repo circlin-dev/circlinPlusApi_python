@@ -1,7 +1,7 @@
 from . import api
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
-from global_things.functions.general import login_to_db, check_session, query_result_is_none
+from global_things.functions.general import login_to_db, query_result_is_none
 from global_things.functions.trial import TRIAL_DICTIONARY, replace_text_to_level
 from datetime import datetime, timedelta
 from flask import request, url_for
