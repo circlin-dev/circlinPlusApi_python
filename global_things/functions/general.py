@@ -17,30 +17,24 @@ def login_to_db():
 
 
 # User verification by exploring user table.
-def check_session(cursor, session_id):
-    hashed_session_id = hashlib.sha256(session_id.encode()).hexdigest()
-    sessions = Table('sessions')
+def check_user_token(cursor, bearer_token):
+    hashed_bearer_token = hashlib.sha256(bearer_token.encode()).hexdigest()
+    personal_access_tokens = Table('personal_access_tokens')
 
-    query = f"SELECT id, user_id FROM sessions WHERE id=%s"
     sql = Query.from_(
-        sessions
+        personal_access_tokens
     ).select(
-        sessions.id,
-        sessions.user_id
+        personal_access_tokens.tokenable_id
     ).where(
-        sessions.id == hashed_session_id
+        personal_access_tokens.tokens == hashed_bearer_token
     ).get_sql()
-    cursor.execute(sql)
-    user_session = cursor.fetchall()
 
-    if len(user_session) == 0 or user_session == ():
-        result = {'result': False, 'user_id': None}
-        return result
-    elif user_session[0][0] != hashed_session_id:
+    verified_user_id = cursor.fetchall()
+    if len(verified_user_id) == 0 or verified_user_id == ():
         result = {'result': False, 'user_id': None}
         return result
     else:
-        result = {'result': True, 'user_id': user_session[0][1]}
+        result = {'result': True, 'user_id': verified_user_id[0][0]}
         return result
 
 

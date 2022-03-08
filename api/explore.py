@@ -1,7 +1,7 @@
 from global_things.constants import API_ROOT
 from global_things.error_handler import HandleException
 from global_things.functions.explore import make_explore_query, filter_dataframe, make_query_to_find_related_terms, make_query_get_every_titles
-from global_things.functions.general import login_to_db, check_session, query_result_is_none
+from global_things.functions.general import login_to_db, check_user_token, query_result_is_none
 from . import api
 from flask import url_for, request
 import json
@@ -265,7 +265,7 @@ def explore_log(user_id: int):
     endpoint = API_ROOT + url_for('api.explore_log', user_id=user_id)
     user_token = request.headers.get('authorization')
     # session_id = request.headers['Authorization']
-    # check_session(session_id)
+
     """Define tables required to execute SQL."""
     search_logs = Table('search_logs')
 
@@ -281,6 +281,15 @@ def explore_log(user_id: int):
                               payload=None,
                               result=False)
     cursor = connection.cursor()
+
+    verify_user = check_user_token(cursor, user_token)
+    if verify_user['result'] is False:
+        connection.close()
+        result = {
+            'result': False,
+            'error': 'Unauthorized user.'
+        }
+        return json.dumps(result), 401
 
     if request.method == 'GET':  # 검색 기록 조회
         sql = Query.from_(
@@ -324,7 +333,7 @@ def explore_log(user_id: int):
 
         logs = []
         for log in search_records:
-            data = {'id': log[0], 'searched_word': log[1], 'user_token': user_token}
+            data = {'id': log[0], 'searched_word': log[1]}
             logs.append(data)
 
         result_dict = {
