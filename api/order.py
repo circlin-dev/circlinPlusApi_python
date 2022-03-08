@@ -14,7 +14,7 @@ from pypika import MySQLQuery as Query, Criterion, Table, Order, Interval, funct
 def create_chat_with_manager():
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.create_chat_with_manager')
-    # user_token = request.headers.get('authorization')
+    # user_token = request.headers.get('Authorization')
     parameters = json.loads(request.get_data(), encoding='utf-8')
     user_id = int(parameters['user_id'])
     # order_id = parameters['order_id']  # null or int

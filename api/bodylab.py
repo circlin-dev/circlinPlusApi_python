@@ -834,7 +834,7 @@ def read_user_bodylab(user_id):
 def read_user_bodylab_single(user_id, start_date):
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.read_user_bodylab_single', user_id=user_id, start_date=start_date)
-    user_token = request.headers.get('authorization')
+    user_token = request.headers.get('Authorization')
 
     """Define tables required to execute SQL."""
     bodylabs = Table('bodylabs')

@@ -12,7 +12,7 @@ from pypika import MySQLQuery as Query, Table, Order, Criterion, functions as fn
 def add_user_question():
     ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.add_user_question')
-    # user_token = request.headers.get('authorization')
+    # user_token = request.headers.get('Authorization')
     parameters = json.loads(request.get_data(), encoding='utf-8')
 
     """Define tables required to execute SQL."""
