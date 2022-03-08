@@ -306,7 +306,7 @@ def explore_log(user_id: int):
         connection.close()
         result = {
             'result': False,
-            'error': f'Unauthorized user.'
+            'error': f'Unauthorized user({user_token}).'
         }
         return json.dumps(result), 401
     verified_user_id = verify_user['user_id']
