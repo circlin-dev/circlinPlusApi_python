@@ -18,7 +18,7 @@ def explore():
     """
     ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.explore')
-    # token = request.headers['Authorization']
+    user_token = request.headers.get('authorization')
     """Define tables required to execute SQL."""
     search_logs = Table('search_logs')
 
@@ -52,6 +52,16 @@ def explore():
                               result=False)
 
     cursor = connection.cursor()
+    verify_user = check_user_token(cursor, user_token)
+    if verify_user['result'] is False:
+        connection.close()
+        result = {
+            'result': False,
+            'error': 'Unauthorized user.'
+        }
+        return json.dumps(result), 401
+    # user_id = verify_user['user_id']
+
     result_list = []
     if word_for_search == "" or len(word_for_search) == 0 or word_for_search is None:
         pass
@@ -148,7 +158,7 @@ def explore():
 def get_related_terms_list():
     ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.get_related_terms_list')
-    # user_token = request.headers['Authorization']
+    user_token = request.headers.get('authorization')
     # check_token(user_token)
 
     try:
@@ -174,6 +184,16 @@ def get_related_terms_list():
     related_equipments_list = []
 
     cursor = connection.cursor()
+    verify_user = check_user_token(cursor, user_token)
+    if verify_user['result'] is False:
+        connection.close()
+        result = {
+            'result': False,
+            'error': 'Unauthorized user.'
+        }
+        return json.dumps(result), 401
+    # user_id = verify_user['user_id']
+
     if word == "" or len(word) == 0 or word is None:
         pass
     else:
@@ -264,7 +284,6 @@ def explore_log(user_id: int):
     ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.explore_log', user_id=user_id)
     user_token = request.headers.get('authorization')
-    # session_id = request.headers['Authorization']
 
     """Define tables required to execute SQL."""
     search_logs = Table('search_logs')
@@ -290,6 +309,7 @@ def explore_log(user_id: int):
             'error': 'Unauthorized user.'
         }
         return json.dumps(result), 401
+    # user_id = verify_user['user_id']
 
     if request.method == 'GET':  # 검색 기록 조회
         sql = Query.from_(

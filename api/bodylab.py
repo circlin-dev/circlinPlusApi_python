@@ -1,7 +1,7 @@
 import datetime
 from global_things.constants import API_ROOT, AMAZON_URL, ATTRACTIVENESS_SCORE_CRITERIA, BODY_IMAGE_ANALYSIS_CRITERIA
 from global_things.functions.slack import slack_error_notification
-from global_things.functions.general import login_to_db, query_result_is_none
+from global_things.functions.general import login_to_db, check_user_token, query_result_is_none
 from global_things.error_handler import HandleException
 from global_things.functions.bodylab import analyze_body_images, generate_resized_image, get_image_information, validate_and_save_to_s3, upload_image_to_s3, standard_healthiness_value, healthiness_score, attractiveness_score, return_dict_when_nothing_to_return, analyze_atflee_images
 from . import api
@@ -26,7 +26,7 @@ from werkzeug.utils import secure_filename
 def weekly_bodylab():
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.weekly_bodylab')
-    # token = request.headers['Authorization']
+    user_token = request.headers.get('Authorization')
 
     data = request.form.to_dict()
     try:
@@ -46,6 +46,29 @@ def weekly_bodylab():
                               status_code=400,
                               payload=json.dumps(data, ensure_ascii=False),
                               result=False)
+    try:
+        connection = login_to_db()
+    except Exception as e:
+        raise HandleException(user_ip=ip,
+                              user_id=user_id,
+                              api=endpoint,
+                              error_message=str(e),
+                              method=request.method,
+                              status_code=500,
+                              payload=None,
+                              result=False)
+
+    cursor = connection.cursor()
+    verify_user = check_user_token(cursor, user_token)
+    if verify_user['result'] is False:
+        connection.close()
+        result = {
+            'result': False,
+            'error': 'Unauthorized user.'
+        }
+        return json.dumps(result), 401
+    # user_id = verify_user['user_id']
+
     if request.method == 'POST':
         """
         이미지 서버 임시 저장 & 업로드 코드 추가 필요
@@ -153,20 +176,6 @@ def weekly_bodylab():
         #     os.rename(f'{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}/{secure_file}', local_image_path)
         # """input 가로 리사이징 후 저장"""
         # """DB에 각 이미지 크기별 파일 크기, 가로, 세로 길이 추가 저장"""
-
-        try:
-            connection = login_to_db()
-        except Exception as e:
-            raise HandleException(user_ip=ip,
-                                  user_id=user_id,
-                                  api=endpoint,
-                                  error_message=str(e),
-                                  method=request.method,
-                                  status_code=500,
-                                  payload=None,
-                                  result=False)
-
-        cursor = connection.cursor()
 
         # Verify user is valid or not.
         # is_valid_user = check_token(cursor, user_id, token)
@@ -565,7 +574,7 @@ def weekly_bodylab():
 def read_user_bodylab(user_id):
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.read_user_bodylab', user_id=user_id)
-    # token = request.headers['Authorization']
+    user_token = request.headers.get('Authorization')
 
     """Define tables required to execute SQL."""
     bodylabs = Table('bodylabs')
@@ -585,6 +594,15 @@ def read_user_bodylab(user_id):
         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
     cursor = connection.cursor()
+    verify_user = check_user_token(cursor, user_token)
+    if verify_user['result'] is False:
+        connection.close()
+        result = {
+            'result': False,
+            'error': 'Unauthorized user.'
+        }
+        return json.dumps(result), 401
+    # user_id = verify_user['user_id']
 
     sql = Query.from_(
         user_questions
@@ -816,7 +834,7 @@ def read_user_bodylab(user_id):
 def read_user_bodylab_single(user_id, start_date):
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.read_user_bodylab_single', user_id=user_id, start_date=start_date)
-    # token = request.headers['Authorization']
+    user_token = request.headers.get('authorization')
 
     """Define tables required to execute SQL."""
     bodylabs = Table('bodylabs')
@@ -834,7 +852,18 @@ def read_user_bodylab_single(user_id, start_date):
         }
         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
         return json.dumps(result, ensure_ascii=False), 500
+
     cursor = connection.cursor()
+    verify_user = check_user_token(cursor, user_token)
+    if verify_user['result'] is False:
+        connection.close()
+        result = {
+            'result': False,
+            'error': 'Unauthorized user.'
+        }
+        return json.dumps(result), 401
+    # user_id = verify_user['user_id']
+
     sql = Query.from_(
         user_questions
     ).select(

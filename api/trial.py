@@ -14,7 +14,7 @@ import random
 def create_trial():
     ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.create_trial')
-    # session_id = request.headers['Authorization']
+    # user_token = request.headers.get('Authorization')
     parameters = json.loads(request.get_data(), encoding='utf-8')
     user_id = parameters['user_id']
     user_question_id = parameters['user_question_id']
@@ -38,17 +38,15 @@ def create_trial():
     cursor = connection.cursor()
 
     # Verify user is valid or not.
-    # is_valid_user = check_session(cursor, session_id)
-    # if is_valid_user['result'] is False:
-    #   connection.close()
-    #   result = {
-    #     'result': False,
-    #     'error': f"Cannot find user {user_id}: No such user."
-    #   }
-    #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
-    #   return json.dumps(result, ensure_ascii=False), 401
-    # elif is_valid_user['result'] is True:
-    #   pass
+    # verify_user = check_user_token(cursor, user_token)
+    # if verify_user['result'] is False:
+    #     connection.close()
+    #     result = {
+    #         'result': False,
+    #         'error': 'Unauthorized user.'
+    #     }
+    #     return json.dumps(result), 401
+    # user_id = verify_user['user_id']
 
     sql = Query.from_(
         user_questions

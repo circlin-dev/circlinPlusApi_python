@@ -1,7 +1,7 @@
 from . import api
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
-from global_things.functions.general import login_to_db, parse_for_mysql, query_result_is_none
+from global_things.functions.general import login_to_db, check_user_token, parse_for_mysql, query_result_is_none
 from global_things.functions.user_question import sort_schedule_by_date, replace_number_to_experience
 from flask import request, url_for
 import json
@@ -12,8 +12,9 @@ from pypika import MySQLQuery as Query, Table, Order, Criterion, functions as fn
 def add_user_question():
     ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.add_user_question')
-    # session_id = request.headers['Authorization']
+    # user_token = request.headers.get('authorization')
     parameters = json.loads(request.get_data(), encoding='utf-8')
+
     """Define tables required to execute SQL."""
     user_questions = Table('user_questions')
 
@@ -88,18 +89,15 @@ def add_user_question():
 
     cursor = connection.cursor()
 
-    # Verify user is valid or not.
-    # is_valid_user = check_session(cursor, session_id)
-    # if is_valid_user['result'] is False:
-    #   connection.close()
-    #   result = {
-    #     'result': False,
-    #     'error': f"Cannot find user {user_id}: No such user."
-    #   }
-    #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method, status_code=401)
-    #   return json.dumps(result, ensure_ascii=False), 401
-    # elif is_valid_user['result'] is True:
-    #   pass
+    # verify_user = check_user_token(cursor, user_token)
+    # if verify_user['result'] is False:
+    #     connection.close()
+    #     result = {
+    #         'result': False,
+    #         'error': 'Unauthorized user.'
+    #     }
+    #     return json.dumps(result), 401
+    # user_id = verify_user['user_id']
 
     # Formatting json to INSERT into mysql database.
     json_data = json.dumps({
@@ -145,7 +143,7 @@ def add_user_question():
 def read_user_question(user_id):
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.read_user_question', user_id=user_id)
-    # token = request.headers['token']
+    # user_token = request.headers.get('Authorization')
     """Define tables required to execute SQL."""
     user_questions = Table('user_questions')
 
@@ -163,17 +161,15 @@ def read_user_question(user_id):
     cursor = connection.cursor()
 
     # Verify user is valid or not.
-    # is_valid_user = check_token(cursor, user_id, token)
-    # if is_valid_user['result'] is False:
-    #   connection.close()
-    #   result = {
-    #     'result': False,
-    #     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
-    #   }
-    #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
-    #   return json.dumps(result, ensure_ascii=False), 401
-    # elif is_valid_user['result'] is True:
-    #   pass
+    # verify_user = check_user_token(cursor, user_token)
+    # if verify_user['result'] is False:
+    #     connection.close()
+    #     result = {
+    #         'result': False,
+    #         'error': 'Unauthorized user.'
+    #     }
+    #     return json.dumps(result), 401
+    # user_id = verify_user['user_id']
 
     # sql = f"""
     #     SELECT
@@ -225,7 +221,7 @@ def read_user_question(user_id):
 def update_user_question(user_id, question_id):
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.update_user_question', user_id=user_id, question_id=question_id)
-    # token = request.headers['token']
+    # user_token = request.headers.get('Authorization')
     parameters = json.loads(request.get_data(), encoding='utf-8')
     """Define tables required to execute SQL."""
     user_questions = Table('user_questions')
@@ -294,17 +290,15 @@ def update_user_question(user_id, question_id):
     cursor = connection.cursor()
 
     # Verify user is valid or not.
-    # is_valid_user = check_token(cursor, user_id, token)
-    # if is_valid_user['result'] is False:
-    #   connection.close()
-    #   result = {
-    #     'result': False,
-    #     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
-    #   }
-    #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method, status_code=401)
-    #   return json.dumps(result, ensure_ascii=False), 401
-    # elif is_valid_user['result'] is True:
-    #   pass
+    # verify_user = check_user_token(cursor, user_token)
+    # if verify_user['result'] is False:
+    #     connection.close()
+    #     result = {
+    #         'result': False,
+    #         'error': 'Unauthorized user.'
+    #     }
+    #     return json.dumps(result), 401
+    # user_id = verify_user['user_id']
 
     json_data = json.dumps({
         "purpose": purpose,

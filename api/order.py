@@ -1,6 +1,6 @@
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification, slack_purchase_notification
-from global_things.functions.general import login_to_db, query_result_is_none
+from global_things.functions.general import login_to_db, check_user_token, query_result_is_none
 from global_things.functions.order import validation_subscription_order, validation_equipment_delivery, get_import_access_token, request_import_refund
 from global_things.constants import IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET
 from . import api
@@ -14,7 +14,7 @@ from pypika import MySQLQuery as Query, Criterion, Table, Order, Interval, funct
 def create_chat_with_manager():
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.create_chat_with_manager')
-    # token = request.headers['Authorization']
+    # user_token = request.headers.get('authorization')
     parameters = json.loads(request.get_data(), encoding='utf-8')
     user_id = int(parameters['user_id'])
     # order_id = parameters['order_id']  # null or int
@@ -38,6 +38,15 @@ def create_chat_with_manager():
         return json.dumps(result, ensure_ascii=False), 500
 
     cursor = connection.cursor()
+    # verify_user = check_user_token(cursor, user_token)
+    # if verify_user['result'] is False:
+    #     connection.close()
+    #     result = {
+    #         'result': False,
+    #         'error': 'Unauthorized user.'
+    #     }
+    #     return json.dumps(result), 401
+    # user_id = verify_user['user_id']
 
     sql = Query.from_(
         users
@@ -419,7 +428,7 @@ def update_payment_state_by_webhook():
 def add_subscription_order():
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.add_subscription_order')
-    # token = request.headers['Authorization']
+    # user_token = request.headers.get('Authorization')
     """Define tables required to execute SQL."""
     orders = Table('orders')
     subscriptions = Table('subscriptions')
@@ -482,17 +491,15 @@ def add_subscription_order():
     cursor = connection.cursor()
 
     # Verify user is valid or not.
-    # is_valid_user = check_token(cursor, user_id, token)
-    # if is_valid_user['result'] is False:
-    #   connection.close()
-    #   result = {
-    #     'result': False,
-    #     'error': f"Invalid request: Unauthorized token or no such user({user_id})"
-    #   }
-    #   slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
-    #   return json.dumps(result, ensure_ascii=False), 401
-    # elif is_valid_user['result'] is True:
-    #   pass
+    # verify_user = check_user_token(cursor, user_token)
+    # if verify_user['result'] is False:
+    #     connection.close()
+    #     result = {
+    #         'result': False,
+    #         'error': 'Unauthorized user.'
+    #     }
+    #     return json.dumps(result), 401
+    # user_id = verify_user['user_id']
 
     # 2. 결제 정보 조회(import)
     get_token = json.loads(get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET))
