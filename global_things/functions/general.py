@@ -34,7 +34,7 @@ def check_user_token(connection, bearer_token):
     verified_user_id = cursor.fetchall()
     connection.close()
     if len(verified_user_id) == 0 or verified_user_id == ():
-        result = {'result': False, 'user_id': None}
+        result = {'result': False, 'user_id': verified_user_id[0][0]}
         return result
     else:
         result = {'result': True, 'user_id': verified_user_id[0][0]}
