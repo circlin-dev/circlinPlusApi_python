@@ -284,6 +284,7 @@ def explore_log(user_id: int):
     ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.explore_log', user_id=user_id)
     user_token = request.headers.get('Authorization')
+    user_token = user_token.split(' ')[-1]
 
     """Define tables required to execute SQL."""
     search_logs = Table('search_logs')

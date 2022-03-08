@@ -17,8 +17,7 @@ def login_to_db():
 
 
 # User verification by exploring user table.
-def check_user_token(connection, bearer_token):
-    cursor = connection.cursor()
+def check_user_token(cursor, bearer_token):
     hashed_bearer_token = hashlib.sha256(bearer_token.encode()).hexdigest()
     personal_access_tokens = Table('personal_access_tokens')
 
@@ -32,9 +31,8 @@ def check_user_token(connection, bearer_token):
 
     cursor.execute(sql)
     verified_user_id = cursor.fetchall()
-    connection.close()
     if len(verified_user_id) == 0 or verified_user_id == ():
-        result = {'result': False, 'user_id': None, 'hashed_bearer_token': hashed_bearer_token}
+        result = {'result': False, 'user_id': None}
         return result
     else:
         result = {'result': True, 'user_id': verified_user_id[0][0]}
