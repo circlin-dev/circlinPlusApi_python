@@ -302,7 +302,7 @@ def explore_log(user_id: int):
                               result=False)
     cursor = connection.cursor()
 
-    verify_user = check_user_token(connection, user_token)
+    verify_user = check_user_token(cursor, user_token)
     if verify_user['result'] is False:
         result = {
             'result': False,
