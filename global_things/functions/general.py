@@ -26,7 +26,7 @@ def check_user_token(cursor, bearer_token):
     ).select(
         personal_access_tokens.tokenable_id
     ).where(
-        personal_access_tokens.tokens == hashed_bearer_token
+        personal_access_tokens.token == hashed_bearer_token
     ).get_sql()
 
     cursor.execute(sql)
