@@ -44,7 +44,7 @@ def weekly_bodylab():
                               error_message=f'KeyError: {str(e)}',
                               method=request.method,
                               status_code=400,
-                              payload=json.dumps(data, ensure_ascii=False),
+                              payload=data,
                               result=False)
     try:
         connection = login_to_db()
