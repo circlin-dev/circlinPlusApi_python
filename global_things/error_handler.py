@@ -6,6 +6,7 @@ import json
 class HandleException(Exception):
     def __init__(self,
                  user_ip: str = '',
+                 nickname: str = '',
                  user_id: int = 0,
                  api: str = '',
                  error_message: str = '',
@@ -16,6 +17,7 @@ class HandleException(Exception):
                  result: bool = False):
         super().__init__()
         self.user_ip = user_ip
+        self.nickname = nickname
         self.user_id = user_id
         self.api = api
         self.error_message = error_message
@@ -26,15 +28,9 @@ class HandleException(Exception):
         self.result = result
 
     def to_dict(self):
-        slack_error_notification(user_ip=self.user_ip,
-                                 user_id=self.user_id,
-                                 api=self.api,
-                                 method=self.method,
-                                 status_code=self.status_code,
-                                 query=self.query,
-                                 error_message=self.error_message)
         error = dict()
         error['user_ip'] = self.user_ip
+        error['nickname'] = self.nickname
         error['user_id'] = self.user_id
         error['api'] = self.api
         error['error_message'] = self.error_message
@@ -43,4 +39,12 @@ class HandleException(Exception):
         error['status_code'] = self.status_code
         error['payload'] = self.payload
         error['result'] = self.result
+        slack_error_notification(user_ip=self.user_ip,
+                                 nickname=self.nickname,
+                                 user_id=self.user_id,
+                                 api=self.api,
+                                 method=self.method,
+                                 status_code=self.status_code,
+                                 query=self.query,
+                                 error_message=self.error_message)
         return error
