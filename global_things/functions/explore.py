@@ -156,7 +156,7 @@ def make_explore_query(word: str = "", user_id: int = 0, sort_by: str = "latest"
                 pur.id = ppu.purpose_id
             WHERE
                    c.name LIKE '%{word}%'
-            AND p.coach_id = (SELECT id FROM coaches WHERE name=c.name AND deleted_at IS NOT NULL)
+            AND p.coach_id = (SELECT id FROM coaches WHERE name=c.name AND deleted_at IS NULL)
             AND
                 p.deleted_at IS NULL            
             GROUP BY
