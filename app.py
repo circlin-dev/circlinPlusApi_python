@@ -46,8 +46,4 @@ def hello_world():
 
 
 if __name__ == '__main__':
-    try:
-        app.run(host='0.0.0.0', debug=True)  # 0.0.0.0 for production or 127.0.0.1 for local development
-    except Exception as e:
-        error = str(e)
-        slack_error_notification(error_message=error)
+    app.run(host='0.0.0.0', debug=True)  # 0.0.0.0 for production or 127.0.0.1 for local development

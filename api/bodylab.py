@@ -39,14 +39,13 @@ def weekly_bodylab():
         body_image = request.files.to_dict()['body_image']
         # atflee_image = request.files.to_dict()['atflee_image'] => 키, 몸무게, BMI, 근육량, 지방량 모두 대체 가능
     except Exception as e:
-        pass
-        # raise HandleException(user_ip=ip,
-        #                       api=endpoint,
-        #                       error_message=f'KeyError: {str(e)}',
-        #                       method=request.method,
-        #                       status_code=400,
-        #                       payload=data,
-        #                       result=False)
+        raise HandleException(user_ip=ip,
+                              api=endpoint,
+                              error_message=f'KeyError: {str(e)}',
+                              method=request.method,
+                              status_code=400,
+                              payload=data,
+                              result=False)
     try:
         connection = login_to_db()
     except Exception as e:
