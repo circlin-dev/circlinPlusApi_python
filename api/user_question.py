@@ -1,4 +1,5 @@
 from . import api
+from global_things.error_handler import HandleException
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_user_token, parse_for_mysql, query_result_is_none
@@ -29,13 +30,11 @@ def add_user_question():
         disease = parameters['disease']  # Array
         disease_detail = parameters['disease_detail']  # None or string
         level = parameters['level']  # string
-    except:
+    except Exception as e:
         result = {
             'result': False,
-            'error': f'Missing data in request.'
+            'message': f'Missing data: {str(e)}'
         }
-        error_log = f"{result['error']}, parameters({json.dumps(parameters, ensure_ascii=False)}),"
-        slack_error_notification(user_ip=ip, api=endpoint, error_message=error_log, method=request.method, status_code=400)
         return json.dumps(result, ensure_ascii=False), 400
     # Verify if mandatory information is not null.
     if request.method == 'POST':
@@ -48,16 +47,14 @@ def add_user_question():
         if not(user_id and purpose and sports and gender and age_group and experience_group and level and schedule):
             result = {
                 'result': False,
-                'error': f'Missing data in request.'
+                'message': f'Missing data in request.'
             }
-            error_log = f"{result['error']}, parameters({json.dumps(parameters, ensure_ascii=False)}),"
-            slack_error_notification(user_ip=ip, api=endpoint, error_message=error_log, method=request.method, status_code=400)
             return json.dumps(result, ensure_ascii=False), 400
         # Check if disease_detail is None, or disease_detail is empty string("" or " " or "  " ...).
         if len(disease) == 0 and (disease_detail is not None or (type(disease_detail) == str and len(disease_detail.strip()) > 0)):
             result = {
                 'result': False,
-                'error': f'User answered that he/she has no disease, but disease_detail has value.',
+                'error': f'Invalid request parameter: User answered that he/she has no disease, but disease_detail has value.',
                 'disease': disease,
                 'disease_detail': disease_detail
             }
@@ -76,27 +73,17 @@ def add_user_question():
             }
             return json.dumps(result, ensure_ascii=False), 400
 
-    try:
-        connection = login_to_db()
-    except Exception as e:
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while connecting to DB: {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method, status_code=500)
-        return json.dumps(result, ensure_ascii=False), 500
-
+    connection = login_to_db()
     cursor = connection.cursor()
-
     # verify_user = check_user_token(cursor, user_token)
     # if verify_user['result'] is False:
     #     connection.close()
+    #     message = 'No token at request header.' if user_token is None else 'Unauthorized user.'
     #     result = {
     #         'result': False,
-    #         'error': 'Unauthorized user.'
+    #         'message': message
     #     }
-    #     return json.dumps(result), 401
+    #     return json.dumps(result, ensure_ascii=False), 401
     # user_id = verify_user['user_id']
     # user_nickname = verify_user['user_nickname']
 
@@ -128,13 +115,16 @@ def add_user_question():
     except Exception as e:
         connection.rollback()
         connection.close()
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while executing INSERT query(user_questions): {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method, status_code=500)
-        return json.dumps(result, ensure_ascii=False), 500
+        raise HandleException(user_ip=ip,
+                              # nickname=user_nickname,
+                              user_id=user_id,
+                              api=endpoint,
+                              error_message=str(e),
+                              method=request.method,
+                              query=sql,
+                              status_code=500,
+                              payload=None,
+                              result=False)
 
     result = {'result': True, 'user_question_id': user_question_id}
     return json.dumps(result, ensure_ascii=False), 201
@@ -238,13 +228,11 @@ def update_user_question(user_id, question_id):
         disease = parameters['disease']  # short sentence for index 7(string)
         disease_detail = parameters['disease_detail']
         level = parameters['level']
-    except:
+    except Exception as e:
         result = {
             'result': False,
-            'error': f'Missing data in request.'
+            'message': f'Missing data: {str(e)}'
         }
-        error_log = f"{result['error']}, parameters({json.dumps(parameters, ensure_ascii=False)}),"
-        slack_error_notification(user_ip=ip, api=endpoint, error_message=error_log, method=request.method, status_code=400)
         return json.dumps(result, ensure_ascii=False), 400
 
     # if not(user_id and purpose and sports and gender and age_group and experience_group and level and schedule):
@@ -277,18 +265,7 @@ def update_user_question(user_id, question_id):
     #         'schedule': schedule
     #     }
     #     return json.dumps(result, ensure_ascii=False), 400
-
-    try:
-        connection = login_to_db()
-    except Exception as e:
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while connecting to DB: {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method, status_code=500)
-        return json.dumps(result, ensure_ascii=False), 500
-
+    connection = login_to_db()
     cursor = connection.cursor()
 
     # Verify user is valid or not.
@@ -332,14 +309,16 @@ def update_user_question(user_id, question_id):
     except Exception as e:
         connection.rollback()
         connection.close()
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while executing INSERT query(user_questions): {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method, status_code=500)
-        return json.dumps(result, ensure_ascii=False), 500
+        raise HandleException(user_ip=ip,
+                              # nickname=user_nickname,
+                              user_id=user_id,
+                              api=endpoint,
+                              error_message=str(e),
+                              method=request.method,
+                              query=sql,
+                              status_code=500,
+                              payload=None,
+                              result=False)
 
     result = {'result': True}
-
     return json.dumps(result, ensure_ascii=False), 200

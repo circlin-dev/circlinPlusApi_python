@@ -11,26 +11,14 @@ import pandas as pd
 def read_products():
     ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.read_products')
-    # session_id = request.headers['Authorization']
-    # check_session(session_id)
     """페이징 필요!!!"""
-
-    try:
-        connection = login_to_db()
-    except Exception as e:
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while connecting to DB: {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=0, api=endpoint, error_message=result['error'], method=request.method)
-        return json.dumps(result, ensure_ascii=False), 500
 
     query_parameter = request.args.to_dict()  # type: equipment(기구), starterkit(스타터키트), item(상품)
     parameters = []
     for key in query_parameter.keys():
         parameters.append(request.args[key].strip())
 
+    connection = login_to_db()
     cursor = connection.cursor()
     if parameters == [] or len(parameters) == 0:
         """GET everything in 'products' table. => Don't use 'where' clause in sql."""
@@ -268,21 +256,9 @@ def read_products():
 def read_a_product(product_id: int):
     ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.read_a_product', product_id=product_id)
-    # session_id = request.headers['Authorization']
-    # check_session(session_id)
     """페이징 필요!!!"""
 
-    try:
-        connection = login_to_db()
-    except Exception as e:
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while connecting to DB: {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=0, api=endpoint, error_message=result['error'], method=request.method)
-        return json.dumps(result, ensure_ascii=False), 500
-
+    connection = login_to_db()
     cursor = connection.cursor()
     sql = f"""
         SELECT DISTINCT

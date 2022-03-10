@@ -1,4 +1,5 @@
 from global_things.constants import API_ROOT
+from global_things.error_handler import HandleException
 from global_things.functions.slack import slack_error_notification, slack_purchase_notification
 from global_things.functions.general import login_to_db, check_user_token, query_result_is_none
 from global_things.functions.order import validation_subscription_order, validation_equipment_delivery, get_import_access_token, request_import_refund
@@ -26,26 +27,16 @@ def create_chat_with_manager():
     chat_users = Table('chat_users')
     users = Table('users')
 
-    try:
-        connection = login_to_db()
-    except Exception as e:
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while connecting to DB: {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
-        return json.dumps(result, ensure_ascii=False), 500
-
+    connection = login_to_db()
     cursor = connection.cursor()
     # verify_user = check_user_token(cursor, user_token)
     # if verify_user['result'] is False:
     #     connection.close()
+    #     message = 'No token at request header.' if user_token is None else 'Unauthorized user.'
     #     result = {
     #         'result': False,
-    #         'error': 'Unauthorized user.'
+    #         'message': message
     #     }
-    #     return json.dumps(result), 401
     # user_id = verify_user['user_id']
     # user_nickname = verify_user['user_nickname']
 
@@ -125,14 +116,16 @@ def create_chat_with_manager():
         except Exception as e:
             connection.rollback()
             connection.close()
-            error = str(e)
-            result = {
-                'result': False,
-                'error': f'Server Error while executing INSERT query(chat_rooms): {error}'
-            }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
-            return json.dumps(result, ensure_ascii=False), 500
-
+            raise HandleException(user_ip=ip,
+                                  nickname=user_nickname,
+                                  user_id=user_id,
+                                  api=endpoint,
+                                  error_message=f'Server Error while making chat_rooms: {str(e)}',
+                                  query=sql,
+                                  method=request.method,
+                                  status_code=500,
+                                  payload=None,
+                                  result=False)
         try:
             sql = Query.into(
                 chat_users
@@ -151,13 +144,16 @@ def create_chat_with_manager():
         except Exception as e:
             connection.rollback()
             connection.close()
-            error = str(e)
-            result = {
-                'result': False,
-                'error': f'Server Error while executing INSERT query(chat_users): {error}'
-            }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
-            return json.dumps(result, ensure_ascii=False), 500
+            raise HandleException(user_ip=ip,
+                                  nickname=user_nickname,
+                                  user_id=user_id,
+                                  api=endpoint,
+                                  error_message=f'Server Error while making chat_rooms: {str(e)}',
+                                  query=sql,
+                                  method=request.method,
+                                  status_code=500,
+                                  payload=None,
+                                  result=False)
     else:
         connection.close()
         result = {
@@ -295,22 +291,12 @@ def update_payment_state_by_webhook():
       - 관리자 콘솔에서 환불되었을 때: cancelled
     :return:
     """
-    # ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.update_payment_state_by_webhook')
     """Define tables required to execute SQL."""
     orders = Table("orders")
 
-    try:
-        connection = login_to_db()
-    except Exception as e:
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while connecting to DB: {error}'
-        }
-        slack_error_notification(user_ip=ip, api=endpoint, error_message=result['error'], method=request.method, status_code=500)
-        return json.dumps(result, ensure_ascii=False), 500
+    connection = login_to_db()
     cursor = connection.cursor()
 
     parameters = json.loads(request.get_data(), encoding='utf-8')
@@ -324,10 +310,15 @@ def update_payment_state_by_webhook():
     get_token = json.loads(get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET))
     if get_token['result'] is False:
         connection.close()
-        result = {'result': False,
-                  'error': f'Failed to get import access token at server(message: {get_token["message"]})'}
-        slack_error_notification(user_ip=ip, api=endpoint, error_message=get_token['message'], method=request.method, status_code=500)
-        return json.dumps(result, ensure_ascii=False), 500
+        raise HandleException(user_ip=ip,
+                              user_id=user_id,
+                              api=endpoint,
+                              error_message=f'Failed to get import access token at server(message: {get_token["message"]})',
+                              # query=sql,
+                              method=request.method,
+                              status_code=500,
+                              payload=None,
+                              result=False)
     else:
         access_token = get_token['access_token']
 
@@ -383,17 +374,18 @@ def update_payment_state_by_webhook():
         except Exception as e:
             connection.rollback()
             connection.close()
-            error = str(e)
-            result = {
-                'result': False,
-                'error': f'Server error while validating : {error}'
-            }
-            slack_error_notification(user_ip=ip, api=endpoint, error_message=result['error'], query=sql, method=request.method)
-            return json.dumps(result, ensure_ascii=False), 500
+            raise HandleException(user_ip=ip,
+                                  user_id=user_id,
+                                  api=endpoint,
+                                  error_message=f'Failed to get import access token at server(message: {str(e)})',
+                                  query=sql,
+                                  method=request.method,
+                                  status_code=500,
+                                  payload=None,
+                                  result=False)
     else:
         # 결제 취소 이벤트가 아임포트 어드민(https://admin.iamport.kr/)에서 "취소하기" 버튼을 클릭하여 발생한 경우에만 트리거됨.
         if int(db_paid_amount[0][0]) == int(import_paid_amount):
-            """1. 결제 검증 실패에 의해 취소되는 경우: 어떤 조건들을 추가해 줄까???"""
             if updated_state == 'cancelled':
                 sql = Query.update(
                     orders
@@ -422,7 +414,7 @@ def update_payment_state_by_webhook():
                 'error': f': Error while validating payment information: Paid amount that was sent from IMPORT is {import_paid_amount} WON(imp_uid: {imp_uid}), but found {db_paid_amount} WON in orders table.'
             }
             slack_error_notification(user_ip=ip, api=endpoint, error_message=result['error'], method=request.method)
-            return json.dumps(result, ensure_ascii=False), 403
+            return json.dumps(result, ensure_ascii=False), 400
 
 
 @api.route('/purchase', methods=['POST'])
@@ -448,22 +440,18 @@ def add_subscription_order():
         # 결제 정보 변수
         imp_uid = payment_info['imp_uid']
         merchant_uid = payment_info['merchant_uid']
-    except:
+    except Exception as e:
         result = {
             'result': False,
-            'error': f'Missing data in request.'
+            'message': f'Missing data: {str(e)}'
         }
-        error_log = f"{result['error']}, parameters({json.dumps(parameters, ensure_ascii=False)}),"
-        slack_error_notification(user_ip=ip, api=endpoint, error_message=error_log, method=request.method, status_code=400)
         return json.dumps(result, ensure_ascii=False), 400
 
     if not(user_id and period and imp_uid and merchant_uid):
         result = {
             'result': False,
-            'error': f'Missing data in request.'
+            'message': 'Null is not allowed.'
         }
-        error_log = f"{result['error']}, user_id({user_id}), subscription_code({subscription_code}), discount_code({discount_code}), period({period}),  imp_uid({imp_uid}), merchant_uid({merchant_uid})."
-        slack_error_notification(user_ip=ip, api=endpoint, error_message=error_log, method=request.method)
         return json.dumps(result, ensure_ascii=False), 400
 
     # 구독 기간 정보 변수
@@ -478,17 +466,7 @@ def add_subscription_order():
         subscription_days = 365
 
     # 1. 유저 정보 확인
-    try:
-        connection = login_to_db()
-    except Exception as e:
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while connecting to DB: {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
-        return json.dumps(result, ensure_ascii=False), 500
-
+    connection = login_to_db()
     cursor = connection.cursor()
 
     # Verify user is valid or not.
@@ -506,10 +484,17 @@ def add_subscription_order():
     # 2. 결제 정보 조회(import)
     get_token = json.loads(get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET))
     if get_token['result'] is False:
-        result = {'result': False,
-                  'error': f'Failed to get import access token at server(message: {get_token["message"]})'}
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=get_token['message'], method=request.method)
-        return json.dumps(result, ensure_ascii=False), 500
+        connection.close()
+        raise HandleException(user_ip=ip,
+                              # nickname=user_nickname,
+                              user_id=user_id,
+                              api=endpoint,
+                              error_message=f'Failed to get import access token at server(message: {get_token["message"]})',
+                              # query=sql,
+                              method=request.method,
+                              status_code=500,
+                              payload=parameters,
+                              result=False)
     else:
         access_token = get_token['access_token']
 
@@ -574,18 +559,18 @@ def add_subscription_order():
                 slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
                 return json.dumps(result, ensure_ascii=False), 400
         except Exception as e:
-            connection.rollback()
-            connection.close()
-            error = str(e)
-            result = {
-                'result': False,
-                'error': f'Server error while validating : {error}'
-            }
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
-            return json.dumps(result, ensure_ascii=False), 500
+            raise HandleException(user_ip=ip,
+                                  # nickname=user_nickname,
+                                  user_id=user_id,
+                                  api=endpoint,
+                                  error_message=f'Server error while validating subscription purchase: {str(e)}',
+                                  query=sql,
+                                  method=request.method,
+                                  status_code=500,
+                                  payload=parameters,
+                                  result=False)
     else:
         pass
-
     if discount_code is None:
         to_be_paid = subscription_information[0][3]
         subscription_original_price = subscription_information[0][2]
@@ -636,13 +621,16 @@ def add_subscription_order():
             except Exception as e:
                 connection.rollback()
                 connection.close()
-                error = str(e)
-                result = {
-                    'result': False,
-                    'error': f'Server error while validating : {error}'
-                }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
-                return json.dumps(result, ensure_ascii=False), 500
+                raise HandleException(user_ip=ip,
+                                      # nickname=user_nickname,
+                                      user_id=user_id,
+                                      api=endpoint,
+                                      error_message=f'Server error while validating subscription purchase: {str(e)}',
+                                      query=sql,
+                                      method=request.method,
+                                      status_code=500,
+                                      payload=parameters,
+                                      result=False)
             connection.close()
             result = {'result': False,
                       'error': f"결제 검증 실패(결제 금액 불일치), 환불처리 성공(imp_uid: {imp_uid}, merchant_uid: {merchant_uid})."}
@@ -660,20 +648,6 @@ def add_subscription_order():
     subscription_id = subscription_information[0][0]
     try:
         if discount_id is None:
-            # sql = f"""
-            #     UPDATE
-            #         orders o
-            #     JOIN
-            #         users u
-            #     ON o.user_id = u.id
-            #     SET
-            #         o.user_id = {user_id},
-            #         u.subscription_expired_at = (SELECT(NOW() + INTERVAL {subscription_days} DAY)),
-            #         u.subscription_id = {subscription_id}
-            #     WHERE
-            #           o.user_id = {user_id}
-            #     AND o.imp_uid = %s
-            #     AND o.merchant_uid = %s"""
             sql = Query.update(
                 orders
             ).join(
@@ -694,21 +668,6 @@ def add_subscription_order():
                 ])
             ).get_sql()
         else:
-            # sql = f"""
-            #     UPDATE
-            #         orders o
-            #     JOIN
-            #         users u
-            #     ON o.user_id = u.id
-            #     SET
-            #         o.user_id = {user_id},
-            #         o.discount_id = {discount_id},
-            #         u.subscription_expired_at = (SELECT(NOW() + INTERVAL {subscription_days} DAY)),
-            #         u.subscription_id = {subscription_id}
-            #     WHERE
-            #           o.user_id = {user_id}
-            #     AND o.imp_uid = %s
-            #     AND o.merchant_uid = %s"""
             sql = Query.update(
                 orders
             ).join(
@@ -731,8 +690,6 @@ def add_subscription_order():
                 ])
             ).get_sql()
         cursor.execute(sql)
-        # values = (imp_uid, merchant_uid)
-        # cursor.execute(sql, values)
         connection.commit()
 
         sql = Query.from_(
@@ -752,10 +709,6 @@ def add_subscription_order():
         else:
             order_id = result[0][0]
 
-        # sql = f"""
-        #     INSERT INTO
-        #             order_subscriptions(order_id, subscription_id, price, discount_price)
-        #         VALUES({order_id}, {subscription_id}, {import_paid_amount}, {subscription_original_price - import_paid_amount})"""
         sql = Query.into(
             order_subscriptions
         ).columns(
@@ -800,182 +753,182 @@ def add_subscription_order():
         return json.dumps(result, ensure_ascii=False), 400
 
 
-@api.route('/validation/delivery-fee', methods=['POST'])
-def validate_delivery_fee():
-    ip = request.headers["X-Forwarded-For"]
-    endpoint = API_ROOT + url_for('api.validate_delivery_fee')
-    # token = request.headers['Authorization']
-    """Define tables required to execute SQL."""
-    orders = Table('orders')
-    order_products = Table('order_products')
-    order_product_deliveries = Table('order_product_delivery')
-    order_subscriptions = Table('order_subscriptions')
-    products = Table('products')
-    discounts = Table('discounts')
-
-    parameters = json.loads(request.get_data(), encoding='utf-8')
-    imp_uid = parameters['imp_uid']
-    merchant_uid = parameters['merchant_uid']
-    discount_code = parameters['discount_code']
-    first_delivery_discount_code = parameters['first_delivery_discount_code'] if parameters['first_delivery_discount_code'] is not None else ''
-    equipment_code = parameters['equipment_code']
-    address = parameters['address']
-    user_id = merchant_uid.split('_')[-1]
-
-    try:
-        connection = login_to_db()
-    except Exception as e:
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while connecting to DB: {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
-        return json.dumps(result, ensure_ascii=False), 500
-
-    cursor = connection.cursor()
-    # 2. import에서 결제 정보 조회
-    get_token = json.loads(get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET))
-    if get_token['result'] is False:
-        connection.close()
-        result = {'result': False,
-                  'error': f'Failed to get import access token at server(message: {get_token["message"]})'}
-        slack_error_notification(user_ip=ip, api=endpoint, error_message=get_token['message'], method=request.method)
-        return json.dumps(result, ensure_ascii=False), 500
-    else:
-        access_token = get_token['access_token']
-
-    payment_validation_import = requests.get(
-        f"https://api.iamport.kr/payments/{imp_uid}",
-        headers={"Authorization": access_token}
-    ).json()
-    import_paid_amount = int(payment_validation_import['response']['amount'])
-
-    sql = Query.from_(
-        products
-    ).select(
-        products.id,
-        products.type,
-        products.delivery_fee
-    ).where(
-        Criterion.all([products.code == equipment_code])
-    ).get_sql()
-    cursor.execute(sql)
-    equipment = cursor.fetchall()
-    equipment_dict = {
-        'id': equipment[0][0],
-        'type': equipment[0][1],
-        'delivery_fee': equipment[0][2]
-    }
-
-    sql = Query.from_(
-        discounts
-    ).select(
-        discounts.id,
-        discounts.type,
-        discounts.title,
-        discounts.method,
-        discounts.value,
-        discounts.code
-    ).where(
-        Criterion.all([
-            discounts.code == discount_code
-            # discounts.code == first_delivery_discount_code
-        ])
-    ).get_sql()
-    cursor.execute(sql)
-    area_discount = cursor.fetchall()
-    area_discount_dict = {
-        'id': area_discount[0][0],
-        'type': area_discount[0][1],
-        'title': area_discount[0][2],
-        'method': area_discount[0][3],
-        'value': area_discount[0][4],
-        'code': area_discount[0][5]
-    }
-
-    sql = Query.from_(
-        discounts
-    ).select(
-        discounts.id,
-        discounts.type,
-        discounts.title,
-        discounts.method,
-        discounts.value,
-        discounts.code
-    ).where(
-        Criterion.all([
-            discounts.code == first_delivery_discount_code
-        ])
-    ).get_sql()
-    cursor.execute(sql)
-    first_delivery = cursor.fetchall()
-    if len(first_delivery) == 0:
-        first_delivery_discount_dict = {
-            'is_first': False,
-            'type': None,
-            'title': None,
-            'method': None,
-            'value': 0,
-            'code': None
-        }
-    else:
-        first_delivery_discount_dict = {
-            'is_first': True,
-            'type': first_delivery[0][0],
-            'title': first_delivery[0][1],
-            'method': first_delivery[0][2],
-            'value': first_delivery[0][3],
-            'code': first_delivery[0][4]
-        }
-    discount_dict = {'first_delivery_discount': first_delivery_discount_dict, 'area_discount': area_discount_dict}
-    to_be_paid, total_fee, area_discount_id, first_delivery_discount_value = validation_equipment_delivery(equipment_dict, discount_dict)
-
-    if to_be_paid == import_paid_amount:
-        connection.close()
-        result_dict = {"result": True}
-        return json.dumps(result_dict, ensure_ascii=False)
-    else:
-        connection.close()
-        refund_reason = "[결제검증 실패]: 실제 기구배송비와 결제금액이 불일치합니다."
-        refund_result = request_import_refund(access_token, imp_uid, merchant_uid, import_paid_amount, import_paid_amount, refund_reason)
-        if refund_result['code'] == 0:
-            try:
-                sql = Query.update(
-                    orders
-                ).set(
-                    orders.user_id, user_id
-                ).set(
-                    orders.status, "cancelled"
-                ).set(
-                    orders.deleted_at, fn.Now()
-                ).where(
-                    Criterion.all([
-                        orders.imp_uid == imp_uid,
-                        orders.merchant_uid == merchant_uid
-                    ])
-                ).get_sql()
-                cursor.execute(sql)
-                connection.commit()
-            except Exception as e:
-                connection.rollback()
-                connection.close()
-                error = str(e)
-                result = {
-                    'result': False,
-                    'error': f'Server error while validating : {error}'
-                }
-                slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
-                return json.dumps(result, ensure_ascii=False), 500
-            connection.close()
-            result = {'result': False,
-                      'error': f"결제 검증 실패(결제 금액 불일치), 환불처리 성공(imp_uid: {imp_uid}, merchant_uid: {merchant_uid})."}
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
-            return json.dumps(result, ensure_ascii=False), 400
-        else:
-            # IMPORT 서버의 오류로 인해 환불 요청이 실패할 경우 직접 환불한다.
-            connection.close()
-            result = {'result': False,
-                      'error': f"결제 검증 실패(결제 금액 불일치), 다음 사유로 인해 환불처리 실패하였으니 아임포트 어드민에서 직접 취소 요망(imp_uid: {imp_uid}, merchant_uid: {merchant_uid}) : {refund_result['message']}"}
-            slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
-            return json.dumps(result, ensure_ascii=False), 400
+# @api.route('/validation/delivery-fee', methods=['POST'])
+# def validate_delivery_fee():
+#     ip = request.headers["X-Forwarded-For"]
+#     endpoint = API_ROOT + url_for('api.validate_delivery_fee')
+#     # token = request.headers['Authorization']
+#     """Define tables required to execute SQL."""
+#     orders = Table('orders')
+#     order_products = Table('order_products')
+#     order_product_deliveries = Table('order_product_delivery')
+#     order_subscriptions = Table('order_subscriptions')
+#     products = Table('products')
+#     discounts = Table('discounts')
+#
+#     parameters = json.loads(request.get_data(), encoding='utf-8')
+#     imp_uid = parameters['imp_uid']
+#     merchant_uid = parameters['merchant_uid']
+#     discount_code = parameters['discount_code']
+#     first_delivery_discount_code = parameters['first_delivery_discount_code'] if parameters['first_delivery_discount_code'] is not None else ''
+#     equipment_code = parameters['equipment_code']
+#     address = parameters['address']
+#     user_id = merchant_uid.split('_')[-1]
+#
+#     try:
+#         connection = login_to_db()
+#     except Exception as e:
+#         error = str(e)
+#         result = {
+#             'result': False,
+#             'error': f'Server Error while connecting to DB: {error}'
+#         }
+#         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
+#         return json.dumps(result, ensure_ascii=False), 500
+#
+#     cursor = connection.cursor()
+#     # 2. import에서 결제 정보 조회
+#     get_token = json.loads(get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET))
+#     if get_token['result'] is False:
+#         connection.close()
+#         result = {'result': False,
+#                   'error': f'Failed to get import access token at server(message: {get_token["message"]})'}
+#         slack_error_notification(user_ip=ip, api=endpoint, error_message=get_token['message'], method=request.method)
+#         return json.dumps(result, ensure_ascii=False), 500
+#     else:
+#         access_token = get_token['access_token']
+#
+#     payment_validation_import = requests.get(
+#         f"https://api.iamport.kr/payments/{imp_uid}",
+#         headers={"Authorization": access_token}
+#     ).json()
+#     import_paid_amount = int(payment_validation_import['response']['amount'])
+#
+#     sql = Query.from_(
+#         products
+#     ).select(
+#         products.id,
+#         products.type,
+#         products.delivery_fee
+#     ).where(
+#         Criterion.all([products.code == equipment_code])
+#     ).get_sql()
+#     cursor.execute(sql)
+#     equipment = cursor.fetchall()
+#     equipment_dict = {
+#         'id': equipment[0][0],
+#         'type': equipment[0][1],
+#         'delivery_fee': equipment[0][2]
+#     }
+#
+#     sql = Query.from_(
+#         discounts
+#     ).select(
+#         discounts.id,
+#         discounts.type,
+#         discounts.title,
+#         discounts.method,
+#         discounts.value,
+#         discounts.code
+#     ).where(
+#         Criterion.all([
+#             discounts.code == discount_code
+#             # discounts.code == first_delivery_discount_code
+#         ])
+#     ).get_sql()
+#     cursor.execute(sql)
+#     area_discount = cursor.fetchall()
+#     area_discount_dict = {
+#         'id': area_discount[0][0],
+#         'type': area_discount[0][1],
+#         'title': area_discount[0][2],
+#         'method': area_discount[0][3],
+#         'value': area_discount[0][4],
+#         'code': area_discount[0][5]
+#     }
+#
+#     sql = Query.from_(
+#         discounts
+#     ).select(
+#         discounts.id,
+#         discounts.type,
+#         discounts.title,
+#         discounts.method,
+#         discounts.value,
+#         discounts.code
+#     ).where(
+#         Criterion.all([
+#             discounts.code == first_delivery_discount_code
+#         ])
+#     ).get_sql()
+#     cursor.execute(sql)
+#     first_delivery = cursor.fetchall()
+#     if len(first_delivery) == 0:
+#         first_delivery_discount_dict = {
+#             'is_first': False,
+#             'type': None,
+#             'title': None,
+#             'method': None,
+#             'value': 0,
+#             'code': None
+#         }
+#     else:
+#         first_delivery_discount_dict = {
+#             'is_first': True,
+#             'type': first_delivery[0][0],
+#             'title': first_delivery[0][1],
+#             'method': first_delivery[0][2],
+#             'value': first_delivery[0][3],
+#             'code': first_delivery[0][4]
+#         }
+#     discount_dict = {'first_delivery_discount': first_delivery_discount_dict, 'area_discount': area_discount_dict}
+#     to_be_paid, total_fee, area_discount_id, first_delivery_discount_value = validation_equipment_delivery(equipment_dict, discount_dict)
+#
+#     if to_be_paid == import_paid_amount:
+#         connection.close()
+#         result_dict = {"result": True}
+#         return json.dumps(result_dict, ensure_ascii=False)
+#     else:
+#         connection.close()
+#         refund_reason = "[결제검증 실패]: 실제 기구배송비와 결제금액이 불일치합니다."
+#         refund_result = request_import_refund(access_token, imp_uid, merchant_uid, import_paid_amount, import_paid_amount, refund_reason)
+#         if refund_result['code'] == 0:
+#             try:
+#                 sql = Query.update(
+#                     orders
+#                 ).set(
+#                     orders.user_id, user_id
+#                 ).set(
+#                     orders.status, "cancelled"
+#                 ).set(
+#                     orders.deleted_at, fn.Now()
+#                 ).where(
+#                     Criterion.all([
+#                         orders.imp_uid == imp_uid,
+#                         orders.merchant_uid == merchant_uid
+#                     ])
+#                 ).get_sql()
+#                 cursor.execute(sql)
+#                 connection.commit()
+#             except Exception as e:
+#                 connection.rollback()
+#                 connection.close()
+#                 error = str(e)
+#                 result = {
+#                     'result': False,
+#                     'error': f'Server error while validating : {error}'
+#                 }
+#                 slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
+#                 return json.dumps(result, ensure_ascii=False), 500
+#             connection.close()
+#             result = {'result': False,
+#                       'error': f"결제 검증 실패(결제 금액 불일치), 환불처리 성공(imp_uid: {imp_uid}, merchant_uid: {merchant_uid})."}
+#             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
+#             return json.dumps(result, ensure_ascii=False), 400
+#         else:
+#             # IMPORT 서버의 오류로 인해 환불 요청이 실패할 경우 직접 환불한다.
+#             connection.close()
+#             result = {'result': False,
+#                       'error': f"결제 검증 실패(결제 금액 불일치), 다음 사유로 인해 환불처리 실패하였으니 아임포트 어드민에서 직접 취소 요망(imp_uid: {imp_uid}, merchant_uid: {merchant_uid}) : {refund_result['message']}"}
+#             slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
+#             return json.dumps(result, ensure_ascii=False), 400

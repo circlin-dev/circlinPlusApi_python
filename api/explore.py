@@ -161,18 +161,6 @@ def get_related_terms_list():
     endpoint = API_ROOT + url_for('api.get_related_terms_list')
     user_token = request.headers.get('Authorization')
 
-    try:
-        connection = login_to_db()
-    except Exception as e:
-        raise HandleException(user_ip=ip,
-                              api=endpoint,
-                              error_message=f'Server Error while connecting to DB: {str(e)}',
-                              query='',
-                              method=request.method,
-                              status_code=500,
-                              payload=None,
-                              result=False)
-
     query_parameter = request.args.to_dict()
     word = ''
     for key in query_parameter.keys():
@@ -183,15 +171,17 @@ def get_related_terms_list():
     related_exercises_list = []
     related_equipments_list = []
 
+    connection = login_to_db()
     cursor = connection.cursor()
     verify_user = check_user_token(cursor, user_token)
     if verify_user['result'] is False:
         connection.close()
+        message = 'No token at request header.' if user_token is None else 'Unauthorized user.'
         result = {
             'result': False,
-            'error': 'Unauthorized user.'
+            'message': message
         }
-        return json.dumps(result), 401
+        return json.dumps(result, ensure_ascii=False), 401
     # user_id = verify_user['user_id']
     # user_nickname = verify_user['user_nickname']
 
@@ -289,26 +279,18 @@ def explore_log(user_id: int):
     """Define tables required to execute SQL."""
     search_logs = Table('search_logs')
 
-    try:
-        connection = login_to_db()
-    except Exception as e:
-        raise HandleException(user_ip=ip,
-                              user_id=user_id,
-                              api=endpoint,
-                              error_message=str(e),
-                              method=request.method,
-                              status_code=500,
-                              payload=None,
-                              result=False)
+    connection = login_to_db()
     cursor = connection.cursor()
 
     verify_user = check_user_token(cursor, user_token)
     if verify_user['result'] is False:
+        connection.close()
+        message = 'No token at request header.' if user_token is None else 'Unauthorized user.'
         result = {
             'result': False,
-            'error': f'Unauthorized user.'
+            'message': message
         }
-        return json.dumps(result), 401
+        return json.dumps(result, ensure_ascii=False), 401
     verified_user_id = verify_user['user_id']
 
     if request.method == 'GET':  # 검색 기록 조회
@@ -332,17 +314,12 @@ def explore_log(user_id: int):
             search_records = cursor.fetchall()
             connection.close()
         except Exception as e:
-            connection.rollback()
             connection.close()
-            raise HandleException(user_ip=ip,
-                                  user_id=user_id,
-                                  api=endpoint,
-                                  error_message=f'Cannot find requested search record: {str(e)}',
-                                  query=sql,
-                                  method=request.method,
-                                  status_code=400,
-                                  payload=None,
-                                  result=False)
+            result = {
+                'result': False,
+                'error': f'Cannot find requested search record: {str(e)}'
+            }
+            return json.dumps(result, ensure_ascii=False), 400
 
         if query_result_is_none(search_records) is True:
             result = {
@@ -389,23 +366,19 @@ def explore_log(user_id: int):
                 cursor.execute(sql)
                 connection.commit()
                 connection.close()
+                result_dict = {
+                    'result': True,
+                    'message': f"Successfully deleted the requested search term({word_to_delete})."
+                }
+                return json.dumps(result_dict, ensure_ascii=False), 200
             except Exception as e:
                 connection.rollback()
                 connection.close()
-                raise HandleException(user_ip=ip,
-                                      user_id=user_id,
-                                      api=endpoint,
-                                      error_message=f'Cannot delete the requested search term: {str(e)}',
-                                      query=sql,
-                                      method=request.method,
-                                      status_code=400,
-                                      payload=None,
-                                      result=False)
-            result_dict = {
-                'result': True,
-                'message': f"Successfully deleted the requested search term({word_to_delete})."
-            }
-            return json.dumps(result_dict, ensure_ascii=False), 200
+                result = {
+                    'result': False,
+                    'error': f'Cannot delete the requested search term: {str(e)}'
+                }
+                return json.dumps(result, ensure_ascii=False), 400
         else:
             # 전체 삭제
             """
@@ -429,17 +402,13 @@ def explore_log(user_id: int):
             except Exception as e:
                 connection.rollback()
                 connection.close()
-                raise HandleException(user_ip=ip,
-                                      user_id=user_id,
-                                      api=endpoint,
-                                      error_message=f'Cannot delete the requested whole search record: {str(e)}',
-                                      query=sql,
-                                      method=request.method,
-                                      status_code=400,
-                                      payload=None,
-                                      result=False)
+                result = {
+                    'result': False,
+                    'error': f'Cannot delete the requested whole search log: {str(e)}'
+                }
+                return json.dumps(result, ensure_ascii=False), 400
             result_dict = {
                 'result': True,
-                'message': f"Successfully deleted the requested whole search record({word_to_delete})."
+                'message': f"Successfully deleted the requested whole search log({word_to_delete})."
             }
             return json.dumps(result_dict, ensure_ascii=False), 200

@@ -32,7 +32,7 @@ class HandleException(Exception):
         # error['user_ip'] = self.user_ip
         # error['nickname'] = self.nickname
         # error['user_id'] = self.user_id
-        # error['api'] = self.api
+        error['api'] = self.api
         error['error'] = self.error_message
         # error['query'] = self.query
         error['method'] = self.method

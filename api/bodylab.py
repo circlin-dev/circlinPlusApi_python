@@ -39,60 +39,45 @@ def weekly_bodylab():
         body_image = request.files.to_dict()['body_image']
         # atflee_image = request.files.to_dict()['atflee_image'] => 키, 몸무게, BMI, 근육량, 지방량 모두 대체 가능
     except Exception as e:
-        raise HandleException(user_ip=ip,
-                              api=endpoint,
-                              error_message=f'{str(e)}',
-                              method=request.method,
-                              status_code=400,
-                              payload=data,
-                              result=False)
-    try:
-        connection = login_to_db()
-    except Exception as e:
-        raise HandleException(user_ip=ip,
-                              user_id=user_id,
-                              api=endpoint,
-                              error_message=str(e),
-                              method=request.method,
-                              status_code=500,
-                              payload=None,
-                              result=False)
-
-    cursor = connection.cursor()
-    verify_user = check_user_token(cursor, user_token)
-    if verify_user['result'] is False:
-        connection.close()
         result = {
             'result': False,
-            'error': 'Unauthorized user.'
+            'message': f'Missing data: {str(e)}'
         }
-        return json.dumps(result), 401
+        return json.dumps(result, ensure_ascii=False), 400
+
+    # Verify if mandatory information is not null.
+    if not (user_id and user_height and user_weight and bmi and muscle_mass and fat_mass and body_image):
+        result = {
+            'result': False,
+            'message': 'Null is not allowed.'
+        }
+        return json.dumps(result, ensure_ascii=False), 400
+
+    connection = login_to_db()
+    cursor = connection.cursor()
+    verify_user = check_user_token(cursor, user_token)
+
+    if verify_user['result'] is False:
+        connection.close()
+        message = 'No token at request header.' if user_token is None else 'Unauthorized user.'
+        result = {
+            'result': False,
+            'message': message
+        }
+        return json.dumps(result, ensure_ascii=False), 401
     # user_id = verify_user['user_id']
-    # user_nickname = verify_user['user_nickname']
+    user_nickname = verify_user['user_nickname']
 
     if request.method == 'POST':
         """
         이미지 서버 임시 저장 & 업로드 코드 추가 필요
           - 눈바디 이미지, 앳플리 이미지 S3 업로드 후 URL 가져오는 코드 추가해야 함!
         """
-
-        """Define tables required to execute SQL."""
         bodylabs = Table('bodylabs')
-        bodylab_analyze_bodies = Table('bodylab_analyze_bodies')  # bodylab_body_images = Table('bodylab_body_images')
+        bodylab_analyze_bodies = Table('bodylab_analyze_bodies')
         # bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
         user_questions = Table('user_questions')
         files = Table('files')
-
-        # Verify if mandatory information is not null.
-        if not(user_id or user_height or user_weight or bmi or muscle_mass or fat_mass or body_image):
-            raise HandleException(user_ip=ip,
-                                  user_id=user_id,
-                                  api=endpoint,
-                                  error_message=f'Missing data in payload.',
-                                  method=request.method,
-                                  status_code=400,
-                                  payload=json.dumps(data, ensure_ascii=False),
-                                  result=False)
 
         now = datetime.now().strftime('%Y%m%d%H%M%S')
         # S3 업로드 - 바디랩 이미지 1: 신체 사진(눈바디)
@@ -223,10 +208,12 @@ def weekly_bodylab():
             user_week_id = cursor.fetchall()[0][0]
         except Exception as e:
             raise HandleException(user_ip=ip,
+                                  nickname=user_nickname,
                                   user_id=user_id,
                                   api=endpoint,
                                   error_message=str(e),
                                   method=request.method,
+                                  query=sql,
                                   status_code=500,
                                   payload=None,
                                   result=False)
@@ -308,14 +295,22 @@ def weekly_bodylab():
                 connection.close()
                 result = {
                     'result': False,
-                    'message': 'Failed to create 1 week free trial(Cannot find user or user_question data).'
+                    'message': 'Pre-survey answer is necessary for bodylab.'
                 }
                 return json.dumps(result, ensure_ascii=False), 400
             answer = json.loads(data[0][0].replace("\\", "\\\\"), strict=False)
             gender = answer['gender']
             age_group = answer['age_group']
 
-            ideal_fat_mass, ideal_muscle_mass, bmi_status, ideal_bmi = standard_healthiness_value(str(age_group), str(gender), float(user_weight), float(user_height), float(bmi))
+            if gender is not None and age_group is not None:
+                ideal_fat_mass, ideal_muscle_mass, bmi_status, ideal_bmi = standard_healthiness_value(str(age_group), str(gender), float(user_weight), float(user_height), float(bmi))
+            else:
+                connection.close()
+                result = {
+                    'result': False,
+                    'message': 'Missing data in pre-survey answer: gender or age_group.'
+                }
+                return json.dumps(result, ensure_ascii=False), 400
 
             # 건강점수
             bmi_healthiness_score = healthiness_score(ideal_bmi, bmi)
@@ -370,33 +365,34 @@ def weekly_bodylab():
             ).get_sql()
             cursor.execute(sql)
             connection.commit()
+            latest_bodylab_id = cursor.lastrowid
 
             # Get users latest bodylab data = User's data inserted just before.
-            sql = Query.from_(
-                bodylabs
-            ).select(
-                bodylabs.id
-            ).where(
-                bodylabs.user_id == user_id
-            ).orderby(
-                bodylabs.id, order=Order.desc
-            ).limit(1).get_sql()
-            cursor.execute(sql)
-            latest_bodylab_id_tuple = cursor.fetchall()
-
-            if query_result_is_none(latest_bodylab_id_tuple) is True:
-                connection.close()
-                raise HandleException(user_ip=ip,
-                                      user_id=user_id,
-                                      api=endpoint,
-                                      error_message=f'Cannot find requested bodylab data of user(id: {user_id})(bodylab)',
-                                      query=sql,
-                                      method=request.method,
-                                      status_code=200,
-                                      payload=json.dumps(data, ensure_ascii=False),
-                                      result=False)
-            else:
-                latest_bodylab_id = latest_bodylab_id_tuple[0][0]
+            # sql = Query.from_(
+            #     bodylabs
+            # ).select(
+            #     bodylabs.id
+            # ).where(
+            #     bodylabs.user_id == user_id
+            # ).orderby(
+            #     bodylabs.id, order=Order.desc
+            # ).limit(1).get_sql()
+            # cursor.execute(sql)
+            # latest_bodylab_id_tuple = cursor.fetchall()
+            #
+            # if query_result_is_none(latest_bodylab_id) is True:
+            #     connection.close()
+            #     raise HandleException(user_ip=ip,
+            #                           user_id=user_id,
+            #                           api=endpoint,
+            #                           error_message=f'Cannot find requested bodylab data of user(id: {user_id})(bodylab)',
+            #                           query=sql,
+            #                           method=request.method,
+            #                           status_code=500,
+            #                           payload=json.dumps(data, ensure_ascii=False),
+            #                           result=False)
+            # else:
+            #     latest_bodylab_id = latest_bodylab_id_tuple[0][0]
 
             # Analyze user's image and store the result.
             body_analysis = json.loads(analyze_body_images(user_id, body_input_image_dict['pathname']))
@@ -434,6 +430,7 @@ def weekly_bodylab():
                 except Exception as e:
                     connection.close()
                     raise HandleException(user_ip=ip,
+                                          nickname=user_nickname,
                                           user_id=user_id,
                                           api=endpoint,
                                           error_message=str(e),
@@ -474,12 +471,13 @@ def weekly_bodylab():
                 except Exception as e:
                     connection.close()
                     raise HandleException(user_ip=ip,
+                                          nickname=user_nickname,
                                           user_id=user_id,
                                           api=endpoint,
                                           error_message=str(e),
                                           query=sql,
                                           method=request.method,
-                                          status_code=400,
+                                          status_code=500,
                                           payload=json.dumps(data, ensure_ascii=False),
                                           result=False)
                 try:
@@ -515,13 +513,14 @@ def weekly_bodylab():
                 except Exception as e:
                     connection.close()
                     raise HandleException(user_ip=ip,
+                                          nickname=user_nickname,
                                           user_id=user_id,
                                           api=endpoint,
                                           error_message=str(e),
                                           query=sql,
                                           method=request.method,
-                                          status_code=400,
-                                          payload=json.dumps(data, ensure_ascii=False),
+                                          status_code=500,
+                                          payload=data,
                                           result=False)
 
                 connection.close()
@@ -529,46 +528,38 @@ def weekly_bodylab():
                 return json.dumps(result, ensure_ascii=False), 201
             elif result_code == 400:
                 connection.close()
-                raise HandleException(user_ip=ip,
-                                      user_id=user_id,
-                                      api=endpoint,
-                                      error_message=f"Failed to analysis requested image({user_id}, {body_input_image_dict['pathname']}): {body_analysis['error']}",
-                                      query=sql,
-                                      method=request.method,
-                                      status_code=400,
-                                      payload=json.dumps(data, ensure_ascii=False),
-                                      result=False)
+                result = {
+                    'result': False,
+                    'error': f"Failed to analysis requested image({user_id}, {body_input_image_dict['pathname']}): {body_analysis['error']}"
+                }
+                return json.dumps(result, ensure_ascii=False), 400
             elif result_code == 500:
                 connection.close()
                 raise HandleException(user_ip=ip,
+                                      nickname=user_nickname,
                                       user_id=user_id,
                                       api=endpoint,
                                       error_message=f"Failed to analysis requested image({body_image}): {body_analysis['error']}",
                                       query=sql,
                                       method=request.method,
                                       status_code=500,
-                                      payload=json.dumps(data, ensure_ascii=False),
+                                      payload=data,
                                       result=False)
         except Exception as e:
             connection.close()
             raise HandleException(user_ip=ip,
+                                  nickname=user_nickname,
                                   user_id=user_id,
                                   api=endpoint,
                                   error_message=f"Failed to execute POST request: {str(e)}",
                                   query=sql,
                                   method=request.method,
                                   status_code=500,
-                                  payload=json.dumps(data, ensure_ascii=False),
+                                  payload=data,
                                   result=False)
     else:
-        raise HandleException(user_ip=ip,
-                              user_id=user_id,
-                              api=endpoint,
-                              error_message=f'Method Not Allowed',
-                              method=request.method,
-                              status_code=405,
-                              payload=json.dumps(data, ensure_ascii=False),
-                              result=False)
+        result = {'result': False, 'error': 'Method Not Allowed.'}
+        return json.dumps(result, ensure_ascii=False), 405
 
 
 @api.route('/user/<user_id>/bodylab', methods=['GET'])
@@ -598,11 +589,12 @@ def read_user_bodylab(user_id):
     verify_user = check_user_token(cursor, user_token)
     if verify_user['result'] is False:
         connection.close()
+        message = 'No token at request header.' if user_token is None else 'Unauthorized user.'
         result = {
             'result': False,
-            'error': 'Unauthorized user.'
+            'message': message
         }
-        return json.dumps(result), 401
+        return json.dumps(result, ensure_ascii=False), 401
     # user_id = verify_user['user_id']
     # user_nickname = verify_user['user_nickname']
 
@@ -764,7 +756,7 @@ def read_user_bodylab(user_id):
         }
         slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql,
                                  method=request.method)
-        return json.dumps(result, ensure_ascii=False), 200
+        return json.dumps(result, ensure_ascii=False), 400
 
     result_list = []
     for record in records:
@@ -844,28 +836,19 @@ def read_user_bodylab_single(user_id, start_date):
     # bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
     user_questions = Table('user_questions')
 
-    try:
-        connection = login_to_db()
-    except Exception as e:
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while connecting to DB: {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
-        return json.dumps(result, ensure_ascii=False), 500
-
+    connection = login_to_db()
     cursor = connection.cursor()
     verify_user = check_user_token(cursor, user_token)
     if verify_user['result'] is False:
         connection.close()
+        message = 'No token at request header.' if user_token is None else 'Unauthorized user.'
         result = {
             'result': False,
-            'error': 'Unauthorized user.'
+            'message': message
         }
-        return json.dumps(result), 401
+        return json.dumps(result, ensure_ascii=False), 401
     # user_id = verify_user['user_id']
-    # user_nickname = verify_user['user_nickname']
+    user_nickname = verify_user['user_nickname']
 
     sql = Query.from_(
         user_questions
@@ -1028,7 +1011,7 @@ def read_user_bodylab_single(user_id, start_date):
             'error': f'No data for start_date({start_date})'
         }
         # return json.dumps(result, ensure_ascii=False), 200
-        return json.dumps(return_dict_when_nothing_to_return(), ensure_ascii=False), 200
+        return json.dumps(return_dict_when_nothing_to_return(), ensure_ascii=False), 400
 
     connection.close()
     record = record[0]

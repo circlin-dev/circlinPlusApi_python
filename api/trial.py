@@ -1,4 +1,5 @@
 from . import api
+from global_things.error_handler import HandleException
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, query_result_is_none
@@ -24,28 +25,19 @@ def create_trial():
     user_lectures = Table('user_lectures')
     lectures = Table('lectures')
 
-    try:
-        connection = login_to_db()
-    except Exception as e:
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while connecting to DB: {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
-        return json.dumps(result, ensure_ascii=False), 500
-
+    connection = login_to_db()
     cursor = connection.cursor()
 
     # Verify user is valid or not.
     # verify_user = check_user_token(cursor, user_token)
     # if verify_user['result'] is False:
     #     connection.close()
+    #     message = 'No token at request header.' if user_token is None else 'Unauthorized user.'
     #     result = {
     #         'result': False,
-    #         'error': 'Unauthorized user.'
+    #         'message': message
     #     }
-    #     return json.dumps(result), 401
+    #     return json.dumps(result, ensure_ascii=False), 401
     # user_id = verify_user['user_id']
     # user_nickname = verify_user['user_nickname']
 
@@ -98,18 +90,6 @@ def create_trial():
         return json.dumps(result, ensure_ascii=False), 400
 
     # 검증 2: 유저가 이미 무료 강의들을 배정받은 기록이 있는지 여부
-    # sql = f"""
-    #     SELECT
-    #         ul.lecture_id,
-    #         l.program_id
-    #     FROM
-    #         user_lectures ul
-    #     INNER JOIN
-    #         lectures l
-    #         ON l.id = ul.lecture_id
-    #     WHERE ul.user_id={user_id}
-    #     AND l.program_id IS NULL
-    #     AND ul.deleted_at IS NULL"""
     sql = Query.from_(
         user_lectures
     ).select(
@@ -182,19 +162,12 @@ def create_trial():
                 else:   # now >= request_schedule_30m
                     scheduled_at = request_schedule_7d.strftime('%Y-%m-%d %H:%M:00')  # request_schedule + 7 days에 배정
                     pass
-
             to_be_scheduled = [x for x in free_week_routines if x['day'] == schedule_date]
-
             for routine in to_be_scheduled:
                 if routine['type'] == 'guide':
                     selected_level = 0
                 else:
                     selected_level = replace_text_to_level(answer['level'])
-                # sql = f"""
-                #     INSERT INTO
-                #         user_lectures(created_at, updated_at, user_id, lecture_id, level, scheduled_at)
-                #     VALUES
-                #         ((SELECT NOW()), (SELECT NOW()), {user_id}, {routine['lecture_id']}, {selected_level}, TIMESTAMP('{scheduled_at}'))"""
                 sql = Query.into(
                     user_lectures
                 ).columns(
@@ -218,13 +191,16 @@ def create_trial():
                 except Exception as e:
                     connection.rollback()
                     connection.close()
-                    error = str(e)
-                    result = {
-                        'result': False,
-                        'error': f'Server Error while executing INSERT query(user_questions): {error}'
-                    }
-                    slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], query=sql, method=request.method)
-                    return json.dumps(result, ensure_ascii=False), 500
+                    raise HandleException(user_ip=ip,
+                                          # nickname=user_nickname,
+                                          user_id=user_id,
+                                          api=endpoint,
+                                          error_message=f"Server Error while executing INSERT query(user_questions): {str(e)}",
+                                          query=sql,
+                                          method=request.method,
+                                          status_code=500,
+                                          payload=json.dumps(data, ensure_ascii=False),
+                                          result=False)
             else:
                 pass
 

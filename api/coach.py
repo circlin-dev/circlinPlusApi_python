@@ -12,18 +12,8 @@ import pandas as pd
 def get_coaches():
     ip = request.headers["X-Forwarded-For"]
     endpoint = API_ROOT + url_for('api.get_coaches')
-    # token = request.headers['Authorization']
 
-    try:
-        connection = login_to_db()
-    except Exception as e:
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while connecting to DB: {error}'
-        }
-        slack_error_notification(user_ip=ip, api=endpoint, error_message=result['error'], method=request.method)
-        return json.dumps(result, ensure_ascii=False), 500
+    connection = login_to_db()
     cursor = connection.cursor()
 
     sql = f"""
@@ -126,16 +116,7 @@ def get_coach(coach_id):
     endpoint = API_ROOT + url_for('api.get_coach', coach_id=coach_id)
     # token = request.headers['Authorization']
 
-    try:
-        connection = login_to_db()
-    except Exception as e:
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while connecting to DB: {error}'
-        }
-        slack_error_notification(user_ip=ip, api=endpoint, error_message=result['error'], method=request.method)
-        return json.dumps(result, ensure_ascii=False), 500
+    connection = login_to_db()
     cursor = connection.cursor()
 
     sql = f"""
