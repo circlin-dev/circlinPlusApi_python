@@ -41,7 +41,7 @@ def weekly_bodylab():
     except Exception as e:
         raise HandleException(user_ip=ip,
                               api=endpoint,
-                              error_message=f'KeyError: {str(e)}',
+                              error_message=f'{str(e)}',
                               method=request.method,
                               status_code=400,
                               payload=data,
