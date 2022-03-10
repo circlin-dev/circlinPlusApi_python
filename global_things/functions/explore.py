@@ -337,7 +337,7 @@ def filter_dataframe(filter_exercise: list, filter_purpose: list, filter_equipme
         title = df_by_id['title'].unique()[0]  # For error 'TypeError: Object of type int64 is not JSON serializable'
         thumbnail = df_by_id['thumbnail'].unique()[0]
         thumbnails = list(set(df_by_id['thumbnails'].values.tolist()[0].strip('][').split(', ')))
-        thumbnails = sorted(thumbnails, key=lambda x: int(x.split('_')[-2].split('w')[0]), reverse=True)  # Thumbnails needs be sorted from big size to small size(1080 -> ... 150).
+        thumbnails = sorted(thumbnails, key=lambda x: int(x.split('_')[-1].split('w')[0]), reverse=True)  # Thumbnails needs be sorted from big size to small size(1080 -> ... 150).
         num_lectures = int(df_by_id['num_lectures'].unique()[0])
         num_completed_lectures = int(df_by_id['num_completed_lectures'].unique()[0])
         show_type = df_by_id['type'].unique()[0]
