@@ -31,6 +31,7 @@ class HandleException(Exception):
         error['user_id'] = self.user_id
         error['api'] = self.api
         error['error_message'] = self.error_message
+        error['query'] = self.query
         error['method'] = self.method
         error['status_code'] = self.status_code
         error['payload'] = self.payload
