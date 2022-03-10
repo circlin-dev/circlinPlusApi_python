@@ -2,6 +2,7 @@ from flask import request
 from global_things.functions.slack import slack_error_notification
 import json
 
+
 class HandleException(Exception):
     def __init__(self,
                  user_ip: str = '',

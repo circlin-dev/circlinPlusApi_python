@@ -9,7 +9,7 @@ def slack_error_notification(user_ip: str = '', nickname: str = '', user_id: int
                              status_code: int = 0, query: str = '', error_message: str = ''):
   if user_ip == '' or user_id == '':
     user_ip = "Server error"
-    user_id = "Server error"
+    user_id = 0
 
   send_notification_request = requests.post(
     SLACK_NOTIFICATION_WEBHOOK,

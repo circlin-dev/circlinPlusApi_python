@@ -98,6 +98,7 @@ def add_user_question():
     #     }
     #     return json.dumps(result), 401
     # user_id = verify_user['user_id']
+    # user_nickname = verify_user['user_nickname']
 
     # Formatting json to INSERT into mysql database.
     json_data = json.dumps({
@@ -170,6 +171,7 @@ def read_user_question(user_id):
     #     }
     #     return json.dumps(result), 401
     # user_id = verify_user['user_id']
+    # user_nickname = verify_user['user_nickname']
 
     # sql = f"""
     #     SELECT
@@ -299,6 +301,7 @@ def update_user_question(user_id, question_id):
     #     }
     #     return json.dumps(result), 401
     # user_id = verify_user['user_id']
+    # user_nickname = verify_user['user_nickname']
 
     json_data = json.dumps({
         "purpose": purpose,

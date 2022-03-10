@@ -61,6 +61,7 @@ def explore():
         }
         return json.dumps(result), 401
     # user_id = verify_user['user_id']
+    # user_nickname = verify_user['user_nickname']
 
     result_list = []
     if word_for_search == "" or len(word_for_search) == 0 or word_for_search is None:
@@ -192,6 +193,7 @@ def get_related_terms_list():
         }
         return json.dumps(result), 401
     # user_id = verify_user['user_id']
+    # user_nickname = verify_user['user_nickname']
 
     if word == "" or len(word) == 0 or word is None:
         pass

@@ -47,6 +47,7 @@ def create_chat_with_manager():
     #     }
     #     return json.dumps(result), 401
     # user_id = verify_user['user_id']
+    # user_nickname = verify_user['user_nickname']
 
     sql = Query.from_(
         users
@@ -500,6 +501,7 @@ def add_subscription_order():
     #     }
     #     return json.dumps(result), 401
     # user_id = verify_user['user_id']
+    # user_nickname = verify_user['user_nickname']
 
     # 2. 결제 정보 조회(import)
     get_token = json.loads(get_import_access_token(IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET))

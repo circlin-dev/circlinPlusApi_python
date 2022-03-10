@@ -68,6 +68,7 @@ def weekly_bodylab():
         }
         return json.dumps(result), 401
     # user_id = verify_user['user_id']
+    # user_nickname = verify_user['user_nickname']
 
     if request.method == 'POST':
         """
@@ -603,6 +604,7 @@ def read_user_bodylab(user_id):
         }
         return json.dumps(result), 401
     # user_id = verify_user['user_id']
+    # user_nickname = verify_user['user_nickname']
 
     sql = Query.from_(
         user_questions
@@ -863,6 +865,7 @@ def read_user_bodylab_single(user_id, start_date):
         }
         return json.dumps(result), 401
     # user_id = verify_user['user_id']
+    # user_nickname = verify_user['user_nickname']
 
     sql = Query.from_(
         user_questions

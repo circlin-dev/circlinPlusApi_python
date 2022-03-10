@@ -47,6 +47,7 @@ def create_trial():
     #     }
     #     return json.dumps(result), 401
     # user_id = verify_user['user_id']
+    # user_nickname = verify_user['user_nickname']
 
     sql = Query.from_(
         user_questions

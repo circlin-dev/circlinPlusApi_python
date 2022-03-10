@@ -21,22 +21,28 @@ def check_user_token(cursor, bearer_token):
     token = bearer_token.split(' ')[-1]
     hashed_bearer_token = hashlib.sha256(token.encode()).hexdigest()
     personal_access_tokens = Table('personal_access_tokens')
+    users = Table('users')
 
     sql = Query.from_(
         personal_access_tokens
     ).select(
-        personal_access_tokens.tokenable_id
+        personal_access_tokens.tokenable_id,
+        users.nickname
+    ).join(
+        users
+    ).on(
+        personal_access_tokens.tokenable_id == users.id
     ).where(
         personal_access_tokens.token == hashed_bearer_token
     ).get_sql()
 
     cursor.execute(sql)
-    verified_user_id = cursor.fetchall()
-    if len(verified_user_id) == 0 or verified_user_id == ():
-        result = {'result': False, 'user_id': None}
+    verified_user = cursor.fetchall()
+    if len(verified_user) == 0 or verified_user == ():
+        result = {'result': False, 'user_id': None, 'user_nickname': None}
         return result
     else:
-        result = {'result': True, 'user_id': verified_user_id[0][0]}
+        result = {'result': True, 'user_id': verified_user[0][0], 'user_nickname': verified_user[0][1]}
         return result
 
 
