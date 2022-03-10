@@ -39,18 +39,7 @@ def explore():
                               payload=json.dumps(parameters, ensure_ascii=False),
                               result=False)
 
-    try:
-        connection = login_to_db()
-    except Exception as e:
-        raise HandleException(user_ip=ip,
-                              user_id=user_id,
-                              api=endpoint,
-                              error_message=str(e),
-                              method=request.method,
-                              status_code=500,
-                              payload=None,
-                              result=False)
-
+    connection = login_to_db()
     cursor = connection.cursor()
     verify_user = check_user_token(cursor, user_token)
     if verify_user['result'] is False:
