@@ -28,7 +28,7 @@ app.logger.setLevel(gunicorn_logger.level)
 app.register_blueprint(api, url_prefix="/api")
 
 
-@app.errorhandler(HandleException)
+@api.errorhandler(HandleException)
 def raise_exception(error):
     return json.dumps(error.to_dict(), ensure_ascii=False), error.to_dict()['status_code']
 

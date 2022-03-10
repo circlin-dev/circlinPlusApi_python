@@ -29,12 +29,12 @@ class HandleException(Exception):
 
     def to_dict(self):
         error = dict()
-        error['user_ip'] = self.user_ip
-        error['nickname'] = self.nickname
-        error['user_id'] = self.user_id
-        error['api'] = self.api
-        error['error_message'] = self.error_message
-        error['query'] = self.query
+        # error['user_ip'] = self.user_ip
+        # error['nickname'] = self.nickname
+        # error['user_id'] = self.user_id
+        # error['api'] = self.api
+        error['error'] = self.error_message
+        # error['query'] = self.query
         error['method'] = self.method
         error['status_code'] = self.status_code
         error['payload'] = self.payload
