@@ -37,7 +37,7 @@ class HandleException(Exception):
         error['query'] = self.query
         error['method'] = self.method
         error['status_code'] = self.status_code
-        error['payload'] = self.payload
+        error['payload'] = json.dumps(self.payload, ensure_ascii=False)
         error['result'] = self.result
         slack_error_notification(user_ip=self.user_ip,
                                  nickname=self.nickname,
