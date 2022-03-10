@@ -30,7 +30,7 @@ app.register_blueprint(api, url_prefix="/api")
 
 @app.errorhandler(HandleException)
 def raise_exception(error):
-    return json.dumps(error, ensure_ascii=False), error.status_code
+    return json.dumps(error.to_dict(), ensure_ascii=False), error.to_dict()['status_code']
 
 
 @app.route('/testing')
