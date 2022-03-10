@@ -26,6 +26,13 @@ class HandleException(Exception):
         self.result = result
 
     def to_dict(self):
+        slack_error_notification(user_ip=self.user_ip,
+                                 user_id=self.user_id,
+                                 api=self.api,
+                                 method=self.method,
+                                 status_code=self.status_code,
+                                 query=self.query,
+                                 error_message=self.error_message)
         error = dict()
         error['user_ip'] = self.user_ip
         error['user_id'] = self.user_id
@@ -36,11 +43,4 @@ class HandleException(Exception):
         error['status_code'] = self.status_code
         error['payload'] = self.payload
         error['result'] = self.result
-        slack_error_notification(user_ip=self.user_ip,
-                                 user_id=self.user_id,
-                                 api=self.api,
-                                 method=self.method,
-                                 status_code=self.status_code,
-                                 query=self.query,
-                                 error_message=self.error_message)
         return error
