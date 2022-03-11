@@ -10,7 +10,6 @@ from flask import request, url_for
 import json
 from pypika import MySQLQuery as Query, Table, Criterion, functions as fn
 import random
-import requests
 
 
 @api.route('/trial', methods=['POST'])  # 매니저 배정 리턴값을 받은 후!
