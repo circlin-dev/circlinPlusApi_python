@@ -735,11 +735,10 @@ def add_subscription_order():
         ).get_sql()
         cursor.execute(sql)
         user_information = cursor.fetchall()
-        connection.close()
         user_nickname, user_phone = user_information[0]
 
         slack_purchase_notification(cursor, user_id, user_nickname, user_phone, order_id)
-
+        connection.close()
         result = {'result': True,
                   'message': 'Saved subscription payment data.',
                   'order_id': order_id}
