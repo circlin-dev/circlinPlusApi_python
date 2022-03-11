@@ -226,7 +226,7 @@ def send_aligo_free_trial(phone, nickname):
         "https://nodejs.circlinplus.co.kr:444/aligo/message",
         json={
             "phone": phone,
-            "message": f"*써클인플러스 무료체험 시작 알림*\n\n{nickname}님, 환영합니다! \n조금 전에 작성해 주신 사전 설문 내용을 꼼꼼히 읽어보고, {nickname}님께 꼭 맞는 운동의 체험 강의를 보내드렸어요!\n아래 링크에서 '써클인플러스' App을 다운받고, {nickname}님을 위해 준비된 맞춤 강의와 함께 즐겁게 운동을 시작해 보세요!\n\n앱 다운로드: https://www.circlinplus.co.kr/landing \n\n* 무료체험 기간은 현재 시각부터 1주일로 자동 적용되며, 제공해드린 무료체험 운동 강의는 써클인 플러스 앱을 통해서만 시청 가능하니 앱스토어/구글 플레이스토어에서 꼭! 앱을 다운받아 주세요 :)"
+            "message": f"*써클인플러스 무료체험 시작 알림*\n\n{nickname}님, 환영합니다! \n조금 전에 작성해 주신 사전 설문 내용을 꼼꼼히 읽어보고, {nickname}님께 꼭 맞는 운동의 체험 강의를 보내드렸어요!\n\n아래 링크에서 '써클인플러스' App을 다운받고, {nickname}님을 위해 준비된 맞춤 강의와 함께 즐겁게 운동을 시작해 보세요!\n\n앱 다운로드: https://www.circlinplus.co.kr/landing \n\n* 무료체험 기간은 현재 시각부터 1주일 이후 일시로 자동 적용됩니다.\n제공해드린 무료체험 운동 강의는 써클인 플러스 앱을 통해서만 시청 가능하니 앱스토어/구글 플레이스토어에서 꼭! 앱을 다운받아 주세요 :)"
             # "rdate": 'YYYYMMDD',  # 예약발송 일자(ex. 20220303)
             # "rtime": 'HHmm'   # 예약발송 시간(ex. 1707)
         }
