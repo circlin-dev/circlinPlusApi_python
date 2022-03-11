@@ -138,17 +138,7 @@ def read_user_question(user_id):
     """Define tables required to execute SQL."""
     user_questions = Table('user_questions')
 
-    try:
-        connection = login_to_db()
-    except Exception as e:
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while connecting to DB: {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method, status_code=500)
-        return json.dumps(result, ensure_ascii=False), 500
-
+    connection = login_to_db()
     cursor = connection.cursor()
 
     # Verify user is valid or not.
@@ -192,7 +182,6 @@ def read_user_question(user_id):
             'result': False,
             'error': f'Cannot find requested answer data of user(id: {user_id})(users)'
         }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method, status_code=401)
         return json.dumps(result, ensure_ascii=False), 401
     else:
         connection.close()
@@ -241,7 +230,6 @@ def update_user_question(user_id, question_id):
     #         'error': f'Missing data in request.'
     #     }
     #     error_log = f"{result['error']}, parameters({json.dumps(parameters, ensure_ascii=False)}),"
-    #     slack_error_notification(user_ip=ip, api=endpoint, error_message=error_log, method=request.method, status_code=400)
     #     return json.dumps(result, ensure_ascii=False), 400
     # # Check if disease_detail is None, or disease_detail is empty string("" or " " or "  " ...).
     # if len(disease) == 0 and (disease_detail is not None or (type(disease_detail) == str and len(disease_detail.strip()) > 0)):
