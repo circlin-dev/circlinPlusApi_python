@@ -655,11 +655,11 @@ def add_subscription_order():
             ).on(
                 orders.user_id == users.id
             ).set(
-                orders.user_id, {user_id}
+                orders.user_id, user_id
             ).set(
                 users.subscription_expired_at, fn.Now() + Interval(days=subscription_days)
             ).set(
-                users.subscription_id, {subscription_id}
+                users.subscription_id, subscription_id
             ).where(
                 Criterion.all([
                     orders.user_id == user_id,
@@ -681,7 +681,7 @@ def add_subscription_order():
             ).set(
                 users.subscription_expired_at, fn.Now() + Interval(days=subscription_days)
             ).set(
-                users.subscription_id, {subscription_id}
+                users.subscription_id, subscription_id
             ).where(
                 Criterion.all([
                     orders.user_id == user_id,
