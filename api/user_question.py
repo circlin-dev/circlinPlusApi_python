@@ -180,7 +180,7 @@ def read_user_question(user_id):
         user_questions.created_at,
         fn.IfNull(user_questions.updated_data, user_questions.data).as_('answer')
     ).where(
-        user_questions.user_id == 11
+        user_questions.user_id == user_id
     ).orderby(
         user_questions.id, order=Order.desc
     ).limit(1).get_sql()
