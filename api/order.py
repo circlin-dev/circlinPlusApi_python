@@ -745,7 +745,6 @@ def add_subscription_order():
                   'order_id': order_id}
         return json.dumps(result, ensure_ascii=False), 201
     except Exception as e:
-        connection.close()
         error = str(e)
         result = {'result': False,
                   'error': error}
