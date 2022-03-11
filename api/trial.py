@@ -3,12 +3,14 @@ from global_things.error_handler import HandleException
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, query_result_is_none
+from global_things.functions.trial import send_aligo_free_trial
 from global_things.functions.trial import TRIAL_DICTIONARY, replace_text_to_level
 from datetime import datetime, timedelta
 from flask import request, url_for
 import json
 from pypika import MySQLQuery as Query, Table, Criterion, functions as fn
 import random
+import requests
 
 
 @api.route('/trial', methods=['POST'])  # 매니저 배정 리턴값을 받은 후!
@@ -21,6 +23,7 @@ def create_trial():
     user_question_id = parameters['user_question_id']
 
     """Define tables required to execute SQL."""
+    users = Table('users')
     user_questions = Table('user_questions')
     user_lectures = Table('user_lectures')
     lectures = Table('lectures')
@@ -118,6 +121,17 @@ def create_trial():
         }
         return json.dumps(result, ensure_ascii=False), 400
 
+    sql = Query.from_(
+        users
+    ).select(
+        users.phone,
+        users.nickname
+    ).where(
+        users.id == user_id
+    ).get_sql()
+    cursor.execute(sql)
+    user_phone, user_nickname = cursor.fetchall()[0]
+
     for sport in selected_exercise:
         # 여기서 종목 리스트만큼 순회하면서, 종목별 강의 배정을 한다.
         free_week_routines = TRIAL_DICTIONARY[sport][gender]  # list
@@ -192,7 +206,7 @@ def create_trial():
                     connection.rollback()
                     connection.close()
                     raise HandleException(user_ip=ip,
-                                          # nickname=user_nickname,
+                                          nickname=user_nickname,
                                           user_id=user_id,
                                           api=endpoint,
                                           error_message=f"Server Error while executing INSERT query(user_questions): {str(e)}",
@@ -203,8 +217,20 @@ def create_trial():
                                           result=False)
             else:
                 pass
-
     connection.close()
-    result = {'result': True, 'message': 'Created 7 days free trial routine.'}
+    send_aligo = send_aligo_free_trial(user_phone, user_nickname)
+    if send_aligo is True:
+        result = {'result': True, 'message': 'Created 7 days free trial routine.'}
+        return json.dumps(result, ensure_ascii=False), 201
+    else:
+        raise HandleException(user_ip=ip,
+                              nickname=user_nickname,
+                              user_id=user_id,
+                              api=endpoint,
+                              error_message=f"Failed to send aligo message to free trial user.",
+                              query=sql,
+                              method=request.method,
+                              status_code=500,
+                              payload=json.dumps(data, ensure_ascii=False),
+                              result=False)
 
-    return json.dumps(result, ensure_ascii=False), 201
