@@ -21,7 +21,7 @@ def get_coming_soon():
     sql = """
         SELECT
            csl.order AS id,
-           csl.released_at AS released_at,
+           DATE_FORMAT(csl.released_at, '%Y-%m-%d %H:%i:%s') AS released_at,
            csl.title AS title,
            f.pathname,
            (SELECT pathname FROM files WHERE id = c.profile_id) AS thumbnail,
@@ -58,12 +58,10 @@ def get_coming_soon():
         result = {}
         return json.dumps(result, ensure_ascii=False), 200
 
-    data = result[0][0]
-    df = pd.DataFrame(list(data), columns=['id', 'released_at', 'title',
+    df = pd.DataFrame(result, columns=['id', 'released_at', 'title',
                                      'thumbnail', 'thumbnails',
                                      'intro', 'descriptions', 'coach'])
     df['thumbnails'] = df['thumbnails'].apply(lambda x: json.loads(x))
-    df['released_at'] = df['released_at'].apply(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'))
     df['coach'] = df['coach'].apply(lambda x: json.loads(x))
 
     result_dict = json.loads(df.to_json(orient='records'))
