@@ -59,7 +59,7 @@ def get_coming_soon():
         return json.dumps(result, ensure_ascii=False), 200
 
     data = result[0][0]
-    df = pd.DataFrame(data, columns=['id', 'released_at', 'title',
+    df = pd.DataFrame(list(data), columns=['id', 'released_at', 'title',
                                      'thumbnail', 'thumbnails',
                                      'intro', 'descriptions', 'coach'])
     df['thumbnails'] = df['thumbnails'].apply(lambda x: json.loads(x))
