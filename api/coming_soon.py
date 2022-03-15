@@ -21,7 +21,7 @@ def get_coming_soon():
     sql = """
         SELECT
            csl.order AS id,
-           DATE_FORMAT(csl.released_at, '%Y-%m-%d %H:%i:%s') AS released_at,
+           DATE_FORMAT(csl.released_at, '%Y-%m-%d') AS released_at,
            csl.title AS title,
            (SELECT pathname FROM files WHERE id = c.profile_id) AS thumbnail,
            (SELECT JSON_ARRAYAGG(JSON_OBJECT('pathname', pathname)) FROM files WHERE original_file_id = c.profile_id) AS thumbnails,
