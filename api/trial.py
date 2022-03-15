@@ -159,7 +159,7 @@ def create_trial():
             # hour_now = now.hour
             # minute_now = now.minute
             request_schedule = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) - timedelta(days=date_today) + timedelta(days=schedule_date)
-            request_schedule_30m = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) - timedelta(days=date_today) + timedelta(days=schedule_date) + timedelta(minutes=30)
+            request_schedule_1h = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) - timedelta(days=date_today) + timedelta(days=schedule_date) + timedelta(hours=1)
             request_schedule_7d = datetime(now.year, now.month, now.day, hour_schedule, minute_schedule) - timedelta(days=date_today) + timedelta(days=schedule_date) + timedelta(days=7)
 
             if schedule_date > date_today:
@@ -169,7 +169,7 @@ def create_trial():
                 scheduled_at = request_schedule_7d.strftime('%Y-%m-%d %H:%M:00')  # request_schedule + 7days에 배정
                 pass
             else:   # date_schedule == date_today
-                if now < request_schedule_30m:
+                if now < request_schedule_1h:
                     scheduled_at = request_schedule.strftime('%Y-%m-%d %H:%M:00')  # request_schedule 에 배정
                     pass
                 else:   # now >= request_schedule_30m
