@@ -2,9 +2,11 @@
 from . import api
 from global_things.constants import API_ROOT
 from global_things.functions.general import login_to_db, check_user_token, query_result_is_none
-from flask import url_for, request
+# from flask import url_for, request
+from flask import Flask
 import json
 import pandas as pd
+
 
 @api.route('/coming-soon', methods=['GET'])
 def get_coming_soon():
@@ -24,7 +26,7 @@ def get_coming_soon():
            DATE_FORMAT(csl.released_at, '%Y-%m-%d') AS released_at,
            csl.title AS title,
            (SELECT pathname FROM files WHERE id = c.profile_id) AS thumbnail,
-           (SELECT JSON_ARRAYAGG(JSON_OBJECT('pathname', pathname)) FROM files WHERE original_file_id = c.profile_id) AS thumbnails,
+           -- (SELECT JSON_ARRAYAGG(JSON_OBJECT('pathname', pathname)) FROM files WHERE original_file_id = c.profile_id) AS thumbnails,
            (SELECT pathname from files WHERE id = csl.intro_id) AS intro,
            csl.description,
            JSON_ARRAYAGG(JSON_OBJECT(
@@ -33,7 +35,7 @@ def get_coming_soon():
                'intro', (SELECT pathname FROM files WHERE id = c.intro_id),
                'title', c.name,
                'thumbnail', (SELECT pathname FROM files WHERE id = c.profile_id),
-               'thumbnails', (SELECT JSON_ARRAYAGG(JSON_OBJECT('pathname', pathname)) FROM files WHERE original_file_id = c.profile_id),
+               --'thumbnails', (SELECT JSON_ARRAYAGG(JSON_OBJECT('pathname', pathname)) FROM files WHERE original_file_id = c.profile_id),
                'exercise', c.category,
                'description', c.greeting
            )) AS coach
@@ -58,9 +60,10 @@ def get_coming_soon():
         return json.dumps(result, ensure_ascii=False), 200
 
     df = pd.DataFrame(result, columns=['id', 'released_at', 'title',
-                                     'thumbnail', 'thumbnails',
-                                     'intro', 'descriptions', 'coach'])
-    df['thumbnails'] = df['thumbnails'].apply(lambda x: json.loads(x))
+                                       'thumbnail',
+                                       #'thumbnails',
+                                       'intro', 'descriptions', 'coach'])
+    # df['thumbnails'] = df['thumbnails'].apply(lambda x: json.loads(x))
     df['coach'] = df['coach'].apply(lambda x: json.loads(x))
 
     result_dict = json.loads(df.to_json(orient='records'))
