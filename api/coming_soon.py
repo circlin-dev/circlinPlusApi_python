@@ -28,7 +28,7 @@ def get_coming_soon():
            -- (SELECT JSON_ARRAYAGG(JSON_OBJECT('pathname', pathname)) FROM files WHERE original_file_id = c.profile_id) AS thumbnails,
            (SELECT pathname from files WHERE id = csl.intro_id) AS intro,
            csl.description,
-           JSON_ARRAYAGG(JSON_OBJECT(
+           JSON_OBJECT(
                'id', c.id,
                'team', c.affiliation,
                'intro', (SELECT pathname FROM files WHERE id = c.intro_id),
@@ -37,7 +37,7 @@ def get_coming_soon():
                --'thumbnails', (SELECT JSON_ARRAYAGG(JSON_OBJECT('pathname', pathname)) FROM files WHERE original_file_id = c.profile_id),
                'exercise', c.category,
                'description', c.greeting
-           )) AS coach
+           ) AS coach
         FROM
              coming_soon_list csl
         INNER JOIN
@@ -63,7 +63,7 @@ def get_coming_soon():
                                        #'thumbnails',
                                        'intro', 'descriptions', 'coach'])
     # df['thumbnails'] = df['thumbnails'].apply(lambda x: json.loads(x))
-    df['coach'] = df['coach'].apply(lambda x: json.loads(x))
+    df['coach'] = df['coach'].apply(lambda x: json.loads(x)[0])
 
     result_dict = json.loads(df.to_json(orient='records'))
 
