@@ -2,8 +2,7 @@
 from . import api
 from global_things.constants import API_ROOT
 from global_things.functions.general import login_to_db, check_user_token, query_result_is_none
-# from flask import url_for, request
-from flask import Flask
+from flask import url_for, request
 import json
 import pandas as pd
 
