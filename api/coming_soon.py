@@ -25,7 +25,6 @@ def get_coming_soon():
            DATE_FORMAT(csl.released_at, '%Y-%m-%d') AS released_at,
            csl.title AS title,
            (SELECT pathname FROM files WHERE id = c.profile_id) AS thumbnail,
-           -- (SELECT JSON_ARRAYAGG(JSON_OBJECT('pathname', pathname)) FROM files WHERE original_file_id = c.profile_id) AS thumbnails,
            (SELECT pathname from files WHERE id = csl.intro_id) AS intro,
            csl.description,
            JSON_OBJECT(
@@ -34,7 +33,6 @@ def get_coming_soon():
                'intro', (SELECT pathname FROM files WHERE id = c.intro_id),
                'title', c.name,
                'thumbnail', (SELECT pathname FROM files WHERE id = c.profile_id),
-               --'thumbnails', (SELECT JSON_ARRAYAGG(JSON_OBJECT('pathname', pathname)) FROM files WHERE original_file_id = c.profile_id),
                'exercise', c.category,
                'description', c.greeting
            ) AS coach
