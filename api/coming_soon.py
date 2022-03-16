@@ -63,7 +63,7 @@ def get_coming_soon():
                                        #'thumbnails',
                                        'intro', 'descriptions', 'coach'])
     # df['thumbnails'] = df['thumbnails'].apply(lambda x: json.loads(x))
-    df['coach'] = df['coach'].apply(lambda x: json.loads(x)[0])
+    df['coach'] = df['coach'].apply(lambda x: json.loads(x))
 
     result_dict = json.loads(df.to_json(orient='records'))
 
