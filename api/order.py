@@ -18,7 +18,7 @@ def create_chat_with_manager():
     # user_token = request.headers.get('Authorization')
     parameters = json.loads(request.get_data(), encoding='utf-8')
     user_id = int(parameters['user_id'])
-    # order_id = parameters['order_id']  # null or int
+    order_id = parameters['order_id']  # null or int
     """Define tables required to execute SQL."""
     user_questions = Table('user_questions')
     customers = Table('chat_users')
@@ -127,17 +127,29 @@ def create_chat_with_manager():
                                   payload=None,
                                   result=False)
         try:
-            sql = Query.into(
-                chat_users
-            ).columns(
-                chat_users.created_at,
-                chat_users.updated_at,
-                chat_users.chat_room_id,
-                chat_users.user_id
-            ).insert(
-                (fn.Now(), fn.Now(), chat_room_id, manager_id),
-                (fn.Now(), fn.Now(), chat_room_id, user_id)
-            ).get_sql()
+            if order_id is None:
+                sql = Query.into(
+                    chat_users
+                ).columns(
+                    chat_users.created_at,
+                    chat_users.updated_at,
+                    chat_users.chat_room_id,
+                    chat_users.user_id
+                ).insert(
+                    (fn.Now(), fn.Now(), chat_room_id, user_id)
+                ).get_sql()
+            else:
+                sql = Query.into(
+                    chat_users
+                ).columns(
+                    chat_users.created_at,
+                    chat_users.updated_at,
+                    chat_users.chat_room_id,
+                    chat_users.user_id
+                ).insert(
+                    (fn.Now(), fn.Now(), chat_room_id, manager_id),
+                    (fn.Now(), fn.Now(), chat_room_id, user_id)
+                ).get_sql()
             cursor.execute(sql)
             connection.commit()
             connection.close()
