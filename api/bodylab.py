@@ -566,7 +566,7 @@ def weekly_bodylab():
 def read_user_bodylab(user_id):
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.read_user_bodylab', user_id=user_id)
-    user_token = request.headers.get('Authorization')
+    # user_token = request.headers.get('Authorization')   # 매니저 어드민에서 열 것이므로 부족함.
 
     """Define tables required to execute SQL."""
     bodylabs = Table('bodylabs')
@@ -575,26 +575,17 @@ def read_user_bodylab(user_id):
     # bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
     files = Table('files')
 
-    try:
-        connection = login_to_db()
-    except Exception as e:
-        error = str(e)
-        result = {
-            'result': False,
-            'error': f'Server Error while connecting to DB: {error}'
-        }
-        slack_error_notification(user_ip=ip, user_id=user_id, api=endpoint, error_message=result['error'], method=request.method)
-        return json.dumps(result, ensure_ascii=False), 500
+    connection = login_to_db()
     cursor = connection.cursor()
-    verify_user = check_user_token(cursor, user_token)
-    if verify_user['result'] is False:
-        connection.close()
-        message = 'No token at request header.' if user_token is None else 'Unauthorized user.'
-        result = {
-            'result': False,
-            'message': message
-        }
-        return json.dumps(result, ensure_ascii=False), 401
+    # verify_user = check_user_token(cursor, user_token)
+    # if verify_user['result'] is False:
+    #     connection.close()
+    #     message = 'No token at request header.' if user_token is None else 'Unauthorized user.'
+    #     result = {
+    #         'result': False,
+    #         'message': message
+    #     }
+    #     return json.dumps(result, ensure_ascii=False), 401
     # user_id = verify_user['user_id']
     # user_nickname = verify_user['user_nickname']
 
