@@ -819,7 +819,7 @@ def read_user_bodylab(user_id):
 def read_user_bodylab_single(user_id, start_date):
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.read_user_bodylab_single', user_id=user_id, start_date=start_date)
-    user_token = request.headers.get('Authorization')
+    # user_token = request.headers.get('Authorization')
 
     """Define tables required to execute SQL."""
     bodylabs = Table('bodylabs')
@@ -829,17 +829,17 @@ def read_user_bodylab_single(user_id, start_date):
 
     connection = login_to_db()
     cursor = connection.cursor()
-    verify_user = check_user_token(cursor, user_token)
-    if verify_user['result'] is False:
-        connection.close()
-        message = 'No token at request header.' if user_token is None else 'Unauthorized user.'
-        result = {
-            'result': False,
-            'message': message
-        }
-        return json.dumps(result, ensure_ascii=False), 401
+    # verify_user = check_user_token(cursor, user_token)
+    # if verify_user['result'] is False:
+    #     connection.close()
+    #     message = 'No token at request header.' if user_token is None else 'Unauthorized user.'
+    #     result = {
+    #         'result': False,
+    #         'message': message
+    #     }
+    #     return json.dumps(result, ensure_ascii=False), 401
     # user_id = verify_user['user_id']
-    user_nickname = verify_user['user_nickname']
+    # user_nickname = verify_user['user_nickname']
 
     sql = Query.from_(
         user_questions
