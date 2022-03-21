@@ -1113,7 +1113,6 @@ def atflee_image():
     now = datetime.now().strftime('%Y%m%d%H%M%S')
     # S3 업로드 - 바디랩 이미지 1: 신체 사진(눈바디)
     atflee_analysis = validate_and_save_to_s3('atflee', atflee_image, user_id, now)
-    # atflee_input_image_dict, resized_atflee_images_list = validate_and_save_to_s3('atflee', atlfee_image, user_id, now)
     if atflee_analysis['result'] is False:
         result = {
             'result': False,
@@ -1126,7 +1125,7 @@ def atflee_image():
     # Re-save image for OCR.
     secure_file = secure_filename(atflee_image.filename)
     atflee_image.save(secure_file)
-    ocr_result = analyze_atflee_images(secure_file)
+    ocr_result = analyze_atflee_images(atflee_image.filename)
     os.remove(secure_file)
     status_code = ocr_result['status_code']
     del ocr_result['status_code']
