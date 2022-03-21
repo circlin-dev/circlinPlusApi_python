@@ -190,7 +190,8 @@ def analyze_atflee_images(path):
             'height': height,
             'bmi': bmi,
             'fat': fat,
-            'muscle': muscle
+            'muscle': muscle,
+            'status_code': 200,
         }
         return result_dict
     except Exception as e:
