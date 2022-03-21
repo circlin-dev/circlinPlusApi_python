@@ -1106,7 +1106,6 @@ def atflee_image():
       - 눈바디 이미지, 앳플리 이미지 S3 업로드 후 URL 가져오는 코드 추가해야 함!
     """
     bodylabs = Table('bodylabs')
-    # bodylab_analyze_bodies = Table('bodylab_analyze_bodies')
     bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
     user_questions = Table('user_questions')
     files = Table('files')
@@ -1124,7 +1123,7 @@ def atflee_image():
     atflee_input_image_dict = atflee_analysis['input_image_dict']
     resized_atflee_images_list = atflee_analysis['resized_images_list']
 
-    ocr_result = analyze_atflee_images(atflee_input_image_dict['local_path'])
+    ocr_result = analyze_atflee_images(atflee_input_image_dict['pathname'])
     status_code = ocr_result['status_code']
     del ocr_result['status_code']
 
