@@ -294,7 +294,7 @@ def validate_and_save_to_s3(category: str, file, user_id: int, now):
         os.makedirs(f"{local_directory}/{user_id}")
 
     if os.path.exists(secure_file):
-        shutil.move(secure_file, os.path.join(save_path, file.filename)
+        shutil.move(secure_file, os.path.join(save_path, file.filename))
     # shutil.move(secure_file, request_file_path)
 
     try:
