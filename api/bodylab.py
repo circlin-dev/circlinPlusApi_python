@@ -1123,7 +1123,8 @@ def atflee_image():
     if atflee_analysis['result'] is False:
         result = {
             'result': False,
-            'message': atflee_analysis['error']
+            # 'message': atflee_analysis['error']
+            'message': atflee_analysis
         }
         return json.dumps(result, ensure_ascii=False), 400
     atflee_input_image_dict = atflee_analysis['input_image_dict']
