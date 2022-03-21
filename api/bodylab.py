@@ -1114,7 +1114,8 @@ def atflee_image():
     # ocr_result = analyze_atflee_images(atflee_analysis['input_image_dict']['pathname'])
     status_code = ocr_result['status_code']
     del ocr_result['status_code']
-
+    if os.path.exists(atflee_image.filename):
+        os.remove(atflee_image.filename)
     if ocr_result['result'] is False:
         connection.close()
         return json.dumps(ocr_result, ensure_ascii=False), status_code
@@ -1138,6 +1139,8 @@ def atflee_image():
     ocr_result['resized_image_data'] = resized_atflee_images_list
 
     return json.dumps(ocr_result, ensure_ascii=False), 200
+
+
 
     # secure_file = secure_filename(body_image.filename)
     # body_image.save(secure_file)
