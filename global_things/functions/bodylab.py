@@ -295,9 +295,9 @@ def validate_and_save_to_s3(category: str, file, user_id: int, now):
 
     if os.path.exists(request_file_path):
         os.remove(request_file_path)
-    # if os.path.exists(secure_file):
-        # shutil.move(secure_file, save_path)
-    shutil.move(secure_file, request_file_path)
+    if os.path.exists(secure_file):
+        shutil.move(secure_file, save_path)
+    # shutil.move(secure_file, request_file_path)
 
     try:
         mime = get_image_information(request_file_path)['mime_type'].split('/')
