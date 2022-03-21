@@ -1124,7 +1124,7 @@ def atflee_image():
 
     secure_file = secure_filename(atflee_image.filename)
     atflee_image.save(secure_file)
-    ocr_result = analyze_atflee_images(atflee_image.filename)
+    ocr_result = analyze_atflee_images(f'/home/ubuntu/circlinMembersApi_flask/{atflee_image.filename}')
     status_code = ocr_result['status_code']
     del ocr_result['status_code']
 
