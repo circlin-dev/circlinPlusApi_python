@@ -1109,7 +1109,7 @@ def atflee_image():
     # files = Table('files')
     secure_file = secure_filename(atflee_image.filename)
     atflee_image.save(secure_file)
-    copy_secure_file = f'copy_{secure_file}'
+    copy_secure_file = f'/home/ubuntu/circlinMembersApi_python/circlinMembersApi_flask/copy_{atflee_image.filename}'
     shutil.copy2(secure_file, copy_secure_file)
 
     # S3 업로드 - 바디랩 이미지 1: 신체 사진(눈바디)
