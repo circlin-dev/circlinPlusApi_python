@@ -12,7 +12,7 @@ from flask import url_for, request
 import json
 import os
 from pypika import MySQLQuery as Query, Criterion, Table, Order, functions as fn
-
+import shutil
 from werkzeug.utils import secure_filename
 """2개의 이미지 전송
     -> 앳플리는 서버 저장 -> S3 저장 -> OCR
@@ -1107,6 +1107,10 @@ def atflee_image():
     # bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
     # user_questions = Table('user_questions')
     # files = Table('files')
+    secure_file = secure_filename(atflee_image.filename)
+    atflee_image.save(secure_file)
+    copy_secure_file = f'copy_{secure_file}'
+    shutil.copy2(secure_file, copy_secure_file)
 
     # S3 업로드 - 바디랩 이미지 1: 신체 사진(눈바디)
     now = datetime.now().strftime('%Y%m%d%H%M%S')
@@ -1120,9 +1124,7 @@ def atflee_image():
         }
         return json.dumps(result, ensure_ascii=False), 400
 
-    secure_file = secure_filename(atflee_image.filename)
-    atflee_image.save(secure_file)
-    ocr_result = ocr_atflee_images(atflee_image.filename)
+    ocr_result = ocr_atflee_images(copy_secure_file)
     # ocr_result = analyze_atflee_images(atflee_analysis['input_image_dict']['pathname'])
     status_code = ocr_result['status_code']
     del ocr_result['status_code']
