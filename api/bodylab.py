@@ -1129,6 +1129,7 @@ def atflee_image():
             # 'message': atflee_analysis['error']
             'message': atflee_analysis,
             'filename': atflee_image.filename
+            'ocr_result': ocr_result,
         }
         return json.dumps(result, ensure_ascii=False), 400
 
