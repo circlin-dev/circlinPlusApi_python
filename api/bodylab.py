@@ -1083,7 +1083,7 @@ def read_user_bodylab_single(user_id, start_date):
 @api.route('/atflee', methods=['POST'])
 def atflee_image():
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
-    endpoint = API_ROOT + url_for('api.atflee')
+    endpoint = API_ROOT + url_for('api.atflee_image')
     user_token = request.headers.get('Authorization')
 
     connection = login_to_db()
