@@ -1110,6 +1110,13 @@ def atflee_image():
     user_questions = Table('user_questions')
     files = Table('files')
 
+    # Re-save image for OCR.
+    secure_file = secure_filename(atflee_image.filename)
+    atflee_image.save(secure_file)
+    ocr_result = analyze_atflee_images(atflee_image.filename)
+    status_code = ocr_result['status_code']
+    del ocr_result['status_code']
+
     now = datetime.now().strftime('%Y%m%d%H%M%S')
     # S3 업로드 - 바디랩 이미지 1: 신체 사진(눈바디)
     atflee_analysis = validate_and_save_to_s3('atflee', atflee_image, user_id, now)
@@ -1122,19 +1129,13 @@ def atflee_image():
     atflee_input_image_dict = atflee_analysis['input_image_dict']
     resized_atflee_images_list = atflee_analysis['resized_images_list']
 
-    # Re-save image for OCR.
-    secure_file = secure_filename(atflee_image.filename)
-    atflee_image.save(secure_file)
-    ocr_result = analyze_atflee_images(atflee_image.filename)
-    status_code = ocr_result['status_code']
-    del ocr_result['status_code']
-
     if ocr_result['result'] is False:
         connection.close()
         return json.dumps(ocr_result, ensure_ascii=False), status_code
     os.remove(secure_file)
     ocr_result['input_image_data'] = atflee_input_image_dict
     ocr_result['resized_image_data'] = resized_atflee_images_list
+
     return json.dumps(ocr_result, ensure_ascii=False), 200
 
 
