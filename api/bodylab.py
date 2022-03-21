@@ -1109,7 +1109,6 @@ def atflee_image():
     # bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
     # user_questions = Table('user_questions')
     # files = Table('files')
-
     secure_file = secure_filename(atflee_image.filename)
     atflee_image.save(secure_file)
     ocr_result = analyze_atflee_images(atflee_image.filename)
