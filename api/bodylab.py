@@ -1122,7 +1122,7 @@ def atflee_image():
     # os.remove(secure_file)
     # S3 업로드 - 바디랩 이미지 1: 신체 사진(눈바디)
     now = datetime.now().strftime('%Y%m%d%H%M%S')
-    atflee_analysis = validate_and_save_to_s3('atflee', secure_file, user_id, now)
+    atflee_analysis = validate_and_save_to_s3('atflee', atflee_image, user_id, now)
     if atflee_analysis['result'] is False:
         result = {
             'result': False,

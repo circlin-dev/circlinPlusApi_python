@@ -310,6 +310,7 @@ def validate_and_save_to_s3(category: str, file, user_id: int, now):
             'request_file_path': request_file_path,
             'save_path': save_path,
             'secure_file': secure_file,
+            'file': file,
             'error': str(e)
         }
         return result
