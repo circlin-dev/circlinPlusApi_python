@@ -1119,7 +1119,6 @@ def atflee_image():
         connection.close()
         return json.dumps(ocr_result, ensure_ascii=False), status_code
 
-
     # S3 업로드 - 바디랩 이미지 1: 신체 사진(눈바디)
     now = datetime.now().strftime('%Y%m%d%H%M%S')
     atflee_analysis = validate_and_save_to_s3('atflee', atflee_image, user_id, now)
