@@ -287,7 +287,8 @@ def validate_and_save_to_s3(category: str, file, user_id: int, now):
         bucket_directory_input = BUCKET_IMAGE_PATH_ATFLEE_INPUT
 
     secure_file = secure_filename(file.filename)
-    file.save(secure_file)
+    if not os.path.exists(secure_file):
+        file.save(secure_file)
 
     save_path = f'{local_directory}/{user_id}'
     request_file_path = f"{save_path}/{secure_file}"

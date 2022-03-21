@@ -1124,6 +1124,7 @@ def atflee_image():
         }
         return json.dumps(result, ensure_ascii=False), 400
 
+
     ocr_result = ocr_atflee_images(copy_secure_file)
     # ocr_result = analyze_atflee_images(atflee_analysis['input_image_dict']['pathname'])
     status_code = ocr_result['status_code']
