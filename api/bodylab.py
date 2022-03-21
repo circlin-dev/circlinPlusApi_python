@@ -1109,17 +1109,17 @@ def atflee_image():
     bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
     user_questions = Table('user_questions')
     files = Table('files')
-    secure_file = secure_filename(atflee_image)
+    secure_file = secure_filename(atflee_image.filename)
     atflee_image.save(secure_file)
 
     ocr_result = analyze_atflee_images(secure_file)
+    os.remove(secure_file)
     status_code = ocr_result['status_code']
     del ocr_result['status_code']
 
     if ocr_result['result'] is False:
         connection.close()
         return json.dumps(ocr_result, ensure_ascii=False), status_code
-    os.remove(secure_file)
 
     now = datetime.now().strftime('%Y%m%d%H%M%S')
     # S3 업로드 - 바디랩 이미지 1: 신체 사진(눈바디)
