@@ -1108,9 +1108,9 @@ def atflee_image():
     # user_questions = Table('user_questions')
     # files = Table('files')
 
-    secure_file = secure_filename(atflee_image.filename)
-    atflee_image.save(secure_file)
-    ocr_result = ocr_atflee_images(atflee_image.filename)
+    # secure_file = secure_filename(atflee_image.filename)
+    # atflee_image.save(secure_file)
+    ocr_result = ocr_atflee_images(atflee_image)
     # ocr_result = analyze_atflee_images(atflee_analysis['input_image_dict']['pathname'])
     status_code = ocr_result['status_code']
     del ocr_result['status_code']
