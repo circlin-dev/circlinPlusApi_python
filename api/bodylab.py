@@ -4,17 +4,15 @@ from global_things.constants import API_ROOT, AMAZON_URL, ATTRACTIVENESS_SCORE_C
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, check_user_token, query_result_is_none
 from global_things.error_handler import HandleException
-from global_things.functions.bodylab import analyze_body_images, generate_resized_image, get_image_information, validate_and_save_to_s3, upload_image_to_s3, standard_healthiness_value, healthiness_score, attractiveness_score, return_dict_when_nothing_to_return, analyze_atflee_images
+from global_things.functions.bodylab import analyze_body_images, generate_resized_image, get_image_information, validate_and_save_to_s3, upload_image_to_s3, standard_healthiness_value, healthiness_score, attractiveness_score, return_dict_when_nothing_to_return, ocr_atflee_images
 from . import api
-import base64
 import cv2
 from datetime import datetime
 from flask import url_for, request
 import json
 import os
 from pypika import MySQLQuery as Query, Criterion, Table, Order, functions as fn
-import requests
-import shutil
+
 from werkzeug.utils import secure_filename
 """2개의 이미지 전송
     -> 앳플리는 서버 저장 -> S3 저장 -> OCR
@@ -1112,7 +1110,7 @@ def atflee_image():
 
     secure_file = secure_filename(atflee_image.filename)
     atflee_image.save(secure_file)
-    ocr_result = analyze_atflee_images(atflee_image.filename)
+    ocr_result = ocr_atflee_images(atflee_image.filename)
     # ocr_result = analyze_atflee_images(atflee_analysis['input_image_dict']['pathname'])
     status_code = ocr_result['status_code']
     del ocr_result['status_code']
@@ -1120,6 +1118,7 @@ def atflee_image():
     if ocr_result['result'] is False:
         connection.close()
         return json.dumps(ocr_result, ensure_ascii=False), status_code
+
 
     # S3 업로드 - 바디랩 이미지 1: 신체 사진(눈바디)
     now = datetime.now().strftime('%Y%m%d%H%M%S')
@@ -1134,14 +1133,12 @@ def atflee_image():
         }
         return json.dumps(result, ensure_ascii=False), 400
 
-
-    # atflee_input_image_dict = atflee_analysis['input_image_dict']
-    # resized_atflee_images_list = atflee_analysis['resized_images_list']
-    # ocr_result['input_image_data'] = atflee_input_image_dict
-    # ocr_result['resized_image_data'] = resized_atflee_images_list
+    atflee_input_image_dict = atflee_analysis['input_image_dict']
+    resized_atflee_images_list = atflee_analysis['resized_images_list']
+    ocr_result['input_image_data'] = atflee_input_image_dict
+    ocr_result['resized_image_data'] = resized_atflee_images_list
 
     return json.dumps(ocr_result, ensure_ascii=False), 200
-
 
     # secure_file = secure_filename(body_image.filename)
     # body_image.save(secure_file)

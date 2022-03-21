@@ -126,7 +126,7 @@ def analyze_body_images(user_id, url):
         return json.dumps({'error': response.json()['message'], 'status_code': 500}, ensure_ascii=False)
 
 
-def analyze_atflee_images(path):
+def ocr_atflee_images(path):
     try:
         response = requests.post(
             "https://vision.googleapis.com/v1/images:annotate?key=AIzaSyC55mGMIcRGYMFvK2y0m1GYXXlSiDpmpNE",
@@ -293,8 +293,8 @@ def validate_and_save_to_s3(category: str, file, user_id: int, now):
     if str(user_id) not in os.listdir(local_directory):
         os.makedirs(f"{local_directory}/{user_id}")
 
-    if os.path.exists(secure_file):
-        shutil.move(secure_file, os.path.join(save_path, secure_file))
+    # if os.path.exists(secure_file):
+    #     shutil.move(secure_file, os.path.join(save_path, file.filename))
     # shutil.move(secure_file, request_file_path)
 
     try:
