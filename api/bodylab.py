@@ -1124,26 +1124,13 @@ def atflee_image():
     atflee_input_image_dict = atflee_analysis['input_image_dict']
     resized_atflee_images_list = atflee_analysis['resized_images_list']
 
-    ocr_result = analyze_atflee_images(atflee_input_image_dict['pathname'])
+    ocr_result = analyze_atflee_images(atflee_input_image_dict['local_path'])
     status_code = ocr_result['status_code']
     del ocr_result['status_code']
 
     if ocr_result['result'] is False:
         connection.close()
         return json.dumps(ocr_result, ensure_ascii=False), status_code
-
-    for resized_image in resized_atflee_images_list:
-        upload_result = upload_image_to_s3(resized_image['local_path'], BUCKET_NAME, resized_image['object_name'])
-        if upload_result is False:
-            result_dict = {
-                'message': f'Failed to upload body image into S3({upload_result})',
-                'result': False
-            }
-            return json.dumps(result_dict), 500
-        if os.path.exists(resized_image['local_path']):
-            os.remove(resized_image['local_path'])
-    if os.path.exists(atflee_input_image_dict['pathname']):
-        os.remove(atflee_input_image_dict['pathname'])
     return json.dumps(ocr_result, ensure_ascii=False), 200
 
     # secure_file = secure_filename(body_image.filename)
