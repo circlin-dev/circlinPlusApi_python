@@ -128,13 +128,14 @@ def analyze_body_images(user_id, url):
 
 def ocr_atflee_images(path):
     try:
+        image = cv2.imread(path, cv2.IMREAD_COLOR)
         response = requests.post(
             "https://vision.googleapis.com/v1/images:annotate?key=AIzaSyC55mGMIcRGYMFvK2y0m1GYXXlSiDpmpNE",
             json={
                 "requests": [
                     {
                         "image": {
-                            "content": base64.b64encode(cv2.imencode('.jpg', cv2.imread(path, cv2.IMREAD_COLOR))[1]).decode('utf-8')
+                            "content": base64.b64encode(cv2.imencode('.jpg', image)[1]).decode('utf-8')
                         },
                         "features": [
                             {
