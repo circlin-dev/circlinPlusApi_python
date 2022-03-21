@@ -296,22 +296,22 @@ def validate_and_save_to_s3(category: str, file, user_id: int, now):
     if os.path.exists(secure_file):
         shutil.move(secure_file, save_path)
 
-    try:
-        mime = get_image_information(request_file_path)['mime_type'].split('/')
-        if mime[0] != 'image':
-            result = {
-                'result': False,
-                'error': 'Invalid file type(Requested file is not an image).'
-            }
-            return result
-    except Exception as e:
+    # try:
+    mime = get_image_information(request_file_path)['mime_type'].split('/')
+    if mime[0] != 'image':
         result = {
             'result': False,
-            'request_file_path': request_file_path,
-            'save_path': save_path,
-            'secure_file': secure_file,
-            'error': str(e)
+            'error': 'Invalid file type(Requested file is not an image).'
         }
+        return result
+    # except Exception as e:
+    #     result = {
+    #         'result': False,
+    #         'request_file_path': request_file_path,
+    #         'save_path': save_path,
+    #         'secure_file': secure_file,
+    #         'error': str(e)
+    #     }
 
     if mime[1] in invalid_mimes:
         new_file_path, extension = heic_to_jpg(request_file_path)
