@@ -82,7 +82,6 @@ def weekly_bodylab():
         now = datetime.now().strftime('%Y%m%d%H%M%S')
         # S3 업로드 - 바디랩 이미지 1: 신체 사진(눈바디)
         body_analysis = validate_and_save_to_s3('body', body_image, user_id, now)
-        # atflee_input_image_dict, resized_atflee_images_list = validate_and_save_to_s3('atflee', atlfee_image, user_id, now)
         if body_analysis['result'] is False:
             result = {
                 'result': False,
@@ -1106,10 +1105,16 @@ def atflee_image():
     이미지 서버 임시 저장 & 업로드 코드 추가 필요
       - 눈바디 이미지, 앳플리 이미지 S3 업로드 후 URL 가져오는 코드 추가해야 함!
     """
-    bodylabs = Table('bodylabs')
-    bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
-    user_questions = Table('user_questions')
-    files = Table('files')
+    # bodylabs = Table('bodylabs')
+    # bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
+    # user_questions = Table('user_questions')
+    # files = Table('files')
+
+    secure_file = secure_filename(atflee_image.filename)
+    atflee_image.save(secure_file)
+    ocr_result = analyze_atflee_images(atflee_image.filename)
+    status_code = ocr_result['status_code']
+    del ocr_result['status_code']
 
     # S3 업로드 - 바디랩 이미지 1: 신체 사진(눈바디)
     now = datetime.now().strftime('%Y%m%d%H%M%S')
@@ -1119,15 +1124,9 @@ def atflee_image():
             'result': False,
             # 'message': atflee_analysis['error']
             'message': atflee_analysis,
+            'filename': atflee_image.filename
         }
         return json.dumps(result, ensure_ascii=False), 400
-
-    # Re-save image for OCR.
-    secure_file = secure_filename(atflee_image.filename)
-    atflee_image.save(secure_file)
-    ocr_result = analyze_atflee_images(atflee_image.filename)
-    status_code = ocr_result['status_code']
-    del ocr_result['status_code']
 
     atflee_input_image_dict = atflee_analysis['input_image_dict']
     resized_atflee_images_list = atflee_analysis['resized_images_list']
