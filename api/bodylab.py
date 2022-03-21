@@ -1124,7 +1124,8 @@ def atflee_image():
         result = {
             'result': False,
             # 'message': atflee_analysis['error']
-            'message': atflee_analysis
+            'message': atflee_analysis,
+            'ocr_result': ocr_result
         }
         return json.dumps(result, ensure_ascii=False), 400
     atflee_input_image_dict = atflee_analysis['input_image_dict']
