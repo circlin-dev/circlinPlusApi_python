@@ -199,7 +199,7 @@ def ocr_atflee_images(path):
         result = {
             'result': False,
             'status_code': 400,
-            'error': f'Cannot recognize necessary values from request file: {str(e)}'
+            'error': f'Cannot recognize values from request file: {str(e)}'
         }
         return result
 
@@ -242,9 +242,9 @@ def generate_resized_image(local_save_path, user_id, category, now, extension, o
             'width': new_width,
             'height': new_height,
             # For Server
-            'file_name': file_name,
-            'local_path': resized_image_path,
-            'object_name': object_name,
+            # 'file_name': file_name,
+            # 'local_path': resized_image_path,
+            # 'object_name': object_name,
         }
         resized_image_list.append(image_dict)
     return resized_image_list
@@ -350,9 +350,9 @@ def validate_and_save_to_s3(category: str, file, user_id: int, now):
         'width': image_width,
         'height': image_height,
         # For Server
-        'file_name': file_name,
-        'local_path': local_image_path,
-        'object_name': object_name,
+        # 'file_name': file_name,
+        # 'local_path': local_image_path,
+        # 'object_name': object_name,
     }
 
     resized_images_list = generate_resized_image(local_directory, user_id, category, now, extension, local_image_path)

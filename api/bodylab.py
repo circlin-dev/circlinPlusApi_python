@@ -22,33 +22,26 @@ from werkzeug.utils import secure_filename
 
 
 @api.route('/bodylab', methods=['POST'])
-def weekly_bodylab():
+def post_bodylab():
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
-    endpoint = API_ROOT + url_for('api.weekly_bodylab')
+    endpoint = API_ROOT + url_for('api.post_bodylab')
     user_token = request.headers.get('Authorization')
 
     data = request.form.to_dict()  # {'body': ~~~~~.png, 'atflee': ~~~~~.png}
     try:
-        # user_id = int(data['user_id'])
-        user_height = float(data['height'])
-        user_weight = float(data['weight'])
-        bmi = float(data['bmi'])
-        muscle_mass = float(data['muscle_mass'])
-        fat_mass = float(data['fat_mass'])
         body_image = request.files.to_dict()['body_image']
-        # atflee_image = request.files.to_dict()['atflee_image'] => 키, 몸무게, BMI, 근육량, 지방량 모두 대체 가능
     except Exception as e:
         result = {
             'result': False,
-            'message': f'Missing data: {str(e)}'
+            'error': f'Missing data: {str(e)}'
         }
         return json.dumps(result, ensure_ascii=False), 400
 
     # Verify if mandatory information is not null.
-    if not (user_height and user_weight and bmi and muscle_mass and fat_mass and body_image):
+    if not body_image:
         result = {
             'result': False,
-            'message': 'Null is not allowed.'
+            'error': 'Null is not allowed.'
         }
         return json.dumps(result, ensure_ascii=False), 400
 
@@ -60,7 +53,7 @@ def weekly_bodylab():
         message = 'No token at request header.' if user_token is None else 'Unauthorized user.'
         result = {
             'result': False,
-            'message': message
+            'error': message
         }
         return json.dumps(result, ensure_ascii=False), 401
     user_id = verify_user['user_id']
@@ -73,112 +66,23 @@ def weekly_bodylab():
         """
         bodylabs = Table('bodylabs')
         bodylab_analyze_bodies = Table('bodylab_analyze_bodies')
-        # bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
         user_questions = Table('user_questions')
         files = Table('files')
 
         now = datetime.now().strftime('%Y%m%d%H%M%S')
-        # S3 업로드 - 바디랩 이미지 1: 신체 사진(눈바디)
+        # S3 업로드 - 바디랩 이미지: 신체 사진(눈바디)
         body_analysis = validate_and_save_to_s3('body', body_image, user_id, now)
         if body_analysis['result'] is False:
             result = {
                 'result': False,
-                'message': body_analysis['error']
+                'error': body_analysis['error']
             }
             return json.dumps(result, ensure_ascii=False), 400
         body_input_image_dict = body_analysis['input_image_dict']
         resized_body_images_list = body_analysis['resized_images_list']
 
-        # secure_file = secure_filename(body_image.filename)
-        # body_image.save(secure_file)
-        # validated_file_path, extension = validate_image(secure_file)
-        #
-        # file_name = f'bodylab_body_input_{user_id}_{now}.{extension}'
-        # category = file_name.split('_')[1]
-        #
-        # local_image_path = f'{LOCAL_SAVE_PATH_BODY_INPUT}/{user_id}/{file_name}'
-        # if os.path.exists(validated_file_path):
-        #     shutil.move(validated_file_path, f'{LOCAL_SAVE_PATH_BODY_INPUT}/{user_id}')
-        #     os.rename(f'{LOCAL_SAVE_PATH_BODY_INPUT}/{user_id}/{secure_file}', local_image_path)
-        #
-        # body_image_height, body_image_width, body_image_channel = cv2.imread(local_image_path, cv2.IMREAD_COLOR).shape
-        # object_name = f"{BUCKET_IMAGE_PATH_BODY_INPUT}/{user_id}/{file_name}"
-        # upload_result = upload_image_to_s3(local_image_path, BUCKET_NAME, object_name)
-        # if upload_result is False:
-        #     raise HandleException(user_ip=ip,
-        #                           user_id=user_id,
-        #                           api=endpoint,
-        #                           error_message=f'Failed to upload body image into S3({upload_result}).',
-        #                           method=request.method,
-        #                           status_code=500,
-        #                           payload=json.dumps(data, ensure_ascii=False),
-        #                           result=False)
-        # s3_path_body_input = f"{AMAZON_URL}/{object_name}"
-        # body_input_image_dict = {
-        #     'pathname': s3_path_body_input,
-        #     'original_name': file_name,
-        #     'mime_type': get_image_information(local_image_path)['mime_type'],
-        #     'size': get_image_information(local_image_path)['size'],
-        #     'width': body_image_width,
-        #     'height': body_image_height,
-        #     # For Server
-        #     'file_name': file_name,
-        #     'local_path': local_image_path,
-        #     'object_name': object_name,
-        # }
-        #
-        # resized_body_images_list = generate_resized_image(LOCAL_SAVE_PATH_BODY_INPUT, user_id, category, now, extension, local_image_path)
-        # for resized_image in resized_body_images_list:
-        #     upload_result = upload_image_to_s3(resized_image['local_path'], BUCKET_NAME, resized_image['object_name'])
-        #     if upload_result is False:
-        #         raise HandleException(user_ip=ip,
-        #                               user_id=user_id,
-        #                               api=endpoint,
-        #                               error_message=f'Failed to upload body image into S3({upload_result}).',
-        #                               method=request.method,
-        #                               status_code=500,
-        #                               payload=json.dumps(data, ensure_ascii=False),
-        #                               result=False)
-        #     if os.path.exists(resized_image['local_path']):
-        #         os.remove(resized_image['local_path'])
-        # if os.path.exists(local_image_path):
-        #     os.remove(local_image_path)
-
-        # S3 업로드 - 바디랩 이미지 2: 앳플리 사진
-        # if str(user_id) not in os.listdir(f"{LOCAL_SAVE_PATH_ATFLEE_INPUT}"):
-        #     os.makedirs(f"{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}")
-        # secure_file = secure_filename(atflee_image.filename)
-        # extension = secure_file.split('.')[-1]
-        # file_name = f'bodylab_atflee_input_{user_id}_{now}.{extension}'
-        # category = file_name.split('_')[1]
-        #
-        # local_image_path = f'{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}/{file_name}'
-        # body_image.save(secure_file)
-        # if os.path.exists(secure_file):
-        #     shutil.move(secure_file, f'{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}')
-        #     os.rename(f'{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}/{secure_file}', local_image_path)
-        # """input 가로 리사이징 후 저장"""
-        # """DB에 각 이미지 크기별 파일 크기, 가로, 세로 길이 추가 저장"""
-
         # user_week_id 없으면 생성하고, 이후 SELECT
         try:
-            sql = f"""
-                INSERT INTO
-                        user_weeks(created_at, updated_at, user_id, start_date)
-                    SELECT (SELECT NOW()), (SELECT NOW()), {user_id}, (SELECT ADDDATE(CURDATE(), - WEEKDAY(CURDATE()))) FROM dual
-                WHERE NOT EXISTS(
-                            SELECT 
-                                id 
-                            FROM 
-                                user_weeks 
-                            WHERE 
-                                user_id={user_id} 
-                            AND 
-                                start_date=(SELECT ADDDATE(CURDATE(), - WEEKDAY(CURDATE())))
-                )"""
-            cursor.execute(sql)
-            connection.commit()
-
             sql = f"""
                 SELECT 
                     id 
@@ -201,7 +105,28 @@ def weekly_bodylab():
                                   status_code=500,
                                   payload=None,
                                   result=False)
-
+        try:
+            sql = f"""
+                SELECT 
+                    id 
+                FROM 
+                    bodylabs 
+                WHERE 
+                    user_id={user_id} 
+                ORDER BY id DESC LIMIT 1"""
+            cursor.execute(sql)
+            latest_bodylab_id = cursor.fetchall()[0][0]
+        except Exception as e:
+            raise HandleException(user_ip=ip,
+                                  nickname=user_nickname,
+                                  user_id=user_id,
+                                  api=endpoint,
+                                  error_message=str(e),
+                                  method=request.method,
+                                  query=sql,
+                                  status_code=500,
+                                  payload=None,
+                                  result=False)
         # DB 저장 1 - files에 바디랩 body input 원본 데이터 저장
         try:
             sql = Query.into(
@@ -257,99 +182,17 @@ def weekly_bodylab():
                 cursor.execute(sql)
             connection.commit()
 
-            # DB 저장 3 - files에 바디랩 atflee input 원본 데이터 저장
-            # DB 저장 4 - files에 바디랩 atflee input resized 데이터 저장
-
-            # user_question 데이터 불러오기
-            sql = Query.from_(
-                user_questions
-            ).select(
-                user_questions.data
-            ).where(
-                Criterion.all([
-                    user_questions.user_id == user_id
-                ])
-            ).orderby(
-                user_questions.id, order=Order.desc
-            ).limit(1).get_sql()
-            cursor.execute(sql)
-            data = cursor.fetchall()
-            # 검증 1: 사전설문 응답값 테이블에 전달받은 user id, id값에 해당하는 데이터가 있는지 여부
-            if query_result_is_none(data) is True:
-                connection.close()
-                result = {
-                    'result': False,
-                    'message': 'Pre-survey answer is necessary for bodylab.'
-                }
-                return json.dumps(result, ensure_ascii=False), 400
-            answer = json.loads(data[0][0].replace("\\", "\\\\"), strict=False)
-            gender = answer['gender']
-            age_group = answer['age_group']
-
-            if gender is not None and age_group is not None:
-                ideal_fat_mass, ideal_muscle_mass, bmi_status, ideal_bmi = standard_healthiness_value(str(age_group), str(gender), float(user_weight), float(user_height), float(bmi))
-            else:
-                connection.close()
-                result = {
-                    'result': False,
-                    'message': 'Missing data in pre-survey answer: gender or age_group.'
-                }
-                return json.dumps(result, ensure_ascii=False), 400
-
-            # 건강점수
-            bmi_healthiness_score = healthiness_score(ideal_bmi, bmi)
-            muscle_mass_healthiness_score = healthiness_score(ideal_muscle_mass, muscle_mass)
-            fat_mass_healthiness_score = healthiness_score(ideal_fat_mass, fat_mass)
-
-            # 매력점수
-            bmi_attractiveness_score = attractiveness_score(ATTRACTIVENESS_SCORE_CRITERIA[gender]['bmi'], bmi)
-            muscle_mass_attractiveness_score = attractiveness_score(ATTRACTIVENESS_SCORE_CRITERIA[gender]['muscle_mass'], muscle_mass)
-            fat_mass_attractiveness_score = attractiveness_score(ATTRACTIVENESS_SCORE_CRITERIA[gender]['fat_mass'], fat_mass)
-
             sql = Query.into(
                 bodylabs
             ).columns(
-                bodylabs.user_id,
-                bodylabs.user_week_id,
-                bodylabs.file_id_body_input,
-                bodylabs.height,
-                bodylabs.weight,
-                bodylabs.bmi,
-                bodylabs.ideal_bmi,
-                bodylabs.bmi_status,
-                bodylabs.bmi_healthiness_score,
-                bodylabs.bmi_attractiveness_score,
-                bodylabs.muscle_mass,
-                bodylabs.ideal_muscle_mass,
-                bodylabs.muscle_mass_healthiness_score,
-                bodylabs.muscle_mass_attractiveness_score,
-                bodylabs.fat_mass,
-                bodylabs.ideal_fat_mass,
-                bodylabs.fat_mass_healthiness_score,
-                bodylabs.fat_mass_attractiveness_score,
+                bodylabs.file_id_body_input
             ).insert(
-                user_id,
-                user_week_id,
-                file_id_body_input_image,
-                user_height,
-                user_weight,
-                bmi,
-                ideal_bmi,
-                bmi_status,
-                bmi_healthiness_score,
-                bmi_attractiveness_score,
-                muscle_mass,
-                ideal_muscle_mass,
-                muscle_mass_healthiness_score,
-                muscle_mass_attractiveness_score,
-                fat_mass,
-                ideal_fat_mass,
-                fat_mass_healthiness_score,
-                fat_mass_attractiveness_score
-            ).get_sql()
+                int(file_id_body_input_image)
+            ).where(
+                bodylabs.id == latest_bodylab_id
+            )
             cursor.execute(sql)
             connection.commit()
-            latest_bodylab_id = cursor.lastrowid
 
             # Analyze user's image and store the result.
             body_analysis = json.loads(analyze_body_images(user_id, body_input_image_dict['pathname']))
@@ -520,31 +363,18 @@ def weekly_bodylab():
 
 
 @api.route('/user/<user_id>/bodylab', methods=['GET'])
-def read_user_bodylab(user_id):
+def get_user_bodylab(user_id):
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
-    endpoint = API_ROOT + url_for('api.read_user_bodylab', user_id=user_id)
-    # user_token = request.headers.get('Authorization')   # 매니저 어드민에서 열 것이므로 부족함.
+    endpoint = API_ROOT + url_for('api.get_user_bodylab', user_id=user_id)
 
     """Define tables required to execute SQL."""
     bodylabs = Table('bodylabs')
     bodylab_analyze_bodies = Table('bodylab_analyze_bodies')  # bodylab_body_images = Table('bodylab_body_images')
     user_questions = Table('user_questions')
-    # bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
     files = Table('files')
 
     connection = login_to_db()
     cursor = connection.cursor()
-    # verify_user = check_user_token(cursor, user_token)
-    # if verify_user['result'] is False:
-    #     connection.close()
-    #     message = 'No token at request header.' if user_token is None else 'Unauthorized user.'
-    #     result = {
-    #         'result': False,
-    #         'message': message
-    #     }
-    #     return json.dumps(result, ensure_ascii=False), 401
-    # user_id = verify_user['user_id']
-    # user_nickname = verify_user['user_nickname']
 
     sql = Query.from_(
         user_questions
@@ -564,7 +394,7 @@ def read_user_bodylab(user_id):
         connection.close()
         result = {
             'result': False,
-            'message': 'Failed to create 1 week free trial(Cannot find user or user_question data).'
+            'error': 'Failed to create 1 week free trial(Cannot find user or user_question data).'
         }
         return json.dumps(result, ensure_ascii=False), 400
     answer = json.loads(data[0][0].replace("\\", "\\\\"), strict=False)
@@ -773,10 +603,9 @@ def read_user_bodylab(user_id):
 
 
 @api.route('/user/<user_id>/bodylab/<start_date>', methods=['GET'])
-def read_user_bodylab_single(user_id, start_date):
+def get_user_bodylab_single(user_id, start_date):
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
-    endpoint = API_ROOT + url_for('api.read_user_bodylab_single', user_id=user_id, start_date=start_date)
-    # user_token = request.headers.get('Authorization')
+    endpoint = API_ROOT + url_for('api.get_user_bodylab_single', user_id=user_id, start_date=start_date)
 
     """Define tables required to execute SQL."""
     bodylabs = Table('bodylabs')
@@ -786,17 +615,6 @@ def read_user_bodylab_single(user_id, start_date):
 
     connection = login_to_db()
     cursor = connection.cursor()
-    # verify_user = check_user_token(cursor, user_token)
-    # if verify_user['result'] is False:
-    #     connection.close()
-    #     message = 'No token at request header.' if user_token is None else 'Unauthorized user.'
-    #     result = {
-    #         'result': False,
-    #         'message': message
-    #     }
-    #     return json.dumps(result, ensure_ascii=False), 401
-    # user_id = verify_user['user_id']
-    # user_nickname = verify_user['user_nickname']
 
     sql = Query.from_(
         user_questions
@@ -954,10 +772,10 @@ def read_user_bodylab_single(user_id, start_date):
 
     if query_result_is_none(record) is True:
         connection.close()
-        result = {
-            'result': False,
-            'error': f'No data for start_date({start_date})'
-        }
+        # result = {
+        #     'result': False,
+        #     'error': f'No data for start_date({start_date})'
+        # }
         # return json.dumps(result, ensure_ascii=False), 200
         return json.dumps(return_dict_when_nothing_to_return(), ensure_ascii=False), 400
 
@@ -1077,10 +895,10 @@ def read_user_bodylab_single(user_id, start_date):
 '''
 
 
-@api.route('/atflee', methods=['POST'])
-def atflee_image():
+@api.route('/atflee-ocr', methods=['POST'])
+def post_atflee_ocr():
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
-    endpoint = API_ROOT + url_for('api.atflee_image')
+    endpoint = API_ROOT + url_for('api.post_atflee_ocr')
     user_token = request.headers.get('Authorization')
 
     connection = login_to_db()
@@ -1093,22 +911,16 @@ def atflee_image():
         message = 'No token at request header.' if user_token is None else 'Unauthorized user.'
         result = {
             'result': False,
-            'message': message
+            'error': message
         }
         return json.dumps(result, ensure_ascii=False), 401
     user_id = verify_user['user_id']
     user_nickname = verify_user['user_nickname']
 
-    """
-    이미지 서버 임시 저장 & 업로드 코드 추가 필요
-      - 눈바디 이미지, 앳플리 이미지 S3 업로드 후 URL 가져오는 코드 추가해야 함!
-    """
-    # bodylabs = Table('bodylabs')
-    # bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
-    # user_questions = Table('user_questions')
-    # files = Table('files')
     secure_file = secure_filename(atflee_image.filename)
     atflee_image.save(secure_file)
+
+    # 앳플리 이미지 복사본 생성: secure_file을 두 번 할 시 validate_and_save_to_s3()과 OCR 사이에서 파일 이동이 제대로 되지 않는 현상이 있음...
     copy_secure_file = f'/home/ubuntu/circlinMembersApi_python/circlinMembersApi_flask/copy_{atflee_image.filename}'
     shutil.copy2(secure_file, copy_secure_file)
 
@@ -1118,19 +930,15 @@ def atflee_image():
     if atflee_analysis['result'] is False:
         result = {
             'result': False,
-            # 'message': atflee_analysis['error']
-            'message': atflee_analysis,
-            'filename': atflee_image.filename,
+            'error': atflee_analysis['error']
         }
         return json.dumps(result, ensure_ascii=False), 400
 
-
     ocr_result = ocr_atflee_images(copy_secure_file)
-    # ocr_result = analyze_atflee_images(atflee_analysis['input_image_dict']['pathname'])
     status_code = ocr_result['status_code']
     del ocr_result['status_code']
-    if os.path.exists(atflee_image.filename):
-        os.remove(atflee_image.filename)
+    if os.path.exists(copy_secure_file):
+        os.remove(copy_secure_file)  # secure_file은 validate_and_save_to_s3() 함수에서 제거함.
     if ocr_result['result'] is False:
         connection.close()
         return json.dumps(ocr_result, ensure_ascii=False), status_code
@@ -1143,80 +951,55 @@ def atflee_image():
     return json.dumps(ocr_result, ensure_ascii=False), 200
 
 
+@api.route('/atflee', method=['POST'])
+def post_atflee_image():
+    ip = request.headers["X-Forwarded-For"]  # Both public & private.
+    endpoint = API_ROOT + url_for('api.post_atflee_image')
+    user_token = request.headers.get('Authorization')
 
-    # secure_file = secure_filename(body_image.filename)
-    # body_image.save(secure_file)
-    # validated_file_path, extension = validate_image(secure_file)
-    #
-    # file_name = f'bodylab_body_input_{user_id}_{now}.{extension}'
-    # category = file_name.split('_')[1]
-    #
-    # local_image_path = f'{LOCAL_SAVE_PATH_BODY_INPUT}/{user_id}/{file_name}'
-    # if os.path.exists(validated_file_path):
-    #     shutil.move(validated_file_path, f'{LOCAL_SAVE_PATH_BODY_INPUT}/{user_id}')
-    #     os.rename(f'{LOCAL_SAVE_PATH_BODY_INPUT}/{user_id}/{secure_file}', local_image_path)
-    #
-    # body_image_height, body_image_width, body_image_channel = cv2.imread(local_image_path, cv2.IMREAD_COLOR).shape
-    # object_name = f"{BUCKET_IMAGE_PATH_BODY_INPUT}/{user_id}/{file_name}"
-    # upload_result = upload_image_to_s3(local_image_path, BUCKET_NAME, object_name)
-    # if upload_result is False:
-    #     raise HandleException(user_ip=ip,
-    #                           user_id=user_id,
-    #                           api=endpoint,
-    #                           error_message=f'Failed to upload body image into S3({upload_result}).',
-    #                           method=request.method,
-    #                           status_code=500,
-    #                           payload=json.dumps(data, ensure_ascii=False),
-    #                           result=False)
-    # s3_path_body_input = f"{AMAZON_URL}/{object_name}"
-    # body_input_image_dict = {
-    #     'pathname': s3_path_body_input,
-    #     'original_name': file_name,
-    #     'mime_type': get_image_information(local_image_path)['mime_type'],
-    #     'size': get_image_information(local_image_path)['size'],
-    #     'width': body_image_width,
-    #     'height': body_image_height,
-    #     # For Server
-    #     'file_name': file_name,
-    #     'local_path': local_image_path,
-    #     'object_name': object_name,
-    # }
-    #
-    # resized_body_images_list = generate_resized_image(LOCAL_SAVE_PATH_BODY_INPUT, user_id, category, now, extension, local_image_path)
-    # for resized_image in resized_body_images_list:
-    #     upload_result = upload_image_to_s3(resized_image['local_path'], BUCKET_NAME, resized_image['object_name'])
-    #     if upload_result is False:
-    #         raise HandleException(user_ip=ip,
-    #                               user_id=user_id,
-    #                               api=endpoint,
-    #                               error_message=f'Failed to upload body image into S3({upload_result}).',
-    #                               method=request.method,
-    #                               status_code=500,
-    #                               payload=json.dumps(data, ensure_ascii=False),
-    #                               result=False)
-    #     if os.path.exists(resized_image['local_path']):
-    #         os.remove(resized_image['local_path'])
-    # if os.path.exists(local_image_path):
-    #     os.remove(local_image_path)
+    data = request.form.to_dict()  # {'body': ~~~~~.png, 'atflee': ~~~~~.png}
+    try:
+        user_height = float(data['height'])
+        user_weight = float(data['weight'])
+        bmi = float(data['bmi'])
+        muscle_mass = float(data['muscle'])
+        fat_mass = float(data['fat'])
+        input_image_data = data['input_image_data']  # dictionary
+        resized_image_data = data['resized_image_data']  # list
+    except Exception as e:
+        result = {
+            'result': False,
+            'error': f'Missing data: {str(e)}'
+        }
+        return json.dumps(result, ensure_ascii=False), 400
 
-    # S3 업로드 - 바디랩 이미지 2: 앳플리 사진
-    # if str(user_id) not in os.listdir(f"{LOCAL_SAVE_PATH_ATFLEE_INPUT}"):
-    #     os.makedirs(f"{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}")
-    # secure_file = secure_filename(atflee_image.filename)
-    # extension = secure_file.split('.')[-1]
-    # file_name = f'bodylab_atflee_input_{user_id}_{now}.{extension}'
-    # category = file_name.split('_')[1]
-    #
-    # local_image_path = f'{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}/{file_name}'
-    # body_image.save(secure_file)
-    # if os.path.exists(secure_file):
-    #     shutil.move(secure_file, f'{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}')
-    #     os.rename(f'{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}/{secure_file}', local_image_path)
-    # """input 가로 리사이징 후 저장"""
-    # """DB에 각 이미지 크기별 파일 크기, 가로, 세로 길이 추가 저장"""
+    # Verify if mandatory information is not null.
+    if not (user_height and user_weight and bmi and muscle_mass and fat_mass and input_image_data and resized_image_data):
+        result = {
+            'result': False,
+            'error': 'Null is not allowed.'
+        }
+        return json.dumps(result, ensure_ascii=False), 400
 
+    connection = login_to_db()
+    cursor = connection.cursor()
+    verify_user = check_user_token(cursor, user_token)
 
-'''
+    if verify_user['result'] is False:
+        connection.close()
+        message = 'No token at request header.' if user_token is None else 'Unauthorized user.'
+        result = {
+            'result': False,
+            'error': message
+        }
+        return json.dumps(result, ensure_ascii=False), 401
+    user_id = verify_user['user_id']
+    user_nickname = verify_user['user_nickname']
+
+    files = Table('files')
+    user_questions = Table('user_questions')
+    bodylabs = Table('bodylabs')
+
     # user_week_id 없으면 생성하고, 이후 SELECT
     try:
         sql = f"""
@@ -1258,9 +1041,34 @@ def atflee_image():
                               status_code=500,
                               payload=None,
                               result=False)
+    # DB 저장 1 - files에 바디랩 body input 원본 데이터 저장
+    sql = Query.into(
+        files
+    ).columns(
+        files.created_at,
+        files.updated_at,
+        files.pathname,
+        files.original_name,
+        files.mime_type,
+        files.size,
+        files.width,
+        files.height
+    ).insert(
+        fn.Now(),
+        fn.Now(),
+        input_image_data['pathname'],
+        input_image_data['original_name'],
+        input_image_data['mime_type'],
+        input_image_data['size'],
+        input_image_data['width'],
+        input_image_data['height']
+    ).get_sql()
+    cursor.execute(sql)
+    connection.commit()
+    file_id_atflee_input = cursor.lastrowid
 
-    # DB 저장 1 - files에 바디랩 atflee input 원본 데이터 저장
-    try:
+    # DB 저장 1 - files에 바디랩 atflee input resized 데이터 저장
+    for data in resized_image_data:
         sql = Query.into(
             files
         ).columns(
@@ -1271,371 +1079,117 @@ def atflee_image():
             files.mime_type,
             files.size,
             files.width,
-            files.height
+            files.height,
+            files.original_file_id
         ).insert(
             fn.Now(),
             fn.Now(),
-            atflee_input_image_dict['pathname'],
-            atflee_input_image_dict['original_name'],
-            atflee_input_image_dict['mime_type'],
-            atflee_input_image_dict['size'],
-            atflee_input_image_dict['width'],
-            atflee_input_image_dict['height']
+            data['pathname'],
+            data['original_name'],
+            data['mime_type'],
+            data['size'],
+            data['width'],
+            data['height'],
+            int(file_id_atflee_input)
         ).get_sql()
         cursor.execute(sql)
-        connection.commit()
-        file_id_body_input_image = cursor.lastrowid
+    connection.commit()
 
-        # DB 저장 1 - files에 바디랩 body input resized 데이터 저장
-        for data in resized_atflee_images_list:
-            sql = Query.into(
-                files
-            ).columns(
-                files.created_at,
-                files.updated_at,
-                files.pathname,
-                files.original_name,
-                files.mime_type,
-                files.size,
-                files.width,
-                files.height,
-                files.original_file_id
-            ).insert(
-                fn.Now(),
-                fn.Now(),
-                data['pathname'],
-                data['original_name'],
-                data['mime_type'],
-                data['size'],
-                data['width'],
-                data['height'],
-                int(file_id_body_input_image)
-            ).get_sql()
-            cursor.execute(sql)
-        connection.commit()
-
-        # user_question 데이터 불러오기
-        sql = Query.from_(
-            user_questions
-        ).select(
-            user_questions.data
-        ).where(
-            Criterion.all([
-                user_questions.user_id == user_id
-            ])
-        ).orderby(
-            user_questions.id, order=Order.desc
-        ).limit(1).get_sql()
-        cursor.execute(sql)
-        data = cursor.fetchall()
-        # 검증 1: 사전설문 응답값 테이블에 전달받은 user id, id값에 해당하는 데이터가 있는지 여부
-        if query_result_is_none(data) is True:
-            connection.close()
-            result = {
-                'result': False,
-                'message': 'Pre-survey answer is necessary for bodylab.'
-            }
-            return json.dumps(result, ensure_ascii=False), 400
-        answer = json.loads(data[0][0].replace("\\", "\\\\"), strict=False)
-        gender = answer['gender']
-        age_group = answer['age_group']
-
-        if gender is not None and age_group is not None:
-            ideal_fat_mass, ideal_muscle_mass, bmi_status, ideal_bmi = standard_healthiness_value(str(age_group), str(gender), float(user_weight), float(user_height), float(bmi))
-        else:
-            connection.close()
-            result = {
-                'result': False,
-                'message': 'Missing data in pre-survey answer: gender or age_group.'
-            }
-            return json.dumps(result, ensure_ascii=False), 400
-
-        # 건강점수
-        bmi_healthiness_score = healthiness_score(ideal_bmi, bmi)
-        muscle_mass_healthiness_score = healthiness_score(ideal_muscle_mass, muscle_mass)
-        fat_mass_healthiness_score = healthiness_score(ideal_fat_mass, fat_mass)
-
-        # 매력점수
-        bmi_attractiveness_score = attractiveness_score(ATTRACTIVENESS_SCORE_CRITERIA[gender]['bmi'], bmi)
-        muscle_mass_attractiveness_score = attractiveness_score(ATTRACTIVENESS_SCORE_CRITERIA[gender]['muscle_mass'], muscle_mass)
-        fat_mass_attractiveness_score = attractiveness_score(ATTRACTIVENESS_SCORE_CRITERIA[gender]['fat_mass'], fat_mass)
-
-        sql = Query.into(
-            bodylabs
-        ).columns(
-            bodylabs.user_id,
-            bodylabs.user_week_id,
-            bodylabs.file_id_body_input,
-            bodylabs.height,
-            bodylabs.weight,
-            bodylabs.bmi,
-            bodylabs.ideal_bmi,
-            bodylabs.bmi_status,
-            bodylabs.bmi_healthiness_score,
-            bodylabs.bmi_attractiveness_score,
-            bodylabs.muscle_mass,
-            bodylabs.ideal_muscle_mass,
-            bodylabs.muscle_mass_healthiness_score,
-            bodylabs.muscle_mass_attractiveness_score,
-            bodylabs.fat_mass,
-            bodylabs.ideal_fat_mass,
-            bodylabs.fat_mass_healthiness_score,
-            bodylabs.fat_mass_attractiveness_score,
-        ).insert(
-            user_id,
-            user_week_id,
-            file_id_body_input_image,
-            user_height,
-            user_weight,
-            bmi,
-            ideal_bmi,
-            bmi_status,
-            bmi_healthiness_score,
-            bmi_attractiveness_score,
-            muscle_mass,
-            ideal_muscle_mass,
-            muscle_mass_healthiness_score,
-            muscle_mass_attractiveness_score,
-            fat_mass,
-            ideal_fat_mass,
-            fat_mass_healthiness_score,
-            fat_mass_attractiveness_score
-        ).get_sql()
-        cursor.execute(sql)
-        connection.commit()
-        latest_bodylab_id = cursor.lastrowid
-
-        # Analyze user's image and store the result.
-        body_analysis = json.loads(analyze_body_images(user_id, body_input_image_dict['pathname']))
-        result_code = body_analysis['status_code']
-        if result_code == 200:
-            try:
-                analyze_result = body_analysis['result']
-                body_output_image_dict = analyze_result['body_output_image_dict']
-                resized_body_output_image_list = analyze_result['resized_body_output_image_list']
-
-                sql = Query.into(
-                    files
-                ).columns(
-                    files.created_at,
-                    files.updated_at,
-                    files.pathname,
-                    files.original_name,
-                    files.mime_type,
-                    files.size,
-                    files.width,
-                    files.height
-                ).insert(
-                    fn.Now(),
-                    fn.Now(),
-                    body_output_image_dict['pathname'],
-                    body_output_image_dict['original_name'],
-                    body_output_image_dict['mime_type'],
-                    body_output_image_dict['size'],
-                    body_output_image_dict['width'],
-                    body_output_image_dict['height']
-                ).get_sql()
-                cursor.execute(sql)
-                connection.commit()
-                file_id_body_output_image = cursor.lastrowid
-            except Exception as e:
-                connection.close()
-                raise HandleException(user_ip=ip,
-                                      nickname=user_nickname,
-                                      user_id=user_id,
-                                      api=endpoint,
-                                      error_message=str(e),
-                                      query=sql,
-                                      method=request.method,
-                                      status_code=500,
-                                      payload=json.dumps(data, ensure_ascii=False),
-                                      result=False)
-
-            # DB 저장 1 - files에 바디랩 body input resized 데이터 저장
-            try:
-                for data in resized_body_output_image_list:
-                    sql = Query.into(
-                        files
-                    ).columns(
-                        files.created_at,
-                        files.updated_at,
-                        files.pathname,
-                        files.original_name,
-                        files.mime_type,
-                        files.size,
-                        files.width,
-                        files.height,
-                        files.original_file_id
-                    ).insert(
-                        fn.Now(),
-                        fn.Now(),
-                        data['pathname'],
-                        data['original_name'],
-                        data['mime_type'],
-                        data['size'],
-                        data['width'],
-                        data['height'],
-                        int(file_id_body_output_image)
-                    ).get_sql()
-                    cursor.execute(sql)
-                    connection.commit()
-            except Exception as e:
-                connection.close()
-                raise HandleException(user_ip=ip,
-                                      nickname=user_nickname,
-                                      user_id=user_id,
-                                      api=endpoint,
-                                      error_message=str(e),
-                                      query=sql,
-                                      method=request.method,
-                                      status_code=500,
-                                      payload=json.dumps(data, ensure_ascii=False),
-                                      result=False)
-            try:
-                sql = Query.into(
-                    bodylab_analyze_bodies
-                ).columns(
-                    bodylab_analyze_bodies.bodylab_id,
-                    bodylab_analyze_bodies.file_id_body_output,
-                    bodylab_analyze_bodies.shoulder_width,
-                    bodylab_analyze_bodies.shoulder_ratio,
-                    bodylab_analyze_bodies.hip_width,
-                    bodylab_analyze_bodies.hip_ratio,
-                    bodylab_analyze_bodies.nose_to_shoulder_center,
-                    bodylab_analyze_bodies.shoulder_center_to_hip_center,
-                    bodylab_analyze_bodies.hip_center_to_ankle_center,
-                    bodylab_analyze_bodies.shoulder_center_to_ankle_center,
-                    bodylab_analyze_bodies.whole_body_length
-                ).insert(
-                    latest_bodylab_id,
-                    file_id_body_output_image,
-                    analyze_result['shoulder_width'],
-                    analyze_result['shoulder_ratio'],
-                    analyze_result['hip_width'],
-                    analyze_result['hip_ratio'],
-                    analyze_result['nose_to_shoulder_center'],
-                    analyze_result['shoulder_center_to_hip_center'],
-                    analyze_result['hip_center_to_ankle_center'],
-                    analyze_result['shoulder_center_to_ankle_center'],
-                    analyze_result['whole_body_length']
-                ).get_sql()
-                cursor.execute(sql)
-                connection.commit()
-            except Exception as e:
-                connection.close()
-                raise HandleException(user_ip=ip,
-                                      nickname=user_nickname,
-                                      user_id=user_id,
-                                      api=endpoint,
-                                      error_message=str(e),
-                                      query=sql,
-                                      method=request.method,
-                                      status_code=500,
-                                      payload=data,
-                                      result=False)
-
-            connection.close()
-            result = {'result': True}
-            return json.dumps(result, ensure_ascii=False), 201
-        elif result_code == 400:
-            connection.close()
-            result = {
-                'result': False,
-                'error': f"Failed to analysis requested image({user_id}, {body_input_image_dict['pathname']}): {body_analysis['error']}"
-            }
-            return json.dumps(result, ensure_ascii=False), 400
-        elif result_code == 500:
-            connection.close()
-            raise HandleException(user_ip=ip,
-                                  nickname=user_nickname,
-                                  user_id=user_id,
-                                  api=endpoint,
-                                  error_message=f"Failed to analysis requested image({body_image}): {body_analysis['error']}",
-                                  query=sql,
-                                  method=request.method,
-                                  status_code=500,
-                                  payload=data,
-                                  result=False)
-    except Exception as e:
+    # user_question 데이터 불러오기
+    sql = Query.from_(
+        user_questions
+    ).select(
+        user_questions.data
+    ).where(
+        Criterion.all([
+            user_questions.user_id == user_id
+        ])
+    ).orderby(
+        user_questions.id, order=Order.desc
+    ).limit(1).get_sql()
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    # 검증 1: 사전설문 응답값 테이블에 전달받은 user id, id값에 해당하는 데이터가 있는지 여부
+    if query_result_is_none(data) is True:
         connection.close()
-        raise HandleException(user_ip=ip,
-                              nickname=user_nickname,
-                              user_id=user_id,
-                              api=endpoint,
-                              error_message=f"Failed to execute POST request: {str(e)}",
-                              query=sql,
-                              method=request.method,
-                              status_code=500,
-                              payload=data,
-                              result=False)
+        result = {
+            'result': False,
+            'error': 'Pre-survey answer is necessary.'
+        }
+        return json.dumps(result, ensure_ascii=False), 400
+    answer = json.loads(data[0][0].replace("\\", "\\\\"), strict=False)
+    gender = answer['gender']
+    age_group = answer['age_group']
+
+    if gender is not None and age_group is not None:
+        ideal_fat_mass, ideal_muscle_mass, bmi_status, ideal_bmi = standard_healthiness_value(str(age_group), str(gender),
+                                                                                              float(user_weight),
+                                                                                              float(user_height),
+                                                                                              float(bmi))
     else:
-        result = {'result': False, 'error': 'Method Not Allowed.'}
-        return json.dumps(result, ensure_ascii=False), 405
-'''
+        connection.close()
+        result = {
+            'result': False,
+            'error': 'Missing data in pre-survey answer: gender or age_group.'
+        }
+        return json.dumps(result, ensure_ascii=False), 400
 
+    # 건강점수
+    bmi_healthiness_score = healthiness_score(ideal_bmi, bmi)
+    muscle_mass_healthiness_score = healthiness_score(ideal_muscle_mass, muscle_mass)
+    fat_mass_healthiness_score = healthiness_score(ideal_fat_mass, fat_mass)
 
+    # 매력점수
+    bmi_attractiveness_score = attractiveness_score(ATTRACTIVENESS_SCORE_CRITERIA[gender]['bmi'], bmi)
+    muscle_mass_attractiveness_score = attractiveness_score(ATTRACTIVENESS_SCORE_CRITERIA[gender]['muscle_mass'],
+                                                            muscle_mass)
+    fat_mass_attractiveness_score = attractiveness_score(ATTRACTIVENESS_SCORE_CRITERIA[gender]['fat_mass'], fat_mass)
 
+    sql = Query.into(
+        bodylabs
+    ).columns(
+        bodylabs.user_id,
+        bodylabs.user_week_id,
+        bodylabs.file_id_atflee_input,
+        bodylabs.height,
+        bodylabs.weight,
+        bodylabs.bmi,
+        bodylabs.ideal_bmi,
+        bodylabs.bmi_status,
+        bodylabs.bmi_healthiness_score,
+        bodylabs.bmi_attractiveness_score,
+        bodylabs.muscle_mass,
+        bodylabs.ideal_muscle_mass,
+        bodylabs.muscle_mass_healthiness_score,
+        bodylabs.muscle_mass_attractiveness_score,
+        bodylabs.fat_mass,
+        bodylabs.ideal_fat_mass,
+        bodylabs.fat_mass_healthiness_score,
+        bodylabs.fat_mass_attractiveness_score,
+    ).insert(
+        user_id,
+        user_week_id,
+        file_id_atflee_input,
+        user_height,
+        user_weight,
+        bmi,
+        ideal_bmi,
+        bmi_status,
+        bmi_healthiness_score,
+        bmi_attractiveness_score,
+        muscle_mass,
+        ideal_muscle_mass,
+        muscle_mass_healthiness_score,
+        muscle_mass_attractiveness_score,
+        fat_mass,
+        ideal_fat_mass,
+        fat_mass_healthiness_score,
+        fat_mass_attractiveness_score
+    ).get_sql()
+    cursor.execute(sql)
+    connection.commit()
 
+    connection.close()
+    result = {'result': True}
+    return json.dumps(result, ensure_ascii=False), 201
 
-
-    # now = datetime.now().strftime('%Y%m%d%H%M%S')
-    # # S3 업로드 - 바디랩 이미지 1: 신체 사진(눈바디)
-    # if str(user_id) not in os.listdir(f"{LOCAL_SAVE_PATH_ATFLEE_INPUT}"):
-    #     os.makedirs(f"{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}")
-    # secure_file = secure_filename(atflee_image.filename)
-    # extension = secure_file.split('.')[-1]
-    # file_name = f'bodylab_atflee_input_{user_id}_{now}.{extension}'
-    # category = file_name.split('_')[1]
-    #
-    # local_image_path = f'{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}/{file_name}'
-    # atflee_image.save(secure_file)
-    # if os.path.exists(secure_file):
-    #     shutil.move(secure_file, f'{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}')
-    #     os.rename(f'{LOCAL_SAVE_PATH_ATFLEE_INPUT}/{user_id}/{secure_file}', local_image_path)
-    #
-    # atflee_image_height, atflee_image_width, atflee_image_channel = cv2.imread(local_image_path, cv2.IMREAD_COLOR).shape
-    #
-    # object_name = f"{BUCKET_IMAGE_PATH_ATFLEE_INPUT}/{user_id}/{file_name}"
-    # upload_result = upload_image_to_s3(local_image_path, BUCKET_NAME, object_name)
-    # if upload_result is False:
-    #     result_dict = {
-    #         'message': f'Failed to upload body image into S3({upload_result})',
-    #         'result': False
-    #     }
-    #     return json.dumps(result_dict, ensure_ascii=False), 500
-    # # s3_path_atflee_input = f"{AMAZON_URL}/{object_name}"
-    # # atflee_input_image_dict = {
-    # #     'pathname': s3_path_atflee_input,
-    # #     'original_name': file_name,
-    # #     'mime_type': get_image_information(local_image_path)['mime_type'],
-    # #     'size': get_image_information(local_image_path)['size'],
-    # #     'width': atflee_image_height,
-    # #     'height': atflee_image_width,
-    # #     # For Server
-    # #     'file_name': file_name,
-    # #     'local_path': local_image_path,
-    # #     'object_name': object_name,
-    # # }
-    # ocr_result = analyze_atflee_images(local_image_path)
-    # status_code = ocr_result['status_code']
-    # del ocr_result['status_code']
-    #
-    # if ocr_result['result'] is False:
-    #     connection.close()
-    #     return json.dumps(ocr_result, ensure_ascii=False), status_code
-    #
-    # resized_atflee_images_list = generate_resized_image(BUCKET_IMAGE_PATH_ATFLEE_INPUT, user_id, category, now, extension,
-    #                                                   local_image_path)
-    # for resized_image in resized_atflee_images_list:
-    #     upload_result = upload_image_to_s3(resized_image['local_path'], BUCKET_NAME, resized_image['object_name'])
-    #     if upload_result is False:
-    #         result_dict = {
-    #             'message': f'Failed to upload body image into S3({upload_result})',
-    #             'result': False
-    #         }
-    #         return json.dumps(result_dict), 500
-    #     if os.path.exists(resized_image['local_path']):
-    #         os.remove(resized_image['local_path'])
-    # if os.path.exists(local_image_path):
-    #     os.remove(local_image_path)
-    # return json.dumps(ocr_result, ensure_ascii=False), 200
