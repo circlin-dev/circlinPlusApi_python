@@ -81,7 +81,6 @@ def post_bodylab():
         body_input_image_dict = body_analysis['input_image_dict']
         resized_body_images_list = body_analysis['resized_images_list']
 
-        # user_week_id 없으면 생성하고, 이후 SELECT
         try:
             sql = f"""
                 SELECT 
@@ -127,6 +126,7 @@ def post_bodylab():
                                   status_code=500,
                                   payload=None,
                                   result=False)
+
         # DB 저장 1 - files에 바디랩 body input 원본 데이터 저장
         try:
             sql = Query.into(
@@ -345,6 +345,8 @@ def post_bodylab():
                                       status_code=500,
                                       payload=data,
                                       result=False)
+            else:
+                pass
         except Exception as e:
             connection.close()
             raise HandleException(user_ip=ip,
@@ -886,7 +888,7 @@ def post_atflee_ocr():
     return json.dumps(ocr_result, ensure_ascii=False), 200
 
 
-@api.route('/atflee', method=['POST'])
+@api.route('/atflee', methods=['POST'])
 def post_atflee_image():
     ip = request.headers["X-Forwarded-For"]  # Both public & private.
     endpoint = API_ROOT + url_for('api.post_atflee_image')
