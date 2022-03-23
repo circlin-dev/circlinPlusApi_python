@@ -225,7 +225,8 @@ def replace_text_to_level(level_text: str):
 
 def send_aligo_free_trial(phone, nickname, manager_nickname):
     send_aligo = requests.post(
-        "https://nodejs.circlinplus.co.kr:444/aligo/message",
+        # "https://nodejs.circlinplus.co.kr:444/aligo/message",
+        "https://api.circlinplus.co.kr/api/aligo/message",
         json={
             "phone": phone,
             "message": f"*써클인플러스 무료체험 시작 알림*\n\n{nickname}님, 환영합니다! \n{nickname}님이 작성해주신 사전 설문에 따라 {nickname}님의 전담 매니저로 '매니저 {manager_nickname}'가 배정되었어요!\n지금 써클인플러스 앱을 다운받고, 매니저 채팅창을 확인해 보세요!\n\n앱 다운로드: https://www.circlinplus.co.kr/landing"

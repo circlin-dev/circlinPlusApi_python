@@ -290,10 +290,15 @@ def create_trial():
 
 @api.route('/reservation', methods=['POST'])
 def chat_reservation_test():
-    manager_id = 18
-    chat_room_id = 123
-    user_nickname="최건우"
-    manager_nickname="HJ"
+    parameters = json.loads(request.get_data(), encoding='utf-8')
+
+    user_nickname = parameters['user_nickname']
+    chat_room_id = parameters['chat_room_id']
+    manager_id = parameters['manager_id']
+    manager_nickname = parameters['manager_nickname']
+
+    # manager_id = 18
+    # chat_room_id = 123
 
     chat_reservations = Table('chat_reservations')
     connection = login_to_db()
