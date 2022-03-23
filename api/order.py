@@ -3,6 +3,7 @@ from global_things.error_handler import HandleException
 from global_things.functions.slack import slack_error_notification, slack_purchase_notification
 from global_things.functions.general import login_to_db, check_user_token, query_result_is_none
 from global_things.functions.order import validation_subscription_order, validation_equipment_delivery, get_import_access_token, request_import_refund
+from global_things.functions.trial import manager_by_gender
 from global_things.constants import IMPORT_REST_API_KEY, IMPORT_REST_API_SECRET
 from . import api
 from flask import url_for, request
@@ -77,10 +78,7 @@ def create_chat_with_manager():
 
     gender = json.loads(answer_data[0][0].replace("\\", "\\\\"), strict=False)['gender']
 
-    if gender == 'M':
-        manager_id = 28  # 28 = 대표님, 18 = 희정님
-    else:
-        manager_id = 18
+    manager_id = manager_by_gender(gender)
 
     sql = Query.from_(
         customers

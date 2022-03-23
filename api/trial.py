@@ -3,12 +3,12 @@ from global_things.error_handler import HandleException
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, query_result_is_none
-from global_things.functions.trial import send_aligo_free_trial
+from global_things.functions.trial import send_aligo_free_trial, build_chat_message, manager_by_gender
 from global_things.functions.trial import TRIAL_DICTIONARY, replace_text_to_level
 from datetime import datetime, timedelta
 from flask import request, url_for
 import json
-from pypika import MySQLQuery as Query, Table, Criterion, functions as fn
+from pypika import MySQLQuery as Query, Table, Criterion, Order, functions as fn
 import random
 
 
@@ -26,6 +26,8 @@ def create_trial():
     user_questions = Table('user_questions')
     user_lectures = Table('user_lectures')
     lectures = Table('lectures')
+    chat_users = Table('chat_users')
+    chat_reservations = Table('chat_reservations')
 
     connection = login_to_db()
     cursor = connection.cursor()
@@ -216,8 +218,61 @@ def create_trial():
                                           result=False)
             else:
                 pass
-    connection.close()
-    send_aligo = send_aligo_free_trial(user_phone, user_nickname)
+
+    # Get manager's nickname(to send aligo text message)
+    manager_id = manager_by_gender(gender)
+    sql = Query.from_(
+        users
+    ).select(
+        users.nickname,
+    ).where(
+        users.id == manager_id
+    ).get_sql()
+    cursor.execute(sql)
+    manager_nickname = cursor.fetchall()[0][0]
+
+    # Get free-trial user's chat room id(to schedule manager's chat message)
+    sql = Query.from_(
+        chat_users
+    ).select(
+        chat_users.chat_room_id
+    ).where(
+        chat_users.user_id == user_id
+    ).orderby(
+        chat_users.id, order=Order.desc
+    ).limit(1).get_sql()
+    cursor.execute(sql)
+    chat_room_id = cursor.fetchall()[0][0]
+
+    # 무료체험 발송용 채팅 메시지 예약
+    # daily_messages = build_chat_message(user_nickname, manager_nickname)
+    # for k, message_list in daily_messages.items():
+    #     for message in message_list:
+    #         sql = Query.into(
+    #             chat_reservations
+    #         ).columns(
+    #             chat_reservations.created_at,
+    #             chat_reservations.updated_at,
+    #             chat_reservations.chat_room_id,
+    #             chat_reservations.sender_id,
+    #             chat_reservations.message,
+    #             chat_reservations.send_date,
+    #             chat_reservations.send_time
+    #         ).insert(
+    #             fn.Now(),
+    #             fn.Now(),
+    #             chat_room_id,
+    #             manager_id,
+    #             message['message'],
+    #             message['time'].split(' ')[0],  # date
+    #             message['time'].split(' ')[1]  # time
+    #         ).get_sql()
+    #         cursor.execute(sql)
+    # connection.commit()   # commit after whole messages are staged correctly, so nothing will be stored in DB if there are something wrong during iteration.
+    # connection.close()
+
+    # 무료체험자 휴대폰번호로 안내 문자 예약
+    send_aligo = send_aligo_free_trial(user_phone, user_nickname, manager_nickname)
     if send_aligo is True:
         result = {'result': True, 'message': 'Created 7 days free trial routine.'}
         return json.dumps(result, ensure_ascii=False), 201
@@ -233,3 +288,42 @@ def create_trial():
                               payload=json.dumps(data, ensure_ascii=False),
                               result=False)
 
+@api.route('/reservation', methods=['POST'])
+def chat_reservation_test():
+    manager_id = 18
+    chat_room_id = 123
+    user_nickname="최건우"
+    manager_nickname="HJ"
+
+    chat_reservations = Table('chat_reservations')
+    connection = login_to_db()
+    cursor = connection.cursor()
+
+    daily_messages = build_chat_message(user_nickname, manager_nickname)
+    for k, message_list in daily_messages.items():
+        for message in message_list:
+            sql = Query.into(
+                chat_reservations
+            ).columns(
+                chat_reservations.created_at,
+                chat_reservations.updated_at,
+                chat_reservations.chat_room_id,
+                chat_reservations.sender_id,
+                chat_reservations.message,
+                chat_reservations.send_date,
+                chat_reservations.send_time
+            ).insert(
+                fn.Now(),
+                fn.Now(),
+                chat_room_id,
+                manager_id,
+                message['message'],
+                message['time'].split(' ')[0],  # date
+                message['time'].split(' ')[1]  # time
+            ).get_sql()
+            cursor.execute(sql)
+    connection.commit()  # commit after whole messages are staged correctly, so nothing will be stored in DB if there are something wrong during iteration.
+    connection.close()
+
+    result = {'result': True}
+    return json.dumps(result, ensure_ascii=False), 201
