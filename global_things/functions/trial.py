@@ -249,10 +249,9 @@ def manager_by_gender(gender):
 
 def build_chat_message(user_nickname, manager_nickname):
     # index 0: 신청 당일
-    # time == '0h': 신청 완료 직후
-    # time == '1h': 신청 완료 1시간 후
+
     now = datetime.now()
-    # now_0h = (now + timedelta(minutes=2)).strftime("%Y-%m-%d %H:%M:%S")
+    # now_2m = (now + timedelta(minutes=2)).strftime("%Y-%m-%d %H:%M:%S")
     # now_1h = (now + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
     #
     # d1_0802 = (now + timedelta(days=1)).strftime("%Y-%m-%d 08:02:00")
@@ -291,7 +290,7 @@ def build_chat_message(user_nickname, manager_nickname):
     # d6_1103 = (now + timedelta(days=6)).strftime("%Y-%m-%d 11:03:00")
     # d6_1844 = (now + timedelta(days=6)).strftime("%Y-%m-%d 18:44:00")
     # d6_2209 = (now + timedelta(days=6)).strftime("%Y-%m-%d 22:09:00")
-    now_0h = (now + timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M:%S")
+    now_2m = (now + timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M:%S")
     now_1h = (now + timedelta(minutes=2)).strftime("%Y-%m-%d %H:%M:%S")
 
     d1_0802 = (now + timedelta(minutes=3)).strftime("%Y-%m-%d %H:%M:%S")
@@ -334,35 +333,35 @@ def build_chat_message(user_nickname, manager_nickname):
     daily_messages = {
         0: [
             {"order": 0,
-             "time": now_0h,
+             "time": now_2m,
              "message": f"안녕하세요, {user_nickname}님! 🥳\n저는 {user_nickname}님의 무료체험 매니저로 배정된 매니저 {manager_nickname}입니다 :)"
              },
             {"order": 1,
-             "time": now_0h,
+             "time": now_2m,
              "message": "비록 지금은 무료체험 기간이라\n제가 메시지를 발송하는 것만 가능하지만!"
              },
             {"order": 2,
-             "time": now_0h,
+             "time": now_2m,
              "message": "체험 후에 이용권을 결제하시면,\n저와 실시간으로 메시지를 주고 받을 수 있답니다!"
              },
             {"order": 3,
-             "time": now_0h,
+             "time": now_2m,
              "message": f"우선 사전 설문지에 작성해주신 내용을 참고해서\n{user_nickname}님이 관심있어하실만한 프로그램으로"
              },
             {"order": 4,
-             "time": now_0h,
+             "time": now_2m,
              "message": "무료 체험 강의를 일정에 맞춰 세팅해두었어요!\n마이페이지에서 확인해보세요~! :)"
              },
             {"order": 5,
-             "time": now_0h,
+             "time": now_2m,
              "message": f"그리고 내일부터 제가\n{user_nickname}님이 더 건강한 하루를 보내실 수 있도록"
              },
             {"order": 6,
-             "time": now_0h,
+             "time": now_2m,
              "message": "매일매일 다른 미션을 드리려고해요! 😉\n제가 쪼끔 귀찮게 메시지를 보내더라도"
              },
             {"order": 7,
-             "time": now_0h,
+             "time": now_2m,
              "message": "한 주동안 미션을 잘 따라오시면\n이전보다 훨씬 더 건강한 한주를 보내실 수 있을거예요 ㅎㅎ"
              },
 
