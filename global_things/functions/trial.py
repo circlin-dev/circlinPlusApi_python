@@ -251,7 +251,7 @@ def build_chat_message(user_nickname, manager_nickname):
     # time == '0h': 신청 완료 직후
     # time == '1h': 신청 완료 1시간 후
     now = datetime.now()
-    now_0h = now.strftime("%Y-%m-%d %H:%M:%S")
+    now_0h = (now + timedelta(minutes=2)).strftime("%Y-%m-%d %H:%M:%S")
     # now_1h = (now + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
     #
     # d1_0802 = (now + timedelta(days=1)).strftime("%Y-%m-%d 08:02:00")
