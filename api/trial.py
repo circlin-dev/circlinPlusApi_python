@@ -245,31 +245,31 @@ def create_trial():
     chat_room_id = cursor.fetchall()[0][0]
 
     # 무료체험 발송용 채팅 메시지 예약
-    # daily_messages = build_chat_message(user_nickname, manager_nickname)
-    # for k, message_list in daily_messages.items():
-    #     for message in message_list:
-    #         sql = Query.into(
-    #             chat_reservations
-    #         ).columns(
-    #             chat_reservations.created_at,
-    #             chat_reservations.updated_at,
-    #             chat_reservations.chat_room_id,
-    #             chat_reservations.sender_id,
-    #             chat_reservations.message,
-    #             chat_reservations.send_date,
-    #             chat_reservations.send_time
-    #         ).insert(
-    #             fn.Now(),
-    #             fn.Now(),
-    #             chat_room_id,
-    #             manager_id,
-    #             message['message'],
-    #             message['time'].split(' ')[0],  # date
-    #             message['time'].split(' ')[1]  # time
-    #         ).get_sql()
-    #         cursor.execute(sql)
-    # connection.commit()   # commit after whole messages are staged correctly, so nothing will be stored in DB if there are something wrong during iteration.
-    # connection.close()
+    daily_messages = build_chat_message(user_nickname, manager_nickname)
+    for k, message_list in daily_messages.items():
+        for message in message_list:
+            sql = Query.into(
+                chat_reservations
+            ).columns(
+                chat_reservations.created_at,
+                chat_reservations.updated_at,
+                chat_reservations.chat_room_id,
+                chat_reservations.sender_id,
+                chat_reservations.message,
+                chat_reservations.send_date,
+                chat_reservations.send_time
+            ).insert(
+                fn.Now(),
+                fn.Now(),
+                chat_room_id,
+                manager_id,
+                message['message'],
+                message['time'].split(' ')[0],  # date
+                message['time'].split(' ')[1]  # time
+            ).get_sql()
+            cursor.execute(sql)
+    connection.commit()
+    connection.close()
 
     # 무료체험자 휴대폰번호로 안내 문자 예약
     send_aligo = send_aligo_free_trial(user_phone, user_nickname, manager_nickname)
@@ -287,6 +287,7 @@ def create_trial():
                               status_code=500,
                               payload=json.dumps(data, ensure_ascii=False),
                               result=False)
+
 
 @api.route('/reservation', methods=['POST'])
 def chat_reservation_test():

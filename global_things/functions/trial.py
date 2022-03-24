@@ -290,11 +290,13 @@ def build_chat_message(user_nickname, manager_nickname):
     # d6_1103 = (now + timedelta(days=6)).strftime("%Y-%m-%d 11:03:00")
     # d6_1844 = (now + timedelta(days=6)).strftime("%Y-%m-%d 18:44:00")
     # d6_2209 = (now + timedelta(days=6)).strftime("%Y-%m-%d 22:09:00")
+
+    # Test time scheduling.
     now_2m = (now + timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M:%S")
     now_1h = (now + timedelta(minutes=2)).strftime("%Y-%m-%d %H:%M:%S")
 
     d1_0802 = (now + timedelta(minutes=3)).strftime("%Y-%m-%d %H:%M:%S")
-    d1_1145 = (now + timedelta(minutes=4,)).strftime("%Y-%m-%d %H:%M:%S")
+    d1_1145 = (now + timedelta(minutes=4)).strftime("%Y-%m-%d %H:%M:%S")
     d1_1522 = (now + timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S")
     d1_1820 = (now + timedelta(minutes=6)).strftime("%Y-%m-%d %H:%M:%S")
     d1_2112 = (now + timedelta(minutes=7)).strftime("%Y-%m-%d %H:%M:%S")
