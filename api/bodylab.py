@@ -284,14 +284,22 @@ def post_bodylab():
                     sql = Query.update(
                         bodylabs
                     ).set(
-                        bodylabs.shoulder_width, analyze_result['shoulder_width'],
-                        bodylabs.shoulder_ratio, analyze_result['shoulder_ratio'],
-                        bodylabs.hip_width, analyze_result['hip_width'],
-                        bodylabs.hip_ratio, analyze_result['hip_ratio'],
-                        bodylabs.nose_to_shoulder_center, analyze_result['nose_to_shoulder_center'],
-                        bodylabs.shoulder_center_to_hip_center, analyze_result['shoulder_center_to_hip_center'],
-                        bodylabs.hip_center_to_ankle_center ,analyze_result['hip_center_to_ankle_center'],
-                        bodylabs.shoulder_center_to_ankle_center ,analyze_result['shoulder_center_to_ankle_center'],
+                        bodylabs.shoulder_width, analyze_result['shoulder_width']
+                    ).set(
+                        bodylabs.shoulder_ratio, analyze_result['shoulder_ratio']
+                    ).set(
+                        bodylabs.hip_width, analyze_result['hip_width']
+                    ).set(
+                        bodylabs.hip_ratio, analyze_result['hip_ratio']
+                    ).set(
+                        bodylabs.nose_to_shoulder_center, analyze_result['nose_to_shoulder_center']
+                    ).set(
+                        bodylabs.shoulder_center_to_hip_center, analyze_result['shoulder_center_to_hip_center']
+                    ).set(
+                        bodylabs.hip_center_to_ankle_center, analyze_result['hip_center_to_ankle_center']
+                    ).set(
+                        bodylabs.shoulder_center_to_ankle_center, analyze_result['shoulder_center_to_ankle_center']
+                    ).set(
                         bodylabs.whole_body_length, analyze_result['whole_body_length']
                     ).where(
                         Criterion.all([
