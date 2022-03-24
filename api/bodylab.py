@@ -281,23 +281,21 @@ def post_bodylab():
                                           payload=json.dumps(data, ensure_ascii=False),
                                           result=False)
                 try:
-                    sql = Query.into(
-                        bodylab_analyze_bodies
+                    sql = Query.update(
+                        bodylabs
                     ).columns(
-                        bodylab_analyze_bodies.bodylab_id,
-                        bodylab_analyze_bodies.file_id_body_output,
-                        bodylab_analyze_bodies.shoulder_width,
-                        bodylab_analyze_bodies.shoulder_ratio,
-                        bodylab_analyze_bodies.hip_width,
-                        bodylab_analyze_bodies.hip_ratio,
-                        bodylab_analyze_bodies.nose_to_shoulder_center,
-                        bodylab_analyze_bodies.shoulder_center_to_hip_center,
-                        bodylab_analyze_bodies.hip_center_to_ankle_center,
-                        bodylab_analyze_bodies.shoulder_center_to_ankle_center,
-                        bodylab_analyze_bodies.whole_body_length
-                    ).insert(
-                        latest_bodylab_id,
-                        file_id_body_output_image,
+                        bodylabs.shoulder_width,
+                        bodylabs.shoulder_ratio,
+                        bodylabs.hip_width,
+                        bodylabs.hip_ratio,
+                        bodylabs.nose_to_shoulder_center,
+                        bodylabs.shoulder_center_to_hip_center,
+                        bodylabs.hip_center_to_ankle_center,
+                        bodylabs.shoulder_center_to_ankle_center,
+                        bodylabs.whole_body_length
+                    ).set(
+                        # latest_bodylab_id,
+                        # file_id_body_output_image,
                         analyze_result['shoulder_width'],
                         analyze_result['shoulder_ratio'],
                         analyze_result['hip_width'],
@@ -307,7 +305,39 @@ def post_bodylab():
                         analyze_result['hip_center_to_ankle_center'],
                         analyze_result['shoulder_center_to_ankle_center'],
                         analyze_result['whole_body_length']
+                    ).where(
+                        Criterion.all([
+                            bodylabs.user_id == user_id,
+                            bodylabs.user_week_id == user_week_id
+                        ])
                     ).get_sql()
+                    cursor.execute(sql)
+                    connection.commit()
+                except Exception as e:
+                    connection.close()
+                    raise HandleException(user_ip=ip,
+                                          nickname=user_nickname,
+                                          user_id=user_id,
+                                          api=endpoint,
+                                          error_message=str(e),
+                                          query=sql,
+                                          method=request.method,
+                                          status_code=500,
+                                          payload=data,
+                                          result=False)
+
+                try:
+                    sql = Query.into(
+                        bodylab_analyze_bodies
+                    ).columns(
+                        bodylab_analyze_bodies.bodylab_id,
+                        bodylab_analyze_bodies.filed_id,
+                        bodylab_analyze_bodies.type
+                    ).insert(
+                        (latest_bodylab_id, file_id_body_input_image, 'input'),
+                        (latest_bodylab_id, file_id_body_output_image, 'output')
+                    ).get_sql()
+
                     cursor.execute(sql)
                     connection.commit()
                 except Exception as e:
@@ -938,6 +968,7 @@ def post_atflee_image():
     files = Table('files')
     user_questions = Table('user_questions')
     bodylabs = Table('bodylabs')
+    bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
 
     # user_week_id 없으면 생성하고, 이후 SELECT
     try:
@@ -1090,31 +1121,42 @@ def post_atflee_image():
     ).columns(
         bodylabs.user_id,
         bodylabs.user_week_id,
-        bodylabs.file_id_atflee_input,
-        bodylabs.height,
-        bodylabs.weight,
-        bodylabs.bmi,
-        bodylabs.ideal_bmi,
-        bodylabs.bmi_status,
-        bodylabs.bmi_healthiness_score,
-        bodylabs.bmi_attractiveness_score,
-        bodylabs.muscle_mass,
-        bodylabs.ideal_muscle_mass,
-        bodylabs.muscle_mass_healthiness_score,
-        bodylabs.muscle_mass_attractiveness_score,
-        bodylabs.fat_mass,
-        bodylabs.ideal_fat_mass,
-        bodylabs.fat_mass_healthiness_score,
-        bodylabs.fat_mass_attractiveness_score,
     ).insert(
         user_id,
-        user_week_id,
+        user_week_id
+    ).get_sql()
+    cursor.execute(sql)
+    connection.commit()
+    bodylab_id = cursor.lastrowid
+
+    sql = Query.into(
+        bodylab_analyze_atflees
+    ).columns(
+        bodylab_analyze_atflees.bodylab_id,
+        bodylab_analyze_atflees.file_id_atflee_input,
+        bodylab_analyze_atflees.height,
+        bodylab_analyze_atflees.weight,
+        bodylab_analyze_atflees.bmi,
+        bodylab_analyze_atflees.bmi_status,
+        bodylab_analyze_atflees.ideal_bmi,
+        bodylab_analyze_atflees.bmi_healthiness_score,
+        bodylab_analyze_atflees.bmi_attractiveness_score,
+        bodylab_analyze_atflees.muscle_mass,
+        bodylab_analyze_atflees.ideal_muscle_mass,
+        bodylab_analyze_atflees.muscle_mass_healthiness_score,
+        bodylab_analyze_atflees.muscle_mass_attractiveness_score,
+        bodylab_analyze_atflees.fat_mass,
+        bodylab_analyze_atflees.ideal_fat_mass,
+        bodylab_analyze_atflees.fat_mass_healthiness_score,
+        bodylab_analyze_atflees.fat_mass_attractiveness_score,
+    ).insert(
+        bodylab_id,
         file_id_atflee_input,
         user_height,
         user_weight,
         bmi,
-        ideal_bmi,
         bmi_status,
+        ideal_bmi,
         bmi_healthiness_score,
         bmi_attractiveness_score,
         muscle_mass,
