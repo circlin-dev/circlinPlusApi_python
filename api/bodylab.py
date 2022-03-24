@@ -182,17 +182,17 @@ def post_bodylab():
                 cursor.execute(sql)
             connection.commit()
 
-            sql = Query.into(
-                bodylabs
-            ).columns(
-                bodylabs.file_id_body_input
-            ).insert(
-                int(file_id_body_input_image)
-            ).where(
-                bodylabs.id == latest_bodylab_id
-            ).get_sql()
-            cursor.execute(sql)
-            connection.commit()
+            # sql = Query.into(
+            #     bodylabs
+            # ).columns(
+            #     bodylabs.file_id_body_input
+            # ).insert(
+            #     int(file_id_body_input_image)
+            # ).where(
+            #     bodylabs.id == latest_bodylab_id
+            # ).get_sql()
+            # cursor.execute(sql)
+            # connection.commit()
 
             # Analyze user's image and store the result.
             body_analysis = json.loads(analyze_body_images(user_id, body_input_image_dict['pathname']))
@@ -331,7 +331,7 @@ def post_bodylab():
                         bodylab_analyze_bodies
                     ).columns(
                         bodylab_analyze_bodies.bodylab_id,
-                        bodylab_analyze_bodies.filed_id,
+                        bodylab_analyze_bodies.file_id,
                         bodylab_analyze_bodies.type
                     ).insert(
                         (latest_bodylab_id, file_id_body_input_image, 'input'),
@@ -1133,7 +1133,7 @@ def post_atflee_image():
         bodylab_analyze_atflees
     ).columns(
         bodylab_analyze_atflees.bodylab_id,
-        bodylab_analyze_atflees.file_id_atflee_input,
+        bodylab_analyze_atflees.file_id,
         bodylab_analyze_atflees.height,
         bodylab_analyze_atflees.weight,
         bodylab_analyze_atflees.bmi,
