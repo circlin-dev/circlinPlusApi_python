@@ -638,7 +638,7 @@ def get_user_bodylab_single(user_id, start_date):
     """Define tables required to execute SQL."""
     bodylabs = Table('bodylabs')
     bodylab_analyze_bodies = Table('bodylab_analyze_bodies')  # bodylb_body_images = Table('bodylab_body_images')
-    # bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
+    bodylab_analyze_atflees = Table('bodylab_analyze_atflees')
     user_questions = Table('user_questions')
 
     connection = login_to_db()
@@ -700,98 +700,120 @@ def get_user_bodylab_single(user_id, start_date):
             b.id,
             b.created_at,
             b.user_week_id,
-            (SELECT 
-                    f.pathname 
-            FROM 
-                    files f 
-            INNER JOIN 
-                    bodylabs 
-            ON 
-                f.id = bodylabs.file_id_body_input 
-            WHERE bodylabs.id = b.id) AS body_input_url,
-            (SELECT JSON_ARRAYAGG(JSON_OBJECT('width', ff.width, 'pathname', ff.pathname)) AS resized
-            FROM
-                 files ff
-            INNER JOIN
-                (SELECT
-                       f.id,
+            (
+                SELECT
+                       f.pathname
+                FROM
+                        files f
+                INNER JOIN
+                        bodylab_analyze_bodies bab
+                ON
+                    f.id = bab.file_id
+                WHERE
+                    bab.bodylab_id = b.id
+                AND
+                    bab.type = 'input') AS body_input_url,
+            (
+                SELECT
+                       JSON_ARRAYAGG(JSON_OBJECT('width', ff.width, 'pathname', ff.pathname)) AS resized
+                FROM
+                     files ff
+                INNER JOIN
+                         (SELECT
+                               f.id,
+                               f.pathname
+                         FROM
+                             files f
+                         INNER JOIN
+                                 bodylab_analyze_bodies bab
+                        ON
+                            f.id = bab.file_id
+                        WHERE
+                            bab.bodylab_id = b.id
+                        AND
+                            bab.type = 'input') AS original
+                ON
+                    original.id = ff.original_file_id
+            ) AS body_input_url_resized,
+            baa.height,
+            baa.weight,
+            baa.bmi,
+            baa.ideal_bmi,
+            baa.bmi_healthiness_score,
+            baa.bmi_attractiveness_score,
+            baa.bmi_status,
+            baa.muscle_mass,
+            baa.ideal_muscle_mass,
+            baa.muscle_mass_healthiness_score,
+            baa.muscle_mass_attractiveness_score,
+            baa.fat_mass,
+            baa.ideal_muscle_mass,
+            baa.muscle_mass_healthiness_score,
+            baa.muscle_mass_attractiveness_score,
+            (
+                SELECT
                        f.pathname
                 FROM
                      files f
                 INNER JOIN
-                     bodylabs
-                ON
-                    f.id = bodylabs.file_id_body_input
+                         bodylab_analyze_bodies
+            ON
+                f.id = bodylab_analyze_bodies.file_id
                 WHERE
-                      bodylabs.id = b.id) AS original
-            ON
-                original.id = ff.original_file_id) AS body_input_url_resized,
-            b.height,
-            b.weight,
-            b.bmi,
-            b.ideal_bmi,
-            b.bmi_healthiness_score,
-            b.bmi_attractiveness_score,
-            b.bmi_status,
-            b.muscle_mass,
-            b.ideal_muscle_mass,
-            b.muscle_mass_healthiness_score,
-            b.muscle_mass_attractiveness_score,
-            b.fat_mass,
-            b.ideal_muscle_mass,
-            b.muscle_mass_healthiness_score,
-            b.muscle_mass_attractiveness_score,
-            (SELECT 
-                    f.pathname 
-            FROM 
-                files f 
-            INNER JOIN 
-                bodylab_analyze_bodies 
-            ON 
-                f.id = bodylab_analyze_bodies.file_id_body_output 
-            WHERE 
-                bodylab_analyze_bodies.id = bab.id) AS body_output_url,
-            (SELECT JSON_ARRAYAGG(JSON_OBJECT('width', ff.width, 'pathname', ff.pathname)) AS resized
-            FROM
-                 files ff
-            INNER JOIN
-                (SELECT 
-                    f.id,                
-                    f.pathname 
-                FROM 
-                    files f 
-                INNER JOIN 
-                    bodylab_analyze_bodies 
-                ON 
-                    f.id = bodylab_analyze_bodies.file_id_body_output
-                WHERE 
-                    bodylab_analyze_bodies.id = bab.id) AS original
-            ON
-                original.id = ff.original_file_id) AS body_output_url_resized,
-            bab.shoulder_width,
-            bab.shoulder_ratio,
-            bab.hip_width,
-            bab.hip_ratio,
-            bab.nose_to_shoulder_center,
-            bab.shoulder_center_to_hip_center,
-            bab.hip_center_to_ankle_center,
-            bab.shoulder_center_to_ankle_center,
-            bab.whole_body_length
+                      bodylab_analyze_bodies.bodylab_id = b.id
+                AND bodylab_analyze_bodies.type = 'output'
+            ) AS body_output_url,
+            (
+                SELECT
+                       JSON_ARRAYAGG(JSON_OBJECT('width', ff.width, 'pathname', ff.pathname)) AS resized
+                FROM
+                     files ff
+                INNER JOIN
+                         (SELECT
+                                 f.id,
+                                 f.pathname
+                         FROM
+                              files f
+                        INNER JOIN
+                                  bodylab_analyze_bodies
+                        ON
+                            f.id = bodylab_analyze_bodies.file_id
+                         WHERE
+                               bodylab_analyze_bodies.bodylab_id = b.id
+                           AND
+                               bodylab_analyze_bodies.type = 'output'
+                         ) AS original
+                ON
+                    original.id = ff.original_file_id
+            ) AS body_output_url_resized,
+            b.shoulder_width,
+            b.shoulder_ratio,
+            b.hip_width,
+            b.hip_ratio,
+            b.nose_to_shoulder_center,
+            b.shoulder_center_to_hip_center,
+            b.hip_center_to_ankle_center,
+            b.shoulder_center_to_ankle_center,
+            b.whole_body_length
         FROM
              bodylabs b
         INNER JOIN
             bodylab_analyze_bodies bab
         ON
             bab.bodylab_id = b.id
+        INNER JOIN
+                 bodylab_analyze_atflees baa
+        ON
+            baa.bodylab_id = b.id
         WHERE
             b.user_id = {user_id}
-        AND b.user_week_id = (SELECT 
-                                    uw.id 
-                                FROM 
-                                    user_weeks uw 
-                                WHERE 
-                                    uw.user_id=b.user_id 
-                                AND 
+        AND b.user_week_id = (SELECT
+                                    uw.id
+                                FROM
+                                    user_weeks uw
+                                WHERE
+                                    uw.user_id=b.user_id
+                                AND
                                     start_date = (SELECT ADDDATE(%s, - WEEKDAY(%s))))
         ORDER BY b.id DESC LIMIT 1"""
     values = (start_date, start_date)
@@ -810,10 +832,10 @@ def get_user_bodylab_single(user_id, start_date):
     connection.close()
     record = record[0]
     result_dict = {
-        "result": True,
-        "id": record[0],
-        "created_at": record[1].strftime('%Y-%m-%d %H:%M:%S'),
-        "user_week_id": record[2],
+        "result": True,  #
+        "id": record[0],  #
+        "created_at": record[1].strftime('%Y-%m-%d %H:%M:%S'),  #
+        "user_week_id": record[2],  #
         "bmi": {
             "user": record[7],
             "ideal": record[8],
@@ -834,8 +856,8 @@ def get_user_bodylab_single(user_id, start_date):
             "attractiveness_score": record[19]
         },
         "body_image_analysis": {
-            "body_input_url": record[3],
-            "body_input_url_resized": json.loads(record[4]),
+            "body_input_url": record[3],   #
+            "body_input_url_resized": json.loads(record[4]),   #
             "body_output_url": record[20],
             "body_output_url_resized": json.loads(record[21]),
             "user": {
