@@ -33,8 +33,8 @@ app.register_blueprint(api, url_prefix="/api")
 lms_scheduler = BackgroundScheduler()
 lms_scheduler.add_job(cron_job_send_lms,
                       'cron',
-                      hour=6,
-                      minute="46, 48, 50, 52",
+                      hour=7,
+                      minute="0, 2, 4, 6",
                       id="free_trial_LMS_scheduler")
 lms_scheduler.start()
 
