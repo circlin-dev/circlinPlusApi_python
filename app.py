@@ -2,6 +2,8 @@ from api import api
 from global_things.constants import APP_ROOT
 from global_things.functions.slack import slack_error_notification
 from global_things.error_handler import HandleException
+from global_things.functions.scheduler import cron_job_send_lms
+from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request
 from flask_cors import CORS
 from flask_request_validator.error_formatter import demo_error_formatter
@@ -46,4 +48,7 @@ def hello_world():
 
 
 if __name__ == '__main__':
+    lms_scheduler = BackgroundScheduler()
+    lms_scheduler.start()
+    lms_scheduler.add_job(cron_job_send_lms, 'cron', hour=5, minute="38, 39, 40, 41", id="free_trial_LMS_scheduler")
     app.run(host='0.0.0.0', debug=True)  # 0.0.0.0 for production or 127.0.0.1 for local development

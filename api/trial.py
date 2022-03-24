@@ -3,6 +3,7 @@ from global_things.error_handler import HandleException
 from global_things.constants import API_ROOT
 from global_things.functions.slack import slack_error_notification
 from global_things.functions.general import login_to_db, query_result_is_none
+from global_things.functions.scheduler import common_code_for_lms
 from global_things.functions.trial import send_aligo_free_trial, build_chat_message, manager_by_gender
 from global_things.functions.trial import TRIAL_DICTIONARY, replace_text_to_level
 from datetime import datetime, timedelta
@@ -28,6 +29,8 @@ def create_trial():
     lectures = Table('lectures')
     chat_users = Table('chat_users')
     chat_reservations = Table('chat_reservations')
+    lms_reservations = Table('lms_reservations')
+    common_codes = Table('common_codes')
 
     connection = login_to_db()
     cursor = connection.cursor()
@@ -269,9 +272,35 @@ def create_trial():
             ).get_sql()
             cursor.execute(sql)
     connection.commit()
-    connection.close()
 
-    # 무료체험자 휴대폰번호로 안내 문자 예약
+
+    # 무료체험자 휴대폰번호로 안내 문자 예약  # 12:30발송
+    now = datetime.now()
+    schedule_after_a_day = (now + timedelta(days=1)).strftime("%Y-%m-%d %12:30:00")
+    schedule_after_seven_days = (now + timedelta(days=7)).strftime("%Y-%m-%d %12:30:00")
+    schedule_after_nine_days = (now + timedelta(days=9)).strftime("%Y-%m-%d %12:30:00")
+    schedule_after_twelve_days = (now + timedelta(days=12)).strftime("%Y-%m-%d %12:30:00")
+
+    induce_after_1_logon, induce_after_7_order, induce_after_9_order, induce_after_12_order = common_code_for_lms()[0]
+
+    sql = Query.into(
+        lms_reservations
+    ).columns(
+        lms_reservations.common_code_id,
+        lms_reservations.scheduled_at,
+        lms_reservations.user_id,
+        lms_reservations.message
+    ).insert(
+        (induce_after_1_logon[0], schedule_after_a_day, user_id, induce_after_1_logon[1].replace("{%nickname}", user_nickname).replace("{%manager_nickname}", manager_nickname)),
+        (induce_after_7_order[0], schedule_after_seven_days, user_id, induce_after_7_order[1].replace("{%nickname}", user_nickname).replace("{%manager_nickname}", manager_nickname)),
+        (induce_after_9_order[0], schedule_after_nine_days, user_id, induce_after_9_order[1].replace("{%nickname}", user_nickname).replace("{%manager_nickname}", manager_nickname)),
+        (induce_after_12_order[0], schedule_after_twelve_days, user_id, induce_after_12_order[1].replace("{%nickname}", user_nickname).replace("{%manager_nickname}", manager_nickname))
+    )
+    cursor.execute(sql)
+    connection.commit()
+
+    connection.close()
+    # 무료체험자 휴대폰번호로 안내 문자 발송
     send_aligo = send_aligo_free_trial(user_phone, user_nickname, manager_nickname)
     if send_aligo is True:
         result = {'result': True, 'message': 'Created 7 days free trial routine.'}

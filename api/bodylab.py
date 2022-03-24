@@ -833,10 +833,10 @@ def get_user_bodylab_single(user_id, start_date):
     connection.close()
     record = record[0]
     result_dict = {
-        "result": True,  #
-        "id": record[0],  #
-        "created_at": record[1].strftime('%Y-%m-%d %H:%M:%S'),  #
-        "user_week_id": record[2],  #
+        "result": True,
+        "id": record[0],
+        "created_at": record[1].strftime('%Y-%m-%d %H:%M:%S'),
+        "user_week_id": record[2],
         "bmi": {
             "user": record[7],
             "ideal": record[8],
@@ -857,8 +857,8 @@ def get_user_bodylab_single(user_id, start_date):
             "attractiveness_score": record[19]
         },
         "body_image_analysis": {
-            "body_input_url": record[3],   #
-            "body_input_url_resized": json.loads(record[4]),   #
+            "body_input_url": record[3],
+            "body_input_url_resized": json.loads(record[4]),
             "body_output_url": record[20],
             "body_output_url_resized": json.loads(record[21]),
             "user": {
