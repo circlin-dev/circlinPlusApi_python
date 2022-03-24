@@ -895,7 +895,8 @@ def post_atflee_image():
     endpoint = API_ROOT + url_for('api.post_atflee_image')
     user_token = request.headers.get('Authorization')
 
-    data = request.form.to_dict()  # {'body': ~~~~~.png, 'atflee': ~~~~~.png}
+    # data = request.form.to_dict()  # {'body': ~~~~~.png, 'atflee': ~~~~~.png}
+    data = json.loads(request.get_data(), encoding='utf-8')
     try:
         user_weight = float(data['weight'])
         user_height = float(data['height'])
