@@ -871,6 +871,7 @@ def post_atflee_ocr():
         }
         return json.dumps(result, ensure_ascii=False), 400
 
+    # OCR 분석 수행
     ocr_result = ocr_atflee_images(copy_secure_file)
     status_code = ocr_result['status_code']
     del ocr_result['status_code']
@@ -896,8 +897,8 @@ def post_atflee_image():
 
     data = request.form.to_dict()  # {'body': ~~~~~.png, 'atflee': ~~~~~.png}
     try:
-        user_height = float(data['height'])
         user_weight = float(data['weight'])
+        user_height = float(data['height'])
         bmi = float(data['bmi'])
         muscle_mass = float(data['muscle'])
         fat_mass = float(data['fat'])
