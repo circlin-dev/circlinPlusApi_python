@@ -403,7 +403,7 @@ def cron_job_send_lms():
         WHERE
             u.phone IS NOT NULL
         AND lr.deleted_at IS NULL
-        AND (lr.scheduled_at between NOW() - INTERVAL 1 MINUTE AND NOW() + INTERVAL 1 MINUTE """
+        AND (lr.scheduled_at between NOW() - INTERVAL 1 MINUTE AND NOW() + INTERVAL 1 MINUTE)"""
     cursor.execute(sql)
     result = cursor.fetchall()
     connection.close()
