@@ -814,7 +814,8 @@ def get_user_bodylab_single(user_id, start_date):
                                 WHERE
                                     uw.user_id=b.user_id
                                 AND
-                                    start_date = (SELECT ADDDATE(%s, - WEEKDAY(%s))))
+                                    start_date = (SELECT ADDDATE(%s, - WEEKDAY(%s)))
+                                ORDER BY uw.id DESC LIMIT 1)
         ORDER BY b.id DESC LIMIT 1"""
     values = (start_date, start_date)
     cursor.execute(sql, values)
