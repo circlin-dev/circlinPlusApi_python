@@ -34,7 +34,7 @@ lms_scheduler = BackgroundScheduler()
 lms_scheduler.add_job(cron_job_send_lms,
                       'cron',
                       hour=6,
-                      minute="36, 37, 38, 39, 40, 41, 42, 43",
+                      minute="46, 48, 50, 52",
                       id="free_trial_LMS_scheduler")
 lms_scheduler.start()
 
