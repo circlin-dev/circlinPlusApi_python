@@ -30,6 +30,15 @@ app.logger.setLevel(gunicorn_logger.level)
 app.register_blueprint(api, url_prefix="/api")
 
 
+lms_scheduler = BackgroundScheduler()
+lms_scheduler.add_job(cron_job_send_lms,
+                      'cron',
+                      hour=6,
+                      minute="36, 37, 38, 39, 40, 41, 42, 43",
+                      id="free_trial_LMS_scheduler")
+lms_scheduler.start()
+
+
 @app.errorhandler(HandleException)
 def raise_exception(error):
     result = error.to_dict()
@@ -48,7 +57,4 @@ def hello_world():
 
 
 if __name__ == '__main__':
-    lms_scheduler = BackgroundScheduler()
-    lms_scheduler.start()
-    lms_scheduler.add_job(cron_job_send_lms, 'cron', hour=6, minute="29, 30, 31, 32, 33, 34, 35, 36", id="free_trial_LMS_scheduler")
     app.run(host='0.0.0.0', debug=True)  # 0.0.0.0 for production or 127.0.0.1 for local development
