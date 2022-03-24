@@ -190,7 +190,7 @@ def post_bodylab():
                 int(file_id_body_input_image)
             ).where(
                 bodylabs.id == latest_bodylab_id
-            )
+            ).get_sql()
             cursor.execute(sql)
             connection.commit()
 
@@ -1084,6 +1084,7 @@ def post_atflee_image():
                                                             muscle_mass)
     fat_mass_attractiveness_score = attractiveness_score(ATTRACTIVENESS_SCORE_CRITERIA[gender]['fat_mass'], fat_mass)
 
+     # Cannot add or update a child row: a foreign key constraint fails (`circlin_plus_test`.`bodylabs`, CONSTRAINT `bodylabs_FK_1` FOREIGN KEY (`file_id_body_input`) REFERENCES `files` (`id`))')
     sql = Query.into(
         bodylabs
     ).columns(
