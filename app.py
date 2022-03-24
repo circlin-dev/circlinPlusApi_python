@@ -50,5 +50,5 @@ def hello_world():
 if __name__ == '__main__':
     lms_scheduler = BackgroundScheduler()
     lms_scheduler.start()
-    lms_scheduler.add_job(cron_job_send_lms, 'cron', hour=5, minute="38, 39, 40, 41", id="free_trial_LMS_scheduler")
+    lms_scheduler.add_job(cron_job_send_lms, 'cron', hour=5, minute="52, 53, 54, 55", id="free_trial_LMS_scheduler")
     app.run(host='0.0.0.0', debug=True)  # 0.0.0.0 for production or 127.0.0.1 for local development
