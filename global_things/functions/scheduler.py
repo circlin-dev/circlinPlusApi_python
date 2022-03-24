@@ -81,7 +81,7 @@ def cron_job_send_lms():
         WHERE
             u.phone IS NOT NULL
         AND lr.deleted_at IS NULL
-        AND (lr.scheduled_at between NOW() - INTERVAL 1 MINUTE AND NOW() + INTERVAL 1 MINUTE)"""
+        AND (lr.scheduled_at between NOW() - INTERVAL 30 SECOND AND NOW() + INTERVAL 30 SECOND)"""
     cursor.execute(sql)
     result = cursor.fetchall()
     connection.close()
@@ -104,7 +104,7 @@ def cron_job_send_lms():
     for data in result_list:
         # 다음과 같은 경우에는 발송하지 않는다.
         if data['subscription_id'] == 1 and data['code'] == 'induce.after.1.logon' and data['num_logon'] > 0:
-            # 로그인 유도 문자는 앱 로그인 기록 횟수가 0보다 크면 보내지 말아야 한다.
-            pass
-        send_aligo_scheduled_lms(data['phone'], data['message'])
+            continue
+        else:
+            send_aligo_scheduled_lms(data['phone'], data['message'])
 

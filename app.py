@@ -29,12 +29,12 @@ app.logger.setLevel(gunicorn_logger.level)
 # For Blueprint api activation.
 app.register_blueprint(api, url_prefix="/api")
 
-
+# Job scheduler: Sending scheduled LMS message for free trial users.
 lms_scheduler = BackgroundScheduler()
 lms_scheduler.add_job(cron_job_send_lms,
                       'cron',
-                      hour=7,
-                      minute="0, 2, 4, 6",
+                      hour=7,  # 12
+                      minute="27, 28, 29, 30, 31, 32",  # 30
                       id="free_trial_LMS_scheduler")
 lms_scheduler.start()
 
