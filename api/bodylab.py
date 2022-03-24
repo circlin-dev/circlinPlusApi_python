@@ -283,28 +283,16 @@ def post_bodylab():
                 try:
                     sql = Query.update(
                         bodylabs
-                    ).columns(
-                        bodylabs.shoulder_width,
-                        bodylabs.shoulder_ratio,
-                        bodylabs.hip_width,
-                        bodylabs.hip_ratio,
-                        bodylabs.nose_to_shoulder_center,
-                        bodylabs.shoulder_center_to_hip_center,
-                        bodylabs.hip_center_to_ankle_center,
-                        bodylabs.shoulder_center_to_ankle_center,
-                        bodylabs.whole_body_length
                     ).set(
-                        # latest_bodylab_id,
-                        # file_id_body_output_image,
-                        analyze_result['shoulder_width'],
-                        analyze_result['shoulder_ratio'],
-                        analyze_result['hip_width'],
-                        analyze_result['hip_ratio'],
-                        analyze_result['nose_to_shoulder_center'],
-                        analyze_result['shoulder_center_to_hip_center'],
-                        analyze_result['hip_center_to_ankle_center'],
-                        analyze_result['shoulder_center_to_ankle_center'],
-                        analyze_result['whole_body_length']
+                        bodylabs.shoulder_width, analyze_result['shoulder_width'],
+                        bodylabs.shoulder_ratio, analyze_result['shoulder_ratio'],
+                        bodylabs.hip_width, analyze_result['hip_width'],
+                        bodylabs.hip_ratio, analyze_result['hip_ratio'],
+                        bodylabs.nose_to_shoulder_center, analyze_result['nose_to_shoulder_center'],
+                        bodylabs.shoulder_center_to_hip_center, analyze_result['shoulder_center_to_hip_center'],
+                        bodylabs.hip_center_to_ankle_center ,analyze_result['hip_center_to_ankle_center'],
+                        bodylabs.shoulder_center_to_ankle_center ,analyze_result['shoulder_center_to_ankle_center'],
+                        bodylabs.whole_body_length, analyze_result['whole_body_length']
                     ).where(
                         Criterion.all([
                             bodylabs.user_id == user_id,
