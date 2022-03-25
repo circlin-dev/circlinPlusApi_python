@@ -134,7 +134,8 @@ def create_chat_with_manager():
                     chat_users.chat_room_id,
                     chat_users.user_id
                 ).insert(
-                    (fn.Now(), fn.Now(), chat_room_id, user_id)
+                    (fn.Now(), fn.Now(), chat_room_id, user_id),  # 무료체험: 채팅방 개설 시 유저만 입장시킴.
+                    (fn.Now(), fn.Now(), chat_room_id, manager_id)
                 ).get_sql()
             else:
                 sql = Query.into(
@@ -145,7 +146,7 @@ def create_chat_with_manager():
                     chat_users.chat_room_id,
                     chat_users.user_id
                 ).insert(
-                    (fn.Now(), fn.Now(), chat_room_id, manager_id),
+                    (fn.Now(), fn.Now(), chat_room_id, manager_id),  # 유료 결제: 채팅방 개설 시 유저 & 매니저 함께 입장시킴.
                     (fn.Now(), fn.Now(), chat_room_id, user_id)
                 ).get_sql()
             cursor.execute(sql)
