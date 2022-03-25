@@ -273,7 +273,6 @@ def create_trial():
             cursor.execute(sql)
     connection.commit()
 
-
     # 무료체험자 휴대폰번호로 안내 문자 예약  # 12:30발송
     now = datetime.now()
     schedule_after_a_day = (now + timedelta(days=1)).strftime("%Y-%m-%d %12:30:00")
@@ -295,7 +294,7 @@ def create_trial():
         (induce_after_7_order[0], schedule_after_seven_days, user_id, induce_after_7_order[1].replace("{%nickname}", user_nickname).replace("{%manager_nickname}", manager_nickname)),
         (induce_after_9_order[0], schedule_after_nine_days, user_id, induce_after_9_order[1].replace("{%nickname}", user_nickname).replace("{%manager_nickname}", manager_nickname)),
         (induce_after_12_order[0], schedule_after_twelve_days, user_id, induce_after_12_order[1].replace("{%nickname}", user_nickname).replace("{%manager_nickname}", manager_nickname))
-    )
+    ).get_sql()
     cursor.execute(sql)
     connection.commit()
 
@@ -318,115 +317,115 @@ def create_trial():
                               result=False)
 
 
-@api.route('/reservation', methods=['POST'])
-def chat_reservation_test():
-    parameters = json.loads(request.get_data(), encoding='utf-8')
-
-    user_nickname = parameters['user_nickname']
-    chat_room_id = parameters['chat_room_id']
-    manager_id = parameters['manager_id']
-    manager_nickname = parameters['manager_nickname']
-
-    # manager_id = 18
-    # chat_room_id = 123
-
-    chat_reservations = Table('chat_reservations')
-    connection = login_to_db()
-    cursor = connection.cursor()
-
-    daily_messages = build_chat_message(user_nickname, manager_nickname)
-    for k, message_list in daily_messages.items():
-        for message in message_list:
-            sql = Query.into(
-                chat_reservations
-            ).columns(
-                chat_reservations.created_at,
-                chat_reservations.updated_at,
-                chat_reservations.chat_room_id,
-                chat_reservations.sender_id,
-                chat_reservations.message,
-                chat_reservations.send_date,
-                chat_reservations.send_time
-            ).insert(
-                fn.Now(),
-                fn.Now(),
-                chat_room_id,
-                manager_id,
-                message['message'],
-                message['time'].split(' ')[0],  # date
-                message['time'].split(' ')[1]  # time
-            ).get_sql()
-            cursor.execute(sql)
-    connection.commit()  # commit after whole messages are staged correctly, so nothing will be stored in DB if there are something wrong during iteration.
-    connection.close()
-
-    result = {'result': True}
-    return json.dumps(result, ensure_ascii=False), 201
-
-
-@api.route('/scheduling-message', methods=['POST'])
-def cron_job_send_lms():
-    connection = login_to_db()
-    cursor = connection.cursor()
-    # lms_reservations = Table('lms_reservations')
-    # users = Table('users')
-    # orders = Table('orders')
-    # order_subscriptions = Table('order_subscriptions')
-    # subscriptions = Table('subscriptions')
-    # common_codes = Table('common_codes')
-    # logs = Table('logs')
-
-    sql = f"""
-        SELECT
---            lr.id,
-           lr.scheduled_at,
-           cc.code,
-           lr.message,
---            o.id,
---            o.total_price,
---            os.subscription_id,
---            s.title,
-           u.nickname,
-           u.phone,
-           u.subscription_id,
-           u.subscription_started_at,
-           u.subscription_expired_at,
-           (
-               SELECT COUNT(*) FROM logs l WHERE l.user_id = u.id AND l.type = 'user.logon'
-           ) AS num_logon
-        FROM
-            users u
-        INNER JOIN
-                lms_reservations lr ON u.id = lr.user_id
-        INNER JOIN
-                common_codes cc ON lr.common_code_id = cc.id
-        WHERE
-            u.phone IS NOT NULL
-        AND lr.deleted_at IS NULL
-        AND (lr.scheduled_at between NOW() - INTERVAL 1 MINUTE AND NOW() + INTERVAL 1 MINUTE)"""
-    cursor.execute(sql)
-    result = cursor.fetchall()
-    connection.close()
-
-    result_list = []
-    for data in result:
-        dict_data = {
-            'scheduled_at': data[0],
-            'code': data[1],
-            'message': data[2],
-            'nickname': data[3],
-            'phone': data[4],
-            'subscription_id': data[5],
-            'subscription_started_at': data[6],
-            'subscription_expired_at': data[7],
-            'num_logon': data[8]
-        }
-        result_list.append(dict_data)
-
-    for data in result_list:
-        # 다음과 같은 경우에는 발송하지 않는다.
-        if data['subscription_id'] == 1 and data['code'] == 'induce.after.1.logon' and data['num_logon'] > 0:
-            # 로그인 유도 문자는 앱 로그인 기록 횟수가 0보다 크면 보내지 말아야 한다.
-            pass
-        send_aligo_scheduled_lms(data['phone'], data['message'])
-    return json.dumps({'result': True}, ensure_ascii=False), 200
+# @api.route('/reservation', methods=['POST'])
+# def chat_reservation_test():
+#     parameters = json.loads(request.get_data(), encoding='utf-8')
+#
+#     user_nickname = parameters['user_nickname']
+#     chat_room_id = parameters['chat_room_id']
+#     manager_id = parameters['manager_id']
+#     manager_nickname = parameters['manager_nickname']
+#
+#     # manager_id = 18
+#     # chat_room_id = 123
+#
+#     chat_reservations = Table('chat_reservations')
+#     connection = login_to_db()
+#     cursor = connection.cursor()
+#
+#     daily_messages = build_chat_message(user_nickname, manager_nickname)
+#     for k, message_list in daily_messages.items():
+#         for message in message_list:
+#             sql = Query.into(
+#                 chat_reservations
+#             ).columns(
+#                 chat_reservations.created_at,
+#                 chat_reservations.updated_at,
+#                 chat_reservations.chat_room_id,
+#                 chat_reservations.sender_id,
+#                 chat_reservations.message,
+#                 chat_reservations.send_date,
+#                 chat_reservations.send_time
+#             ).insert(
+#                 fn.Now(),
+#                 fn.Now(),
+#                 chat_room_id,
+#                 manager_id,
+#                 message['message'],
+#                 message['time'].split(' ')[0],  # date
+#                 message['time'].split(' ')[1]  # time
+#             ).get_sql()
+#             cursor.execute(sql)
+#     connection.commit()  # commit after whole messages are staged correctly, so nothing will be stored in DB if there are something wrong during iteration.
+#     connection.close()
+#
+#     result = {'result': True}
+#     return json.dumps(result, ensure_ascii=False), 201
+#
+#
+# @api.route('/scheduling-message', methods=['POST'])
+# def cron_job_send_lms():
+#     connection = login_to_db()
+#     cursor = connection.cursor()
+#     # lms_reservations = Table('lms_reservations')
+#     # users = Table('users')
+#     # orders = Table('orders')
+#     # order_subscriptions = Table('order_subscriptions')
+#     # subscriptions = Table('subscriptions')
+#     # common_codes = Table('common_codes')
+#     # logs = Table('logs')
+#
+#     sql = f"""
+#         SELECT
+# --            lr.id,
+#            lr.scheduled_at,
+#            cc.code,
+#            lr.message,
+# --            o.id,
+# --            o.total_price,
+# --            os.subscription_id,
+# --            s.title,
+#            u.nickname,
+#            u.phone,
+#            u.subscription_id,
+#            u.subscription_started_at,
+#            u.subscription_expired_at,
+#            (
+#                SELECT COUNT(*) FROM logs l WHERE l.user_id = u.id AND l.type = 'user.logon'
+#            ) AS num_logon
+#         FROM
+#             users u
+#         INNER JOIN
+#                 lms_reservations lr ON u.id = lr.user_id
+#         INNER JOIN
+#                 common_codes cc ON lr.common_code_id = cc.id
+#         WHERE
+#             u.phone IS NOT NULL
+#         AND lr.deleted_at IS NULL
+#         AND (lr.scheduled_at between NOW() - INTERVAL 1 MINUTE AND NOW() + INTERVAL 1 MINUTE)"""
+#     cursor.execute(sql)
+#     result = cursor.fetchall()
+#     connection.close()
+#
+#     result_list = []
+#     for data in result:
+#         dict_data = {
+#             'scheduled_at': data[0],
+#             'code': data[1],
+#             'message': data[2],
+#             'nickname': data[3],
+#             'phone': data[4],
+#             'subscription_id': data[5],
+#             'subscription_started_at': data[6],
+#             'subscription_expired_at': data[7],
+#             'num_logon': data[8]
+#         }
+#         result_list.append(dict_data)
+#
+#     for data in result_list:
+#         # 다음과 같은 경우에는 발송하지 않는다.
+#         if data['subscription_id'] == 1 and data['code'] == 'induce.after.1.logon' and data['num_logon'] > 0:
+#             # 로그인 유도 문자는 앱 로그인 기록 횟수가 0보다 크면 보내지 말아야 한다.
+#             pass
+#         send_aligo_scheduled_lms(data['phone'], data['message'])
+#     return json.dumps({'result': True}, ensure_ascii=False), 200
