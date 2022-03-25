@@ -251,8 +251,8 @@ def build_chat_message(user_nickname, manager_nickname):
     # index 0: 신청 당일
 
     now = datetime.now()
-    now_2m = (now + timedelta(minutes=2)).strftime("%Y-%m-%d %H:%M:%S")
-    now_1h = (now + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+    now_2m = (now + timedelta(minutes=2)).strftime("%Y-%m-%d %H:%M:00")
+    now_1h = (now + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:00")
 
     d1_0802 = (now + timedelta(days=1)).strftime("%Y-%m-%d 08:02:00")
     d1_1145 = (now + timedelta(days=1)).strftime("%Y-%m-%d 11:45:00")
