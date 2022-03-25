@@ -281,7 +281,7 @@ def create_trial():
     schedule_after_nine_days = (now + timedelta(days=9)).strftime("%Y-%m-%d %12:30:00")
     schedule_after_twelve_days = (now + timedelta(days=12)).strftime("%Y-%m-%d %12:30:00")
 
-    induce_after_1_logon, induce_after_7_order, induce_after_9_order, induce_after_12_order = common_code_for_lms()[0]
+    induce_after_1_logon, induce_after_7_order, induce_after_9_order, induce_after_12_order = common_code_for_lms()
 
     sql = Query.into(
         lms_reservations
