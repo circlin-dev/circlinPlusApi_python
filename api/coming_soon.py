@@ -24,24 +24,11 @@ def get_coming_soon():
            csl.order AS id,
            DATE_FORMAT(csl.released_at, '%Y-%m-%d') AS released_at,
            csl.title AS title,
-           (SELECT pathname FROM files WHERE id = c.profile_id) AS thumbnail,
            (SELECT pathname from files WHERE id = csl.intro_id) AS intro,
-           csl.description,
-           JSON_OBJECT(
-               'id', c.id,
-               'team', c.affiliation,
-               'intro', (SELECT pathname FROM files WHERE id = c.intro_id),
-               'title', c.name,
-               'thumbnail', (SELECT pathname FROM files WHERE id = c.profile_id),
-               'exercise', c.category,
-               'description', c.greeting
-           ) AS coach
+           (SELECT mime_type from files WHERE id = csl.intro_id) AS mime_type,
+           csl.description
         FROM
              coming_soon_list csl
-        INNER JOIN
-                 coaches c
-            ON
-                c.id = csl.coach_id
         INNER JOIN
                  files f
             ON csl.intro_id = f.id
