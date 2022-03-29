@@ -44,8 +44,7 @@ def get_coming_soon():
         return json.dumps(result, ensure_ascii=False), 200
 
     df = pd.DataFrame(result, columns=['id', 'released_at', 'title',
-                                       'thumbnail', 'mime_type',
-                                       'intro', 'descriptions', 'coach'])
+                                       'intro', 'mime_type', 'descriptions'])
     # df['thumbnails'] = df['thumbnails'].apply(lambda x: json.loads(x))
 
     result_dict = json.loads(df.to_json(orient='records'))
