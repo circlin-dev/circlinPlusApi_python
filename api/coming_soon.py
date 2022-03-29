@@ -27,7 +27,7 @@ def get_coming_soon():
            (SELECT pathname FROM files WHERE id = csl.thumbnail_id) AS thumbnail,
             (
                 SELECT
-                       JSON_ARRAYAGG(f.pathname)
+                       JSON_ARRAYAGG(JSON_OBJECT('pathname', f.pathname))
                 FROM
                      files f
                 WHERE
