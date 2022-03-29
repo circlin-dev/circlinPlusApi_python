@@ -24,6 +24,15 @@ def get_coming_soon():
            csl.order AS id,
            DATE_FORMAT(csl.released_at, '%Y-%m-%d') AS released_at,
            csl.title AS title,
+           (SELECT pathname FROM files WHERE id = csl.thumbnail_id) AS thumbnail,
+            (
+                SELECT
+                       JSON_ARRAYAGG(f.pathname)
+                FROM
+                     files f
+                WHERE
+                    f.original_file_id = csl.thumbnail_id
+            ) AS thumbnails,
            (SELECT pathname from files WHERE id = csl.intro_id) AS intro,
            (SELECT mime_type from files WHERE id = csl.intro_id) AS mime_type,
            csl.description
@@ -44,8 +53,9 @@ def get_coming_soon():
         return json.dumps(result, ensure_ascii=False), 200
 
     df = pd.DataFrame(result, columns=['id', 'released_at', 'title',
+                                       'thumbnail', 'thumbnails',
                                        'intro', 'mime_type', 'descriptions'])
-    # df['thumbnails'] = df['thumbnails'].apply(lambda x: json.loads(x))
+    df['thumbnails'] = df['thumbnails'].apply(lambda x: json.loads(x) if x is not None else None)
 
     result_dict = json.loads(df.to_json(orient='records'))
 
