@@ -182,7 +182,7 @@ def read_user_question(user_id):
             'result': False,
             'error': f'Cannot find requested answer data of user(id: {user_id})(users)'
         }
-        return json.dumps(result, ensure_ascii=False), 401
+        return json.dumps(result, ensure_ascii=False), 404
     else:
         connection.close()
         answer_id = data[0][0]
