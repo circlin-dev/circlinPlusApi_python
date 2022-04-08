@@ -306,6 +306,7 @@ def update_payment_state_by_webhook():
     endpoint = API_ROOT + url_for('api.update_payment_state_by_webhook')
     """Define tables required to execute SQL."""
     orders = Table("orders")
+    users = Table("users")
 
     connection = login_to_db()
     cursor = connection.cursor()
@@ -398,6 +399,19 @@ def update_payment_state_by_webhook():
         # 결제 취소 이벤트가 아임포트 어드민(https://admin.iamport.kr/)에서 "취소하기" 버튼을 클릭하여 발생한 경우에만 트리거됨.
         if int(db_paid_amount[0][0]) == int(import_paid_amount):
             if updated_state == 'cancelled':
+                sql = Query.update(
+                    users
+                ).set(
+                    orders.subscription_started_at, None
+                ).set(
+                    orders.subscription_expired_at, None
+                ).set(
+                    orders.subscription_id, None
+                ).set(
+                    orders.updated_at, fn.Now()
+                ).get_sql()
+                cursor.execute(sql)
+
                 sql = Query.update(
                     orders
                 ).set(
